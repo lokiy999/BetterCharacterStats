@@ -1,6 +1,8 @@
 BetterCharacterStats - a World of Warcraft (1.12.1) AddOn
 ===================================================
 
+**THIS IS A FORK FOR THE VANILLA+ REALM!**
+
 ![preview](https://raw.githubusercontent.com/yutsuku/BetterCharacterStats/gh-pages/images/BetterCharacterStats.png)
 
 Installation:

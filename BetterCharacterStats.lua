@@ -9,7 +9,6 @@ BCS.PLAYERSTAT_DROPDOWN_OPTIONS = {
 	"PLAYERSTAT_MELEE_COMBAT",
 	"PLAYERSTAT_RANGED_COMBAT",
 	"PLAYERSTAT_SPELL_COMBAT",
-	"PLAYERSTAT_SPELL_SCHOOLS",
 	"PLAYERSTAT_DEFENSES",
 }
 
@@ -375,7 +374,16 @@ function BCS:SetAttackPower(statFrame)
 	label:SetText(TEXT(ATTACK_POWER_COLON))
 
 	PaperDollFormatStat(MELEE_ATTACK_POWER, base, posBuff, negBuff, frame, text)
-	frame.tooltipSubtext = format(MELEE_ATTACK_POWER_TOOLTIP, max((base+posBuff+negBuff), 0)/ATTACK_POWER_MAGIC_NUMBER)
+	--frame.tooltipSubtext = format(MELEE_ATTACK_POWER_TOOLTIP, max((base+posBuff+negBuff), 0)/ATTACK_POWER_MAGIC_NUMBER)
+	frame.tooltip = frame.tooltip..format(L["ATTACK_POWER_TOOLTIP"], "melee", max(0,base + posBuff + negBuff)/ATTACK_POWER_MAGIC_NUMBER);
+	frame:SetScript("OnEnter", function()
+			GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+			GameTooltip:SetText(this.tooltip)
+			GameTooltip:Show()
+	end)
+	frame:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
 end
 
 function BCS:SetSpellPower(statFrame, school)
@@ -388,8 +396,7 @@ function BCS:SetSpellPower(statFrame, school)
 	
 	if school then
 		label:SetText(L["SPELL_SCHOOL_"..strupper(school)])
-		local base = BCS:GetSpellPower()
-		local fromSchool = BCS:GetSpellPower(school)
+		local base, schools = BCS:GetSpellPower()
 		local output = base + fromSchool
 		
 		if fromSchool > 0 then
@@ -398,24 +405,29 @@ function BCS:SetSpellPower(statFrame, school)
 		
 		text:SetText(output)
 	else
-		local power, secondaryPower, secondaryName = BCS:GetSpellPower()
+		local power, schools = BCS:GetSpellPower();
 		
 		label:SetText(L.SPELL_POWER_COLON)
-		text:SetText(power+secondaryPower)
+		text:SetText(power);
 		
-		if secondaryPower > 0 then
-			frame.tooltip = format(L.SPELL_POWER_SECONDARY_TOOLTIP, (power+secondaryPower), power, secondaryPower, secondaryName)
-			
-			frame:SetScript("OnEnter", function()
-				GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-				GameTooltip:SetText(this.tooltip)
-				GameTooltip:Show()
-			end)
-			frame:SetScript("OnLeave", function()
-				GameTooltip:Hide()
-			end)
-		end
 		
+		frame.tooltip = format(L.SPELL_POWER_TOOLTIP, power)
+		--frame.tooltipSubtext = L["SPELL_POWER_SCHOOL_TOOLTIP"]
+		
+		frame:SetScript("OnEnter", function()
+			GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+			GameTooltip:SetText(this.tooltip)
+			GameTooltip:AddDoubleLine("Holy", schools["Holy"])
+			GameTooltip:AddDoubleLine("Fire", schools["Fire"])
+			GameTooltip:AddDoubleLine("Nature", schools["Nature"])
+			GameTooltip:AddDoubleLine("Frost", schools["Frost"])
+			GameTooltip:AddDoubleLine("Shadow", schools["Shadow"])
+			GameTooltip:AddDoubleLine("Arcane", schools["Arcane"])
+			GameTooltip:Show()
+		end)
+		frame:SetScript("OnLeave", function()
+			GameTooltip:Hide()
+		end)
 	end
 end
 
@@ -444,7 +456,7 @@ function BCS:SetRating(statFrame, ratingType)
 		end
 		text:SetText(rating)
 		
-		frame.tooltip = L.MELEE_HIT_TOOLTIP
+		frame.tooltip = format(L["HIT_TOOLTIP"], "melee", UnitLevel("player"), rating);
 		if L[BCS.playerClass .. "_MELEE_HIT_TOOLTIP"] then
 			frame.tooltipSubtext = L[BCS.playerClass .. "_MELEE_HIT_TOOLTIP"]
 		end
@@ -463,9 +475,9 @@ function BCS:SetRating(statFrame, ratingType)
 		end
 		text:SetText(rating)
 		
-		frame.tooltip = L.MELEE_HIT_TOOLTIP
-		if L[BCS.playerClass .. "_MELEE_HIT_TOOLTIP"] then
-			frame.tooltipSubtext = L[BCS.playerClass .. "_MELEE_HIT_TOOLTIP"]
+		frame.tooltip = format(L["HIT_TOOLTIP"], "ranged", UnitLevel("player"), rating);
+		if L[BCS.playerClass .. "_RANGED_HIT_TOOLTIP"] then
+			frame.tooltipSubtext = L[BCS.playerClass .. "_RANGED_HIT_TOOLTIP"]
 		end
 	elseif ratingType == "SPELL" then
 		local spell_hit, spell_hit_fire, spell_hit_frost, spell_hit_arcane, spell_hit_shadow = BCS:GetSpellHitRating()
@@ -513,22 +525,21 @@ function BCS:SetRating(statFrame, ratingType)
 		end
 		
 		-- class specific tooltip
+		frame.tooltip = format(L["HIT_TOOLTIP"], "spell", UnitLevel("player"), spell_hit.."%");
 		if L[BCS.playerClass .. "_SPELL_HIT_TOOLTIP"] then
 			frame.tooltipSubtext = L[BCS.playerClass .. "_SPELL_HIT_TOOLTIP"]
 		end
 	end
 	
-	if frame.tooltip then
-		frame:SetScript("OnEnter", function()
-			GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-			GameTooltip:SetText(this.tooltip)
-			GameTooltip:AddLine(this.tooltipSubtext, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
-			GameTooltip:Show()
-		end)
-		frame:SetScript("OnLeave", function()
-			GameTooltip:Hide()
-		end)
-	end
+	frame:SetScript("OnEnter", function()
+		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+		GameTooltip:SetText(this.tooltip)
+		GameTooltip:AddLine(this.tooltipSubtext, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
+		GameTooltip:Show()
+	end)
+	frame:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
 	
 end
 
@@ -564,15 +575,16 @@ function BCS:SetHealing(statFrame)
 	local text = getglobal(statFrame:GetName() .. "StatText")
 	local label = getglobal(statFrame:GetName() .. "Label")
 	
-	local power,_,_,dmg = BCS:GetSpellPower()
+	local power,_,dmg = BCS:GetSpellPower()
 	local heal = BCS:GetHealingPower()
 	
-	power = power-dmg
+	power = power-dmg;
+	healingPower = power + heal;
 	
 	label:SetText(L.HEAL_POWER_COLON)
 	text:SetText(power+heal)
 	
-	frame.tooltip = format(L.SPELL_HEALING_POWER_TOOLTIP, (power+heal), power, heal)
+	frame.tooltip = format(L.SPELL_HEALING_POWER_TOOLTIP, healingPower, healingPower)
 	
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
@@ -811,7 +823,15 @@ function BCS:SetRangedAttackPower(statFrame)
 
 	local base, posBuff, negBuff = UnitRangedAttackPower("player")
 	PaperDollFormatStat(RANGED_ATTACK_POWER, base, posBuff, negBuff, frame, text)
-	frame.tooltipSubtext = format(RANGED_ATTACK_POWER_TOOLTIP, base/ATTACK_POWER_MAGIC_NUMBER)
+	frame.tooltip = frame.tooltip..format(L["ATTACK_POWER_TOOLTIP"], "ranged", max(0,base + posBuff + negBuff)/ATTACK_POWER_MAGIC_NUMBER);
+	frame:SetScript("OnEnter", function()
+			GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+			GameTooltip:SetText(this.tooltip)
+			GameTooltip:Show()
+	end)
+	frame:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
 end
 
 function BCS:UpdatePaperdollStats(prefix, index)
@@ -837,6 +857,14 @@ function BCS:UpdatePaperdollStats(prefix, index)
 	stat4.tooltip = nil
 	stat5.tooltip = nil
 	stat6.tooltip = nil
+	
+	stat1.tooltipSubtext = nil
+	stat2.tooltipSubtext = nil
+	stat3.tooltipSubtext = nil
+	stat4.tooltipSubtext = nil
+	stat4.tooltipSubtext = nil
+	stat5.tooltipSubtext = nil
+	stat6.tooltipSubtext = nil
 
 	stat4:Show()
 	stat5:Show()
@@ -865,18 +893,11 @@ function BCS:UpdatePaperdollStats(prefix, index)
 		stat6:Hide()
 	elseif ( index == "PLAYERSTAT_SPELL_COMBAT" ) then
 		BCS:SetSpellPower(stat1)
-		BCS:SetRating(stat2, "SPELL")
-		BCS:SetSpellCritChance(stat3)
-		BCS:SetHealing(stat4)
+		BCS:SetHealing(stat2)
+		BCS:SetRating(stat3, "SPELL")
+		BCS:SetSpellCritChance(stat4)
 		BCS:SetManaRegen(stat5)
 		stat6:Hide()
-	elseif ( index == "PLAYERSTAT_SPELL_SCHOOLS" ) then
-		BCS:SetSpellPower(stat1, "Arcane")
-		BCS:SetSpellPower(stat2, "Fire")
-		BCS:SetSpellPower(stat3, "Frost")
-		BCS:SetSpellPower(stat4, "Holy")
-		BCS:SetSpellPower(stat5, "Nature")
-		BCS:SetSpellPower(stat6, "Shadow")
 	elseif ( index == "PLAYERSTAT_DEFENSES" ) then
 		BCS:SetArmor(stat1)
 		BCS:SetDefense(stat2)
