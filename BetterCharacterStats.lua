@@ -603,10 +603,20 @@ function BCS:SetManaRegen(statFrame)
 	local text = getglobal(statFrame:GetName() .. "StatText")
 	local label = getglobal(statFrame:GetName() .. "Label")
 	
-	local base, casting, mp5 = BCS:GetManaRegen()
-	
 	label:SetText(L.MANA_REGEN_COLON)
+	
+	powerType, powerTypeString = UnitPowerType("player");
+
+	if powerTypeString ~= "MANA" then
+		text:SetText(NOT_APPLICABLE);
+		frame.tooltip = nil;
+		return
+	end
+
+	local base, casting, mp5 = BCS:GetManaRegen()
+
 	text:SetText(format("%d", base+mp5))
+
 	
 	frame.tooltip = format(L["SPELL_MANA_REGEN_TOOLTIP_HEADER"], (base+mp5))
 	frame.tooltipSubtext = format(L.SPELL_MANA_REGEN_TOOLTIP, (base+mp5))
