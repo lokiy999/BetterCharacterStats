@@ -27,7 +27,7 @@ Features:
 - Displays character statistics in one place (just like the character tab in Burning Crusade).
 
 Known Issues:
-- May be lacking things related to spell hit/spell crit.
-
-Thanks to:
-- All people who keeps reporting to me that some things are missing or are broken.
+- Mana Regen not displayed correctly.
+- Primary stats still have the vanilla text instead of the TBC one.
+- Haste rating still not implemented
+- Class specific things missing

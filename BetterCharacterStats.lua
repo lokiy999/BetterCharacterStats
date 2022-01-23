@@ -374,11 +374,12 @@ function BCS:SetAttackPower(statFrame)
 	label:SetText(TEXT(ATTACK_POWER_COLON))
 
 	PaperDollFormatStat(MELEE_ATTACK_POWER, base, posBuff, negBuff, frame, text)
-	--frame.tooltipSubtext = format(MELEE_ATTACK_POWER_TOOLTIP, max((base+posBuff+negBuff), 0)/ATTACK_POWER_MAGIC_NUMBER)
-	frame.tooltip = frame.tooltip..format(L["ATTACK_POWER_TOOLTIP"], "melee", max(0,base + posBuff + negBuff)/ATTACK_POWER_MAGIC_NUMBER);
+	frame.tooltipSubtext = format(L["ATTACK_POWER_TOOLTIP"], "melee", max(0,base + posBuff + negBuff)/ATTACK_POWER_MAGIC_NUMBER);
+
 	frame:SetScript("OnEnter", function()
 			GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 			GameTooltip:SetText(this.tooltip)
+			GameTooltip:AddLine(this.tooltipSubtext)
 			GameTooltip:Show()
 	end)
 	frame:SetScript("OnLeave", function()
@@ -410,9 +411,7 @@ function BCS:SetSpellPower(statFrame, school)
 		label:SetText(L.SPELL_POWER_COLON)
 		text:SetText(power);
 		
-		
-		frame.tooltip = format(L.SPELL_POWER_TOOLTIP, power)
-		--frame.tooltipSubtext = L["SPELL_POWER_SCHOOL_TOOLTIP"]
+		frame.tooltip = format(L["SPELL_POWER_TOOLTIP_HEADER"], power)
 		
 		frame:SetScript("OnEnter", function()
 			GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
@@ -437,6 +436,7 @@ function BCS:SetRating(statFrame, ratingType)
 	local label = getglobal(statFrame:GetName() .. "Label")
 	
 	label:SetText(L.MELEE_HIT_RATING_COLON)
+	frame.tooltip = L["HIT_TOOLTIP_HEADER"]
 	
 	local colorPos = "|cff20ff20"
 	local colorNeg = "|cffff2020"
@@ -456,9 +456,9 @@ function BCS:SetRating(statFrame, ratingType)
 		end
 		text:SetText(rating)
 		
-		frame.tooltip = format(L["HIT_TOOLTIP"], "melee", UnitLevel("player"), rating);
+		frame.tooltipSubtext = format(L["HIT_TOOLTIP"], "melee", UnitLevel("player"), rating);
 		if L[BCS.playerClass .. "_MELEE_HIT_TOOLTIP"] then
-			frame.tooltipSubtext = L[BCS.playerClass .. "_MELEE_HIT_TOOLTIP"]
+			frame.tooltipSubtext = frame.tooltipSubtext..L[BCS.playerClass .. "_MELEE_HIT_TOOLTIP"]
 		end
 	elseif ratingType == "RANGED" then
 		local rating = BCS:GetRangedHitRating()
@@ -475,9 +475,9 @@ function BCS:SetRating(statFrame, ratingType)
 		end
 		text:SetText(rating)
 		
-		frame.tooltip = format(L["HIT_TOOLTIP"], "ranged", UnitLevel("player"), rating);
+		frame.tooltipSubtext = format(L["HIT_TOOLTIP"], "ranged", UnitLevel("player"), rating);
 		if L[BCS.playerClass .. "_RANGED_HIT_TOOLTIP"] then
-			frame.tooltipSubtext = L[BCS.playerClass .. "_RANGED_HIT_TOOLTIP"]
+			frame.tooltipSubtext = frame.tooltipSubtext..L[BCS.playerClass .. "_RANGED_HIT_TOOLTIP"]
 		end
 	elseif ratingType == "SPELL" then
 		local spell_hit, spell_hit_fire, spell_hit_frost, spell_hit_arcane, spell_hit_shadow = BCS:GetSpellHitRating()
@@ -517,23 +517,23 @@ function BCS:SetRating(statFrame, ratingType)
 				spell_hit_other_type = L.SPELL_SCHOOL_SHADOW
 			end
 			
-			frame.tooltip = format(L.SPELL_HIT_SECONDARY_TOOLTIP, spell_hit+spell_hit_other, spell_hit, spell_hit_other, spell_hit_other_type)
+			frame.tooltipSubtext = format(L.SPELL_HIT_SECONDARY_TOOLTIP, spell_hit+spell_hit_other, spell_hit, spell_hit_other, spell_hit_other_type)
 			text:SetText(spell_hit+spell_hit_other.."%")
 		else
-			frame.tooltip = L.SPELL_HIT_TOOLTIP
+			frame.tooltipSubtext = L.SPELL_HIT_TOOLTIP
 			text:SetText(spell_hit.."%")
 		end
 		
 		-- class specific tooltip
-		frame.tooltip = format(L["HIT_TOOLTIP"], "spell", UnitLevel("player"), spell_hit.."%");
+		frame.tooltipSubtext = format(L["HIT_TOOLTIP"], "spell", UnitLevel("player"), spell_hit.."%");
 		if L[BCS.playerClass .. "_SPELL_HIT_TOOLTIP"] then
-			frame.tooltipSubtext = L[BCS.playerClass .. "_SPELL_HIT_TOOLTIP"]
+			frame.tooltipSubtext = frame.tooltipSubtext..L[BCS.playerClass .. "_SPELL_HIT_TOOLTIP"]
 		end
 	end
 	
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-		GameTooltip:SetText(this.tooltip)
+		GameTooltip:AddLine(this.tooltip)
 		GameTooltip:AddLine(this.tooltipSubtext, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
 		GameTooltip:Show()
 	end)
@@ -584,11 +584,13 @@ function BCS:SetHealing(statFrame)
 	label:SetText(L.HEAL_POWER_COLON)
 	text:SetText(power+heal)
 	
-	frame.tooltip = format(L.SPELL_HEALING_POWER_TOOLTIP, healingPower, healingPower)
+	frame.tooltip = format(L["SPELL_HEALING_POWER_TOOLTIP_HEADER"], healingPower);
+	frame.tooltipSubtext = format(L.SPELL_HEALING_POWER_TOOLTIP, healingPower, healingPower);
 	
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 		GameTooltip:SetText(this.tooltip)
+		GameTooltip:AddLine(this.tooltipSubtext)
 		GameTooltip:Show()
 	end)
 	frame:SetScript("OnLeave", function()
@@ -606,11 +608,13 @@ function BCS:SetManaRegen(statFrame)
 	label:SetText(L.MANA_REGEN_COLON)
 	text:SetText(format("%d", base+mp5))
 	
-	frame.tooltip = format(L.SPELL_MANA_REGEN_TOOLTIP, (base+mp5), base, mp5)
+	frame.tooltip = format(L["SPELL_MANA_REGEN_TOOLTIP_HEADER"], (base+mp5))
+	frame.tooltipSubtext = format(L.SPELL_MANA_REGEN_TOOLTIP, (base+mp5))
 	
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 		GameTooltip:SetText(this.tooltip)
+		GameTooltip:AddLine(this.tooltipSubtext)
 		GameTooltip:Show()
 	end)
 	frame:SetScript("OnLeave", function()
@@ -823,10 +827,11 @@ function BCS:SetRangedAttackPower(statFrame)
 
 	local base, posBuff, negBuff = UnitRangedAttackPower("player")
 	PaperDollFormatStat(RANGED_ATTACK_POWER, base, posBuff, negBuff, frame, text)
-	frame.tooltip = frame.tooltip..format(L["ATTACK_POWER_TOOLTIP"], "ranged", max(0,base + posBuff + negBuff)/ATTACK_POWER_MAGIC_NUMBER);
+	frame.tooltipSubtext = format(L["ATTACK_POWER_TOOLTIP"], "ranged", max(0,base + posBuff + negBuff)/ATTACK_POWER_MAGIC_NUMBER);
 	frame:SetScript("OnEnter", function()
 			GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 			GameTooltip:SetText(this.tooltip)
+			GameTooltip:AddLine(this.tooltipSubtext)
 			GameTooltip:Show()
 	end)
 	frame:SetScript("OnLeave", function()

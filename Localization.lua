@@ -83,34 +83,18 @@ BCS["L"] = {
 	["Destruction spell critical hit chance increased by (%d+)%%."] = "Destruction spell critical hit chance increased by (%d+)%%.",
 	["Critical strike chance with spells and melee attacks increased by (%d+)%%."] = "Critical strike chance with spells and melee attacks increased by (%d+)%%.",
 	
-	
-	["HIT_TOOLTIP"] = [[|cffffffffHit Rating|r
-	Increases your %s chance to hit a
-	target of level %d by %s]],
-	
-	["SPELL_HIT_TOOLTIP"] = [[|cffffffffHit|r
-	Result of an attack made with 
-	spells.]],
-	
-	["SPELL_HIT_SECONDARY_TOOLTIP"] = [[|cffffffffHit %d%% (%d%%|cff20ff20+%d%% %s|r|cffffffff)|r
-	Result of an attack made with 
-	spells.]],
-	
-	["ATTACK_POWER_TOOLTIP"] = "\r\nIncrease damage with %s \r\nweapons by %.1f damage per second.",
-	
-	["SPELL_POWER_TOOLTIP"] = [[|cffffffffBonus Damage %d|r]],
-	
-	["SPELL_POWER_SCHOOL_TOOLTIP"] = "Holy \t%d \r\nFire \t%d \r\nNature \t%d \r\nFrost \t%d \r\nShadow \t%d \r\nArcane \t%d",
+	["HIT_TOOLTIP_HEADER"] = [[|cffffffffHit Rating|r]],
+	["HIT_TOOLTIP"] = "Increases your %s chance to hit a target of level %d by %s\r\n",
 
+	["ATTACK_POWER_TOOLTIP"] = "Increase damage with %s \r\nweapons by %.1f damage per second.",
+
+	["SPELL_POWER_TOOLTIP_HEADER"] = [[|cffffffffBonus Damage %d|r]],
+
+	["SPELL_HEALING_POWER_TOOLTIP_HEADER"] = [[|cffffffffHealing Power %d|r]],
+	["SPELL_HEALING_POWER_TOOLTIP"] = "Increases your healing by %d.",	
 	
-	["SPELL_POWER_SECONDARY_TOOLTIP"] = [[|cffffffffSpell Power %d (%d|cff20ff20+%d %s|r|cffffffff)|r
-	Increases damage done by spells and effects.]],
-	
-	["SPELL_HEALING_POWER_TOOLTIP"] = [[|cffffffffHealing Power %d|r
-	Increases your healing by %d.]],	
-	
-	["SPELL_MANA_REGEN_TOOLTIP"] = [[|cffffffffMana regen %d (%d|cff20ff20+%d|r|cffffffff)|r
-	Regenerating points of mana every 5 seconds.]],
+	["SPELL_MANA_REGEN_TOOLTIP_HEADER"] = [[|cffffffffMana Regen|r]],
+	["SPELL_MANA_REGEN_TOOLTIP"] = "%d mana regenerated every 5 \r\nseconds while not casting.",
 	
 	["ROGUE_MELEE_HIT_TOOLTIP"] = [[
 	
@@ -123,7 +107,6 @@ BCS["L"] = {
 	PLAYERSTAT_MELEE_COMBAT = "Melee",
 	PLAYERSTAT_RANGED_COMBAT = "Ranged",
 	PLAYERSTAT_SPELL_COMBAT = "Spell",
-	PLAYERSTAT_SPELL_SCHOOLS = "Schools",
 	
 	MELEE_HIT_RATING_COLON = "Hit Rating:",
 	RANGED_HIT_RATING_COLON = "Hit Rating:",
@@ -131,13 +114,13 @@ BCS["L"] = {
 	MELEE_CRIT_COLON = "Crit Chance:",
 	RANGED_CRIT_COLON = "Crit Chance:",
 	SPELL_CRIT_COLON = "Crit Chance:",
-	MANA_REGEN_COLON = "Mana regen:",
-	HEAL_POWER_COLON = "Bonus Healing:",
 	DODGE_COLON = DODGE .. ":",
 	PARRY_COLON = PARRY .. ":",
 	BLOCK_COLON = BLOCK .. ":",
 	
 	SPELL_POWER_COLON = "Bonus Damage:",
+	HEAL_POWER_COLON = "Bonus Healing:",
+	MANA_REGEN_COLON = "Mana Regen:",
 	
 	SPELL_SCHOOL_ARCANE = "Arcane",
 	SPELL_SCHOOL_FIRE = "Fire",
