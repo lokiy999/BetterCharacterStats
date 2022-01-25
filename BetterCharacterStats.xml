@@ -45,6 +45,116 @@
 			</OnLeave>
 		</Scripts>
     </Frame>
+
+	<Frame name="BCSDropDownMenuTemplate" virtual="true">
+		<Size>
+			<AbsDimension x="40" y="32"/>
+		</Size>
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture name="$parentLeft" file="Interface\Glues\CharacterCreate\CharacterCreate-LabelFrame">
+					<Size>
+						<AbsDimension x="25" y="64"/>
+					</Size>
+					<Anchors>
+						<Anchor point="TOPLEFT">
+							<Offset>
+								<AbsDimension x="0" y="17"/>
+							</Offset>
+						</Anchor>
+					</Anchors>
+					<TexCoords left="0" right="0.1953125" top="0" bottom="1"/>
+				</Texture>
+				<Texture name="$parentMiddle" file="Interface\Glues\CharacterCreate\CharacterCreate-LabelFrame">
+					<Size>
+						<AbsDimension x="115" y="64"/>
+					</Size>
+					<Anchors>
+						<Anchor point="LEFT" relativeTo="$parentLeft" relativePoint="RIGHT"/>
+					</Anchors>
+					<TexCoords left="0.1953125" right="0.8046875" top="0" bottom="1"/>
+				</Texture>
+				<Texture name="$parentRight" file="Interface\Glues\CharacterCreate\CharacterCreate-LabelFrame">
+					<Size>
+						<AbsDimension x="25" y="64"/>
+					</Size>
+					<Anchors>
+						<Anchor point="LEFT" relativeTo="$parentMiddle" relativePoint="RIGHT"/>
+					</Anchors>
+					<TexCoords left="0.8046875" right="1" top="0" bottom="1"/>
+				</Texture>
+				<FontString name="$parentText" inherits="GameFontHighlightSmall" justifyH="LEFT">
+					<Size>
+						<AbsDimension x="0" y="10"/>
+					</Size>
+					<Anchors>
+						<Anchor point="RIGHT" relativeTo="$parentRight">
+							<Offset>
+								<AbsDimension x="-43" y="2"/>
+							</Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Button name="$parentButton">
+				<Size>
+					<AbsDimension x="24" y="24"/>
+				</Size>
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativeTo="$parentRight">
+						<Offset>
+							<AbsDimension x="-16" y="-18"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						ToggleDropDownMenu();
+						PlaySound("igMainMenuOptionCheckBoxOn");
+					</OnClick>
+				</Scripts>
+				<NormalTexture name="$parentNormalTexture" file="Interface\ChatFrame\UI-ChatIcon-ScrollDown-Up">
+					<Size>
+						<AbsDimension x="24" y="24"/>
+					</Size>
+					<Anchors>
+						<Anchor point="RIGHT"/>
+					</Anchors>
+				</NormalTexture>
+				<PushedTexture name="$parentPushedTexture" file="Interface\ChatFrame\UI-ChatIcon-ScrollDown-Down">
+					<Size>
+						<AbsDimension x="24" y="24"/>
+					</Size>
+					<Anchors>
+						<Anchor point="RIGHT"/>
+					</Anchors>
+				</PushedTexture>
+				<DisabledTexture name="$parentDisabledTexture" file="Interface\ChatFrame\UI-ChatIcon-ScrollDown-Disabled">
+					<Size>
+						<AbsDimension x="24" y="24"/>
+					</Size>
+					<Anchors>
+						<Anchor point="RIGHT"/>
+					</Anchors>
+				</DisabledTexture>
+				<HighlightTexture name="$parentHighlightTexture" file="Interface\Buttons\UI-Common-MouseHilight" alphaMode="ADD">
+					<Size>
+						<AbsDimension x="24" y="24"/>
+					</Size>
+					<Anchors>
+						<Anchor point="RIGHT"/>
+					</Anchors>
+				</HighlightTexture>
+			</Button>
+		</Frames>
+		<Scripts>
+			<OnHide>
+				CloseDropDownMenus();
+			</OnHide>
+		</Scripts>
+	</Frame>
 	
 	<Frame name="BCSFrame" hidden="true">
 		<Frames>
@@ -250,7 +360,7 @@
 							</Anchor>
 						</Anchors>
 					</Frame>
-					<Frame name="PlayerStatFrameLeftDropDown" inherits="UIDropDownMenuTemplate" enableMouse="true">
+					<Frame name="PlayerStatFrameLeftDropDown" inherits="BCSDropDownMenuTemplate" enableMouse="true">
 						<Anchors>
 							<Anchor point="BOTTOMLEFT" relativeTo="PlayerStatLeftTop" relativePoint="TOPLEFT">
 								<Offset>
@@ -264,7 +374,7 @@
 							</OnLoad>
 						</Scripts>
 					</Frame>
-					<Frame name="PlayerStatFrameRightDropDown" inherits="UIDropDownMenuTemplate" enableMouse="true">
+					<Frame name="PlayerStatFrameRightDropDown" inherits="BCSDropDownMenuTemplate" enableMouse="true">
 						<Anchors>
 							<Anchor point="BOTTOMLEFT" relativeTo="PlayerStatRightTop" relativePoint="TOPLEFT">
 								<Offset>
@@ -278,6 +388,7 @@
 							</OnLoad>
 						</Scripts>
 					</Frame>
+					
 				</Frames>
 				<Scripts>
 					<OnShow>
