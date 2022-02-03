@@ -517,8 +517,8 @@ function BCS:SetRating(statFrame, ratingType)
 				spell_hit_other_type = L.SPELL_SCHOOL_SHADOW
 			end
 			
-			frame.tooltipSubtext = format(L.SPELL_HIT_SECONDARY_TOOLTIP, spell_hit+spell_hit_other, spell_hit, spell_hit_other, spell_hit_other_type)
-			text:SetText(spell_hit+spell_hit_other.."%")
+			frame.tooltipSubtext = format(L["HIT_TOOLTIP"], "spell", UnitLevel("player"), spell_hit.."%")
+			text:SetText(spell_hit.."%")
 		else
 			frame.tooltipSubtext = L.SPELL_HIT_TOOLTIP
 			text:SetText(spell_hit.."%")
