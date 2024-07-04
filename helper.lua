@@ -252,6 +252,8 @@ function BCS:GetSpellHitRating()
 	local hit_arcane = 0
 	local hit_shadow = 0
 	local hit_Set_Bonus = {}
+
+	local hit_Schools = {}
 	
 	-- scan gear
 	local MAX_INVENTORY_SLOTS = 19
@@ -270,6 +272,7 @@ function BCS:GetSpellHitRating()
 					if value then
 						hit = hit + tonumber(value)
 					end
+
 					_,_, value = strfind(left:GetText(), L["/Spell Hit %+(%d+)"])
 					if value then
 						hit = hit + tonumber(value)
@@ -279,6 +282,7 @@ function BCS:GetSpellHitRating()
 					if value then
 						hit = hit + tonumber(value)
 					end
+					
 
 					_,_, value = strfind(left:GetText(), "(.+) %(%d/%d%)")
 					if value then
@@ -343,7 +347,6 @@ function BCS:GetSpellHitRating()
 						hit = hit + tonumber(value)
 						line = MAX_LINES
 					end
-
 				end	
 			end
 			
@@ -355,8 +358,15 @@ function BCS:GetSpellHitRating()
 	if hitFromAura then
 		hit = hit + tonumber(hitFromAura)
 	end
+
+	hit_Schools["Fire"] = hit_fire;
+	hit_Schools["Frost"] = hit_frost;
+	hit_Schools["Arcane"] = hit_arcane;
+	hit_Schools["Shadow"] = hit_shadow;
+
+	return hit, hit_Schools
 	
-	return hit, hit_fire, hit_frost, hit_arcane, hit_shadow
+	-- !OLD return hit, hit_fire, hit_frost, hit_arcane, hit_shadow
 end
 
 local Cache_GetCritChance_SpellID, Cache_GetCritChance_BookType, Cache_GetCritChance_Line
@@ -602,6 +612,7 @@ function BCS:GetSpellCritChance()
 end
 
 function BCS:GetSpellPower()
+	--TODO: Fix all schools having Int added, while it's not specific
 	local spellPower = UnitStat("player",4)*0.33;
 	local arcanePower = spellPower;
 	local firePower = spellPower;
@@ -706,13 +717,18 @@ function BCS:GetSpellPower()
 					_,_, value = strfind(left:GetText(), L["^%+(%d+) Shadow Spell Damage"])
 					if value then
 						shadowPower = shadowPower + tonumber(value)
-					end
+					end	
 					
+					_,_, value = strfind(left:GetText(), L["Equip: Increases spell damage by up to (%d+)% of your total Intellect and healing done by up to (%d+)% of your total Spirit."])
+					if value then
+						spellPower = spellPower + UnitStat("player",4)*0.08
+					end	
+	
 					_,_, value = strfind(left:GetText(), "(.+) %(%d/%d%)")
 					if value then
 						SET_NAME = value
 					end
-
+					
 					_, _, value = strfind(left:GetText(), L["^Set: Increases damage and healing done by magical spells and effects by up to (%d+)%."])
 					if value and SET_NAME and not tContains(SpellPower_Set_Bonus, SET_NAME) then
 						tinsert(SpellPower_Set_Bonus, SET_NAME)
@@ -1020,7 +1036,7 @@ function BCS:GetHealingPower()
 	if healPowerFromAura then
 		healPower = healPower + tonumber(healPowerFromAura)
 	end
-	
+		
 	-- Edited from return healPower
 	return math.floor(healPower)
 end

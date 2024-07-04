@@ -460,6 +460,16 @@ function BCS:SetRating(statFrame, ratingType)
 		if L[BCS.playerClass .. "_MELEE_HIT_TOOLTIP"] then
 			frame.tooltipSubtext = frame.tooltipSubtext..L[BCS.playerClass .. "_MELEE_HIT_TOOLTIP"]
 		end
+
+		frame.tooltip = format(L["HIT_TOOLTIP_HEADER"], rating)
+
+		frame:SetScript("OnEnter", function()
+			GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+			GameTooltip:AddLine(this.tooltip)
+			GameTooltip:AddLine(this.tooltipSubtext, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
+			GameTooltip:Show()
+		end)
+
 	elseif ratingType == "RANGED" then
 		local rating = BCS:GetRangedHitRating()
 		if BCS.MELEEHIT[BCS.playerClass] then
@@ -478,65 +488,38 @@ function BCS:SetRating(statFrame, ratingType)
 		frame.tooltipSubtext = format(L["HIT_TOOLTIP"], "ranged", UnitLevel("player"), rating);
 		if L[BCS.playerClass .. "_RANGED_HIT_TOOLTIP"] then
 			frame.tooltipSubtext = frame.tooltipSubtext..L[BCS.playerClass .. "_RANGED_HIT_TOOLTIP"]
-		end
+		end		
+
 	elseif ratingType == "SPELL" then
-		local spell_hit, spell_hit_fire, spell_hit_frost, spell_hit_arcane, spell_hit_shadow = BCS:GetSpellHitRating()
-		--[[if BCS.SPELLHIT[BCS.playerClass] then
-			if spell_hit < BCS.SPELLHIT[BCS.playerClass][1] then
-				spell_hit = colorNeg .. spell_hit .. "%|r"
-			elseif spell_hit >= BCS.SPELLHIT[BCS.playerClass][2] then
-				spell_hit = colorPos .. spell_hit .. "%|r"
-			else
-				spell_hit = spell_hit .. "%"
-			end
-		else
-			spell_hit = spell_hit .. "%"
-		end]]
+		local spell_hit, schools = BCS:GetSpellHitRating()
 		
-		if spell_hit_fire > 0 or spell_hit_frost > 0 or spell_hit_arcane > 0 or spell_hit_shadow > 0 then
-			-- got spell hit from talents
-			local spell_hit_other, spell_hit_other_type
-			
-			spell_hit_other = 0 
-			spell_hit_other_type = ""
-			
-			if spell_hit_fire > spell_hit_other then
-				spell_hit_other = spell_hit_fire
-				spell_hit_other_type = L.SPELL_SCHOOL_FIRE
-			end
-			if spell_hit_frost > spell_hit_other then
-				spell_hit_other = spell_hit_frost
-				spell_hit_other_type = L.SPELL_SCHOOL_FROST
-			end
-			if spell_hit_arcane > spell_hit_other then
-				spell_hit_other = spell_hit_arcane
-				spell_hit_other_type = L.SPELL_SCHOOL_ARCANE
-			end
-			if spell_hit_shadow > spell_hit_other then
-				spell_hit_other = spell_hit_shadow
-				spell_hit_other_type = L.SPELL_SCHOOL_SHADOW
-			end
-			
-			frame.tooltipSubtext = format(L["HIT_TOOLTIP"], "spell", UnitLevel("player"), spell_hit.."%")
-			text:SetText(spell_hit.."%")
-		else
-			frame.tooltipSubtext = L.SPELL_HIT_TOOLTIP
-			text:SetText(spell_hit.."%")
-		end
-		
-		-- class specific tooltip
-		frame.tooltipSubtext = format(L["HIT_TOOLTIP"], "spell", UnitLevel("player"), spell_hit.."%");
-		if L[BCS.playerClass .. "_SPELL_HIT_TOOLTIP"] then
-			frame.tooltipSubtext = frame.tooltipSubtext..L[BCS.playerClass .. "_SPELL_HIT_TOOLTIP"]
-		end
+		frame.tooltipSubtext = L.SPELL_HIT_TOOLTIP
+		text:SetText(spell_hit.."%")
+		frame.tooltip = format(L["HIT_TOOLTIP_HEADER"], spell_hit .. "%")
+
+		frame:SetScript("OnEnter", function()
+			GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+			GameTooltip:AddLine(this.tooltip)
+			GameTooltip:AddDoubleLine("Fire", schools["Fire"] .. "%")
+			GameTooltip:AddDoubleLine("Frost", schools["Frost"] .. "%")
+			GameTooltip:AddDoubleLine("Shadow", schools["Shadow"] .. "%")
+			GameTooltip:AddDoubleLine("Arcane", schools["Arcane"] .. "%")
+			GameTooltip:AddLine(this.tooltipSubtext, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
+			GameTooltip:Show()
+		end)
 	end
-	-- TODO: Add multiple hit% for each School
+
+	-- TODO: FIx for ranged
+	-- !!!
+	if not ratingType == "SPELL" then
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 		GameTooltip:AddLine(this.tooltip)
 		GameTooltip:AddLine(this.tooltipSubtext, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
 		GameTooltip:Show()
 	end)
+	end
+	
 	frame:SetScript("OnLeave", function()
 		GameTooltip:Hide()
 	end)
@@ -606,23 +589,23 @@ function BCS:SetManaRegen(statFrame)
 	label:SetText(L.MANA_REGEN_COLON)
 	
 	powerType, powerTypeString = UnitPowerType("player");
-
+	
 	-- OLD CODE
 	--[[
 	if powerTypeString ~= "MANA" then
 		text:SetText(NOT_APPLICABLE);
 		frame.tooltip = nil;
 		return
-	end]]
+	end
+	]]
 
 	-- NEW CODE CHANGED BY Lokiy999 on 10/09
-	-- Fixes MP5
 	if powerType > 0 then
 		text:SetText(NOT_APPLICABLE);
 		frame.tooltip = nil;
 		return
 	end
-
+	
 	local base, casting, mp5 = BCS:GetManaRegen()
 
 	text:SetText(format("%d", base+mp5))
