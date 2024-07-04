@@ -612,14 +612,13 @@ function BCS:GetSpellCritChance()
 end
 
 function BCS:GetSpellPower()
-	--TODO: Fix all schools having Int added, while it's not specific
-	local spellPower = UnitStat("player",4)*0.33;
-	local arcanePower = spellPower;
-	local firePower = spellPower;
-	local frostPower = spellPower;
-	local holyPower = spellPower;
-	local naturePower = spellPower;
-	local shadowPower = spellPower;
+	local spellPower = UnitStat("player",4) * (1/3);
+	local arcanePower = 0;
+	local firePower = 0;
+	local frostPower = 0;
+	local holyPower = 0;
+	local naturePower = 0;
+	local shadowPower = 0;
 	local damagePower = 0;
 	
 	local MAX_INVENTORY_SLOTS = 19

@@ -509,8 +509,6 @@ function BCS:SetRating(statFrame, ratingType)
 		end)
 	end
 
-	-- TODO: FIx for ranged
-	-- !!!
 	if not ratingType == "SPELL" then
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
