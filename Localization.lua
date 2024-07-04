@@ -22,7 +22,8 @@ BCS["L"] = {
 	["Reduces the chance that the opponent can resist your Frost and Fire spells by (%d)%%."] = "Reduces the chance that the opponent can resist your Frost and Fire spells by (%d)%%.",
 	["Reduces the chance that the opponent can resist your Arcane spells by (%d+)%%."] = "Reduces the chance that the opponent can resist your Arcane spells by (%d+)%%.",
 	["Reduces your target's chance to resist your Shadow spells by (%d+)%%."] = "Reduces your target's chance to resist your Shadow spells by (%d+)%%.",
-	
+	["Improves your chance to hit with spells by (%d+)%%."] = "Improves your chance to hit with spells by (%d+)%%.",
+
 	["Equip: Increases damage done by Arcane spells and effects by up to (%d+)."] = "Equip: Increases damage done by Arcane spells and effects by up to (%d+).",
 	["Equip: Increases damage done by Fire spells and effects by up to (%d+)."] = "Equip: Increases damage done by Fire spells and effects by up to (%d+).",
 	["Equip: Increases damage done by Frost spells and effects by up to (%d+)."] = "Equip: Increases damage done by Frost spells and effects by up to (%d+).",
@@ -37,7 +38,7 @@ BCS["L"] = {
 	["Healing Spells %+(%d+)"] = "Healing Spells %+(%d+)",
 	
 	["Equip: Restores (%d+) mana per 5 sec."] = "Equip: Restores (%d+) mana per 5 sec.",
-	["+(%d)%% Hit"] = "+(%d)%% Hit",
+	["%+(%d+)%% Hit"] = "%+(%d+)%% Hit",
 	
 	-- Random Bonuses // https://wow.gamepedia.com/index.php?title=SuffixId&oldid=204406
 	["^%+(%d+) Damage and Healing Spells"] = "^%+(%d+) Damage and Healing Spells",
@@ -48,7 +49,9 @@ BCS["L"] = {
 	["^%+(%d+) Nature Spell Damage"] = "^%+(%d+) Nature Spell Damage",
 	["^%+(%d+) Shadow Spell Damage"] = "^%+(%d+) Shadow Spell Damage",
 	["^%+(%d+) mana every 5 sec."] = "^%+(%d+) mana every 5 sec.",
-	
+	-- Still needs testing/fixing
+	["Equip: Increases spell damage by up to (%d+)% of your total Intellect and healing done by up to (%d+)% of your total Spirit."] = "Equip: Increases spell damage by up to (%d+)% of your total Intellect and healing done by up to (%d+)% of your total Spirit.",
+
 	-- snowflakes ZG enchants
 	["/Hit %+(%d+)"] = "/Hit %+(%d+)",
 	["/Spell Hit %+(%d+)"] = "/Spell Hit %+(%d+)",

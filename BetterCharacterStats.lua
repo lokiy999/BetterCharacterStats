@@ -530,7 +530,7 @@ function BCS:SetRating(statFrame, ratingType)
 			frame.tooltipSubtext = frame.tooltipSubtext..L[BCS.playerClass .. "_SPELL_HIT_TOOLTIP"]
 		end
 	end
-	
+	-- TODO: Add multiple hit% for each School
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 		GameTooltip:AddLine(this.tooltip)
@@ -607,7 +607,17 @@ function BCS:SetManaRegen(statFrame)
 	
 	powerType, powerTypeString = UnitPowerType("player");
 
+	-- OLD CODE
+	--[[
 	if powerTypeString ~= "MANA" then
+		text:SetText(NOT_APPLICABLE);
+		frame.tooltip = nil;
+		return
+	end]]
+
+	-- NEW CODE CHANGED BY Lokiy999 on 10/09
+	-- Fixes MP5
+	if powerType > 0 then
 		text:SetText(NOT_APPLICABLE);
 		frame.tooltip = nil;
 		return

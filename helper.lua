@@ -275,6 +275,11 @@ function BCS:GetSpellHitRating()
 						hit = hit + tonumber(value)
 					end
 					
+					_,_, value = strfind(left:GetText(), L["%+(%d+)%% Hit"])					
+					if value then
+						hit = hit + tonumber(value)
+					end
+
 					_,_, value = strfind(left:GetText(), "(.+) %(%d/%d%)")
 					if value then
 						SET_NAME = value
@@ -329,6 +334,16 @@ function BCS:GetSpellHitRating()
 						hit_shadow = hit_shadow + tonumber(value)
 						line = MAX_LINES
 					end
+
+					-- Priest
+					-- Spell Focus
+					_,_, value = strfind(left:GetText(), L["Improves your chance to hit with spells by (%d+)%%."])
+					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
+					if value and rank > 0 then
+						hit = hit + tonumber(value)
+						line = MAX_LINES
+					end
+
 				end	
 			end
 			
@@ -1006,7 +1021,8 @@ function BCS:GetHealingPower()
 		healPower = healPower + tonumber(healPowerFromAura)
 	end
 	
-	return healPower
+	-- Edited from return healPower
+	return math.floor(healPower)
 end
 --[[
 -- server\src\game\Object\Player.cpp
