@@ -9,9 +9,12 @@ BCS["L"] = {
 	["^Set: Improves your chance to hit with spells by (%d)%%."] = "^Set: Improves your chance to hit with spells by (%d)%%.",
 	["^Set: Increases damage and healing done by magical spells and effects by up to (%d+)%."] = "^Set: Increases damage and healing done by magical spells and effects by up to (%d+)%.",
 	["^Set: Increases healing done by spells and effects by up to (%d+)%."] = "^Set: Increases healing done by spells and effects by up to (%d+)%.",
+	["^Set: Improves your critical strike chance for all attacks and spells by (%d)%%."] = "^Set: Improves your critical strike chance for all attacks and spells by (%d)%%.",
+
 	
 	["Equip: Improves your chance to hit by (%d)%%."] = "Equip: Improves your chance to hit by (%d)%%.",
 	["Equip: Improves your chance to get a critical strike with spells by (%d)%%."] = "Equip: Improves your chance to get a critical strike with spells by (%d)%%.",
+	["Equip: Improves your critical strike chance for all attacks and spells by (%d)%%."] = "Equip: Improves your critical strike chance for all attacks and spells by (%d)%%.",
 	["Equip: Improves your chance to hit with spells by (%d)%%."] = "Equip: Improves your chance to hit with spells by (%d)%%.",
 	
 	["Increases your chance to hit with melee weapons by (%d)%%."] = "Increases your chance to hit with melee weapons by (%d)%%.",
@@ -23,6 +26,20 @@ BCS["L"] = {
 	["Reduces the chance that the opponent can resist your Arcane spells by (%d+)%%."] = "Reduces the chance that the opponent can resist your Arcane spells by (%d+)%%.",
 	["Reduces your target's chance to resist your Shadow spells by (%d+)%%."] = "Reduces your target's chance to resist your Shadow spells by (%d+)%%.",
 	["Improves your chance to hit with spells by (%d+)%%."] = "Improves your chance to hit with spells by (%d+)%%.",
+
+	["Increases the critical effect chance of your Arcane spells by (%d+)%%."] = "Increases the critical effect chance of your Arcane spells by (%d+)%%.",
+	["Increases the critical effect chance of your Fire spells by (%d+)%%."] = "Increases the critical effect chance of your Fire spells by (%d+)%%.",
+	["Increases the critical effect chance of your Frost spells by (%d+)%%."] = "Increases the critical effect chance of your Frost spells by (%d+)%%.",
+	["Increases the critical effect chance of your Holy spells by (%d+)%%."] = "Increases the critical effect chance of your Holy spells by (%d+)%%.",
+	["Increases the critical effect chance of your Nature spells by (%d+)%%."] = "Increases the critical effect chance of your Nature spells by (%d+)%%.",
+	["Increases the critical effect chance of your Shadow spells by (%d+)%%."] = "Increases the critical effect chance of your Shadow spells by (%d+)%%.",
+
+	["Improves your chance to get a critical strike with Arcane spells by (%d+)%%."] = "Increases the critical effect chance of your Nature spells by (%d+)%%.",
+	["Improves your chance to get a critical strike with Fire spells by (%d+)%%."] = "Increases the critical effect chance of your Nature spells by (%d+)%%.",
+	["Improves your chance to get a critical strike with Frost spells by (%d+)%%."] = "Increases the critical effect chance of your Nature spells by (%d+)%%.",
+	["Improves your chance to get a critical strike with Holy spells by (%d+)%%."] = "Increases the critical effect chance of your Nature spells by (%d+)%%.",
+	["Improves your chance to get a critical strike with Nature spells by (%d+)%%."] = "Increases the critical effect chance of your Nature spells by (%d+)%%.",
+	["Improves your chance to get a critical strike with Shadow spells by (%d+)%%."] = "Increases the critical effect chance of your Nature spells by (%d+)%%.",
 	
 	["Equip: Increases damage done by Arcane spells and effects by up to (%d+)."] = "Equip: Increases damage done by Arcane spells and effects by up to (%d+).",
 	["Equip: Increases damage done by Fire spells and effects by up to (%d+)."] = "Equip: Increases damage done by Fire spells and effects by up to (%d+).",
@@ -50,8 +67,6 @@ BCS["L"] = {
 	["^%+(%d+) Nature Spell Damage"] = "^%+(%d+) Nature Spell Damage",
 	["^%+(%d+) Shadow Spell Damage"] = "^%+(%d+) Shadow Spell Damage",
 	["^%+(%d+) mana every 5 sec."] = "^%+(%d+) mana every 5 sec.",
-	["^Equip: Increases spell damage by up to (%d+)%% of your total Intellect and healing done by up to (%d+)%% of your total Spirit."] = 
-	"^Equip: Increases spell damage by up to (%d+)%% of your total Intellect and healing done by up to (%d+)%% of your total Spirit.",
 	
 	-- snowflakes ZG enchants
 	["/Hit %+(%d+)"] = "/Hit %+(%d+)",
@@ -62,7 +77,16 @@ BCS["L"] = {
 	
 	["Equip: Increases damage and healing done by magical spells and effects by up to (%d+)."] = "Equip: Increases damage and healing done by magical spells and effects by up to (%d+).",
 	["Equip: Increases healing done by spells and effects by up to (%d+)."] = "Equip: Increases healing done by spells and effects by up to (%d+).",
+
+	-- Talents
+	["^Increases your spell damage by (%d+)%% and the critical strike chance of your offensive spells by (%d+)%%."] = "^Increases your spell damage by (%d+)%% and the critical strike chance of your offensive spells by (%d+)%%.",
+	["Increases spell damage and healing by up to (%d+)%% of your total Strength."] = "Increases spell damage and healing by up to (%d+)%% of your total Strength.",
+	["Increases your chance to hit with melee attacks and spells by (%d+)%%."] = "Increases your chance to hit with melee attacks and spells by (%d+)%%.",
+	["Increases your chance to get a critical strike with attacks and offensive spells by (%d+)%%."] = "Increases your chance to get a critical strike with attacks and offensive spells by (%d+)%%.",
 	
+	-- V+ Specific Items
+	["^Equip: Increases spell damage by up to (%d+)%% of your total Intellect and healing done by up to (%d+)%% of your total Spirit."] = "^Equip: Increases spell damage by up to (%d+)%% of your total Intellect and healing done by up to (%d+)%% of your total Spirit.",
+
 	-- auras
 	["Chance to hit increased by (%d)%%."] = 														"Chance to hit increased by (%d)%%.",
 	["Magical damage dealt is increased by up to (%d+)."] = 										"Magical damage dealt is increased by up to (%d+).",
@@ -93,6 +117,7 @@ BCS["L"] = {
 	["ATTACK_POWER_TOOLTIP"] = "Increase damage with %s \r\nweapons by %.1f damage per second.",
 
 	["SPELL_POWER_TOOLTIP_HEADER"] = [[|cffffffffBonus Damage %d|r]],
+	["SPELL_CRIT_TOOLTIP_HEADER"] = [[|cffffffffSpell Crit      %s|r]],
 
 	["SPELL_HEALING_POWER_TOOLTIP_HEADER"] = [[|cffffffffHealing Power %d|r]],
 	["SPELL_HEALING_POWER_TOOLTIP"] = "Increases your healing by %d.",	
@@ -115,9 +140,9 @@ BCS["L"] = {
 	MELEE_HIT_RATING_COLON = "Hit Rating:",
 	RANGED_HIT_RATING_COLON = "Hit Rating:",
 	SPELL_HIT_RATING_COLON = "Hit Rating:",
-	MELEE_CRIT_COLON = "Crit Chance:",
-	RANGED_CRIT_COLON = "Crit Chance:",
-	SPELL_CRIT_COLON = "Crit Chance:",
+	MELEE_CRIT_COLON = "Crit%:",
+	RANGED_CRIT_COLON = "Crit%",
+	SPELL_CRIT_COLON = "Crit%:",
 	DODGE_COLON = DODGE .. ":",
 	PARRY_COLON = PARRY .. ":",
 	BLOCK_COLON = BLOCK .. ":",

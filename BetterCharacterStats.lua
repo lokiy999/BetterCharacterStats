@@ -416,12 +416,12 @@ function BCS:SetSpellPower(statFrame, school)
 		frame:SetScript("OnEnter", function()
 			GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 			GameTooltip:SetText(this.tooltip)
-			GameTooltip:AddDoubleLine("Holy", schools["Holy"])
-			GameTooltip:AddDoubleLine("Fire", schools["Fire"])
-			GameTooltip:AddDoubleLine("Nature", schools["Nature"])
-			GameTooltip:AddDoubleLine("Frost", schools["Frost"])
-			GameTooltip:AddDoubleLine("Shadow", schools["Shadow"])
 			GameTooltip:AddDoubleLine("Arcane", schools["Arcane"])
+			GameTooltip:AddDoubleLine("Fire", schools["Fire"])
+			GameTooltip:AddDoubleLine("Frost", schools["Frost"])
+			GameTooltip:AddDoubleLine("Holy", schools["Holy"])
+			GameTooltip:AddDoubleLine("Nature", schools["Nature"])
+			GameTooltip:AddDoubleLine("Shadow", schools["Shadow"])
 			GameTooltip:Show()
 		end)
 		frame:SetScript("OnLeave", function()
@@ -500,10 +500,12 @@ function BCS:SetRating(statFrame, ratingType)
 		frame:SetScript("OnEnter", function()
 			GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 			GameTooltip:AddLine(this.tooltip)
+			GameTooltip:AddDoubleLine("Arcane", schools["Arcane"] .. "%")
 			GameTooltip:AddDoubleLine("Fire", schools["Fire"] .. "%")
 			GameTooltip:AddDoubleLine("Frost", schools["Frost"] .. "%")
+			GameTooltip:AddDoubleLine("Holy", schools["Holy"] .. "%")
+			GameTooltip:AddDoubleLine("Nature", schools["Nature"] .. "%")
 			GameTooltip:AddDoubleLine("Shadow", schools["Shadow"] .. "%")
-			GameTooltip:AddDoubleLine("Arcane", schools["Arcane"] .. "%")
 			GameTooltip:AddLine(this.tooltipSubtext, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
 			GameTooltip:Show()
 		end)
@@ -536,10 +538,31 @@ end
 function BCS:SetSpellCritChance(statFrame)
 	local frame = statFrame 
 	local text = getglobal(statFrame:GetName() .. "StatText")
-	local label = getglobal(statFrame:GetName() .. "Label")
+	local label = getglobal(statFrame:GetName() .. "Label")	
+	local spell_crit, schools = BCS:GetSpellCritChance()
+	spell_crit = format("%.2f%%", spell_crit)
+
+	frame.tooltip = format(L["SPELL_CRIT_TOOLTIP_HEADER"], spell_crit)
 	
 	label:SetText(L.SPELL_CRIT_COLON)
-	text:SetText(format("%.2f%%", BCS:GetSpellCritChance()))
+	text:SetText(spell_crit)
+
+	frame:SetScript("OnEnter", function()
+		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+		GameTooltip:AddLine(this.tooltip)
+		GameTooltip:AddDoubleLine("Arcane", schools["Arcane"] .. "%")
+		GameTooltip:AddDoubleLine("Fire", schools["Fire"] .. "%")
+		GameTooltip:AddDoubleLine("Frost", schools["Frost"] .. "%")
+		GameTooltip:AddDoubleLine("Holy", schools["Holy"] .. "%")
+		GameTooltip:AddDoubleLine("Nature", schools["Nature"] .. "%")
+		GameTooltip:AddDoubleLine("Shadow", schools["Shadow"] .. "%")
+		GameTooltip:AddDoubleLine("Offensive", schools["Offensive"] .. "%")
+		GameTooltip:Show()
+	end)	
+	
+	frame:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
 end
 
 function BCS:SetRangedCritChance(statFrame)
@@ -587,17 +610,8 @@ function BCS:SetManaRegen(statFrame)
 	label:SetText(L.MANA_REGEN_COLON)
 	
 	powerType, powerTypeString = UnitPowerType("player");
-	
-	-- OLD CODE
-	--[[
-	if powerTypeString ~= "MANA" then
-		text:SetText(NOT_APPLICABLE);
-		frame.tooltip = nil;
-		return
-	end
-	]]
 
-	-- NEW CODE CHANGED BY Lokiy999 on 10/09
+	-- NEW CODE CHANGED BY Lokiy on 10/09/22
 	if powerType > 0 then
 		text:SetText(NOT_APPLICABLE);
 		frame.tooltip = nil;

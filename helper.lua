@@ -133,7 +133,7 @@ function BCS:GetHitRating(hitOnly)
 	end
 	
 	local MAX_TABS = GetNumTalentTabs()
-	-- speedup
+	
 	if Cache_GetHitRating_Tab and Cache_GetHitRating_Talent then
 		BCS_Tooltip:SetTalent(Cache_GetHitRating_Tab, Cache_GetHitRating_Talent)
 		local MAX_LINES = BCS_Tooltip:NumLines()
@@ -151,6 +151,15 @@ function BCS:GetHitRating(hitOnly)
 				
 				-- hunters
 				_,_, value = strfind(left:GetText(), L["Increases hit chance by (%d)%% and increases the chance movement impairing effects will be resisted by an additional %d+%%."])
+				name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(Cache_GetHitRating_Tab, Cache_GetHitRating_Talent)
+				if value and rank > 0 then
+					hit = hit + tonumber(value)
+					line = MAX_LINES
+				end
+
+				-- Paladin
+				-- Precision				
+				_,_, value = strfind(left:GetText(), L["Increases your chance to hit with melee attacks and spells by (%d+)%%."])
 				name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(Cache_GetHitRating_Tab, Cache_GetHitRating_Talent)
 				if value and rank > 0 then
 					hit = hit + tonumber(value)
@@ -205,6 +214,22 @@ function BCS:GetHitRating(hitOnly)
 						talent = MAX_TALENTS
 						tab = MAX_TABS
 					end
+
+					-- Paladin
+					-- Precision				
+					_,_, value = strfind(left:GetText(), L["Increases your chance to hit with melee attacks and spells by (%d+)%%."])
+					name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
+					if value and rank > 0 then
+						hit = hit + tonumber(value)
+						
+						Cache_GetHitRating_Tab = tab
+						Cache_GetHitRating_Talent = talent
+						
+						line = MAX_LINES
+						talent = MAX_TALENTS
+						tab = MAX_TABS
+					end
+
 				end	
 			end
 			
@@ -247,13 +272,15 @@ end
 
 function BCS:GetSpellHitRating()
 	local hit = 0
-	local hit_fire = 0
-	local hit_frost = 0
-	local hit_arcane = 0
-	local hit_shadow = 0
+	local arcaneHit = 0
+	local fireHit = 0
+	local frostHit = 0
+	local holyHit = 0
+	local natureHit = 0
+	local shadowHit = 0
 	local hit_Set_Bonus = {}
 
-	local hit_Schools = {}
+	local Hit_Schools = {}
 	
 	-- scan gear
 	local MAX_INVENTORY_SLOTS = 19
@@ -317,16 +344,17 @@ function BCS:GetSpellHitRating()
 					local _,_, value = strfind(left:GetText(), L["Reduces the chance that the opponent can resist your Frost and Fire spells by (%d)%%."])
 					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
 					if value and rank > 0 then
-						hit_fire = hit_fire + tonumber(value)
-						hit_frost = hit_frost + tonumber(value)
+						fireHit = fireHit + tonumber(value)
+						frostHit = frostHit + tonumber(value)
 						line = MAX_LINES
 					end
 					
+					-- Mage
 					-- Arcane Focus
 					_,_, value = strfind(left:GetText(), L["Reduces the chance that the opponent can resist your Arcane spells by (%d+)%%."])
 					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
 					if value and rank > 0 then
-						hit_arcane = hit_arcane + tonumber(value)
+						arcaneHit = arcaneHit + tonumber(value)
 						line = MAX_LINES
 					end
 					
@@ -335,13 +363,23 @@ function BCS:GetSpellHitRating()
 					_,_, value = strfind(left:GetText(), L["Reduces your target's chance to resist your Shadow spells by (%d+)%%."])
 					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
 					if value and rank > 0 then
-						hit_shadow = hit_shadow + tonumber(value)
+						shadowHit = shadowHit + tonumber(value)
 						line = MAX_LINES
 					end
 
 					-- Priest
 					-- Spell Focus
 					_,_, value = strfind(left:GetText(), L["Improves your chance to hit with spells by (%d+)%%."])
+					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
+					if value and rank > 0 then
+						hit = hit + tonumber(value)
+						line = MAX_LINES
+					end
+
+					
+					-- Paladin
+					-- Precision
+					_,_, value = strfind(left:GetText(), L["Increases your chance to hit with melee attacks and spells by (%d+)%%."])
 					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
 					if value and rank > 0 then
 						hit = hit + tonumber(value)
@@ -359,12 +397,14 @@ function BCS:GetSpellHitRating()
 		hit = hit + tonumber(hitFromAura)
 	end
 
-	hit_Schools["Fire"] = hit_fire;
-	hit_Schools["Frost"] = hit_frost;
-	hit_Schools["Arcane"] = hit_arcane;
-	hit_Schools["Shadow"] = hit_shadow;
+	Hit_Schools["Arcane"] = arcaneHit;
+	Hit_Schools["Fire"] = fireHit;
+	Hit_Schools["Frost"] = frostHit;
+	Hit_Schools["Holy"] = holyHit;
+	Hit_Schools["Nature"] = natureHit;
+	Hit_Schools["Shadow"] = shadowHit;
 
-	return hit, hit_Schools
+	return hit, Hit_Schools
 	
 end
 
@@ -373,55 +413,40 @@ local Cache_GetCritChance_Tab, Cache_GetCritChance_Talent
 function BCS:GetCritChance()
 	local crit = 0
 	local _, class = UnitClass('player')
+
+	-- scan talents
+	local MAX_TABS = GetNumTalentTabs()
 	
-	if class == 'HUNTER' then
-	
-		local MAX_TABS = GetNumTalentTabs()
-		-- speedup
-		if Cache_GetCritChance_Tab and Cache_GetCritChance_Talent then
-			BCS_Tooltip:SetTalent(Cache_GetCritChance_Tab, Cache_GetCritChance_Talent)
-			local MAX_LINES = BCS_Tooltip:NumLines()
+	for tab=1, MAX_TABS do
+		local MAX_TALENTS = GetNumTalents(tab)		
+		
+		for talent=1, MAX_TALENTS do
+			BCS_Tooltip:SetTalent(tab, talent)
+			local MAX_LINES = BCS_Tooltip:NumLines()			
 			
 			for line=1, MAX_LINES do
 				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				
 				if left:GetText() then
+					-- Hunter
+					-- ! Talent name?
 					local _,_, value = strfind(left:GetText(), L["Increases your critical strike chance with all attacks by (%d)%%."])
-					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(Cache_GetCritChance_Tab, Cache_GetCritChance_Talent)
+					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
 					if value and rank > 0 then
 						crit = crit + tonumber(value)
 						line = MAX_LINES
 					end
-				end
+
+					-- General check?
+					local _,_, value = strfind(left:GetText(), L["Increases your critical strike chance with all attacks by (%d)%%."])
+					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
+					if value and rank > 0 then
+						crit = crit + tonumber(value)
+					end					
+				end				
 			end
-		else
-			for tab=1, MAX_TABS do
-				local MAX_TALENTS = GetNumTalents(tab)
-				for talent=1, MAX_TALENTS do
-					BCS_Tooltip:SetTalent(tab, talent);
-					local MAX_LINES = BCS_Tooltip:NumLines()
-					
-					for line=1, MAX_LINES do
-						local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
-						if left:GetText() then
-							local _,_, value = strfind(left:GetText(), L["Increases your critical strike chance with all attacks by (%d)%%."])
-							local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
-							if value and rank > 0 then
-								crit = crit + tonumber(value)
-								
-								Cache_GetCritChance_Tab = tab
-								Cache_GetCritChance_Talent = talent
-								
-								line = MAX_LINES
-								talent = MAX_TALENTS
-								tab = MAX_TABS
-							end
-						end	
-					end
-					
-				end
-			end
+			
 		end
-		
 	end
 	
 	-- speedup
@@ -527,27 +552,36 @@ end
 function BCS:GetSpellCritChance()
 	-- school crit: most likely never
 	local Crit_Set_Bonus = {}
-	local spellCrit = 0;
-	local _, intelect = UnitStat("player", 4)
+	local spellCrit = 0
+	local arcaneCrit = 0
+	local fireCrit = 0
+	local frostCrit = 0
+	local holyCrit = 0
+	local natureCrit = 0
+	local shadowCrit = 0
+	local offensiveCrit = 0
+	local _, intellect = UnitStat("player", 4)
 	local _, class = UnitClass("player")
+	local Crit_Schools = {}
 	
 	-- values from theorycraft / http://wow.allakhazam.com/forum.html?forum=21&mid=1157230638252681707
 	if class == "MAGE" then
-		spellCrit = 0.2 + (intelect / 59.5)
+		spellCrit = 0.2 + (intellect / 59.5)
 	elseif class == "WARLOCK" then
-		spellCrit = 1.7 + (intelect / 60.6)
+		spellCrit = 1.7 + (intellect / 60.6)
 	elseif class == "PRIEST" then
-		spellCrit = 0.8 + (intelect / 59.56)
+		spellCrit = 0.8 + (intellect / 59.56)
 	elseif class == "DRUID" then
-		spellCrit = 1.8 + (intelect / 60)
+		spellCrit = 1.8 + (intellect / 60)
 	elseif class == "SHAMAN" then
-		spellCrit = 1.8 + (intelect / 59.2)
+		spellCrit = 1.8 + (intellect / 59.2)
 	elseif class == "PALADIN" then
-		spellCrit = intelect / 29.5
+		spellCrit = intellect / 29.5
 	end
 	
 	local MAX_INVENTORY_SLOTS = 19
 	
+	-- items
 	for slot=0, MAX_INVENTORY_SLOTS do
 		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
 		
@@ -562,6 +596,65 @@ function BCS:GetSpellCritChance()
 					if value then
 						spellCrit = spellCrit + tonumber(value)
 					end
+
+					local _,_, value = strfind(left:GetText(), L["Equip: Improves your critical strike chance for all attacks and spells by (%d)%%."])
+					if value then
+						spellCrit = spellCrit + tonumber(value)
+					end
+
+					_,_, value = strfind(left:GetText(), L["Increases the critical effect chance of your Arcane spells by (%d+)%%."])
+					if value then
+						arcaneCrit = arcaneCrit + tonumber(value)
+					end
+					_,_, value = strfind(left:GetText(), L["Improves your chance to get a critical strike with Arcane spells by (%d+)%%."])
+					if value then
+						arcaneCrit = arcaneCrit + tonumber(value)
+					end
+
+					_, _, value = strfind(left:GetText(), L["Increases the critical effect chance of your Fire spells by (%d+)%%."])
+					if value then
+						fireCrit = fireCrit + tonumber(value)
+					end
+					_, _, value = strfind(left:GetText(), L["Improves your chance to get a critical strike with Fire spells by (%d+)%%."])
+					if value then
+						fireCrit = fireCrit + tonumber(value)
+					end
+
+					_, _, value = strfind(left:GetText(), L["Increases the critical effect chance of your Frost spells by (%d+)%%."])
+					if value then
+						frostCrit = frostCrit + tonumber(value)
+					end
+					_, _, value = strfind(left:GetText(), L["Improves your chance to get a critical strike with Frost spells by (%d+)%%."])
+					if value then
+						frostCrit = frostCrit + tonumber(value)
+					end
+					
+					_, _, value = strfind(left:GetText(), L["Increases the critical effect chance of your Holy spells by (%d+)%%."])
+					if value then
+						holyCrit = holyCrit + tonumber(value)
+					end
+					_, _, value = strfind(left:GetText(), L["Improves your chance to get a critical strike with Holy spells by (%d+)%%."])
+					if value then
+						holyCrit = holyCrit + tonumber(value)
+					end
+					
+					_, _, value = strfind(left:GetText(), L["Increases the critical effect chance of your Nature spells by (%d+)%%."])
+					if value then
+						natureCrit = natureCrit + tonumber(value)
+					end
+					_, _, value = strfind(left:GetText(), L["Improves your chance to get a critical strike with Nature spells by (%d+)%%."])
+					if value then
+						natureCrit = natureCrit + tonumber(value)
+					end
+					
+					_, _, value = strfind(left:GetText(), L["Increases the critical effect chance of your Shadow spells by (%d+)%%."])
+					if value then
+						shadowCrit = shadowCrit + tonumber(value)
+					end
+					_, _, value = strfind(left:GetText(), L["Improves your chance to get a critical strike with Shadow spells by (%d+)%%."])
+					if value then
+						shadowCrit = shadowCrit + tonumber(value)
+					end					
 					
 					_,_, value = strfind(left:GetText(), "(.+) %(%d/%d%)")
 					if value then
@@ -574,12 +667,18 @@ function BCS:GetSpellCritChance()
 						spellCrit = spellCrit + tonumber(value)
 					end
 
+					_, _, value = strfind(left:GetText(), L["^Set: Improves your critical strike chance for all attacks and spells by (%d)%%."])
+					if value and SET_NAME and not tContains(Crit_Set_Bonus, SET_NAME) then
+						tinsert(Crit_Set_Bonus, SET_NAME)
+						spellCrit = spellCrit + tonumber(value)
+					end
+
 				end
 			end
 		end
 		
 	end
-	
+
 	-- buffs
 	local _, _, critFromAura = BCS:GetPlayerAura(L["Chance for a critical hit with a spell increased by (%d+)%%."])
 	if critFromAura then
@@ -601,13 +700,68 @@ function BCS:GetSpellCritChance()
 	if critFromAura then
 		spellCrit = spellCrit + tonumber(critFromAura)
 	end
+
 	-- debuffs
 	_, _, _, critFromAura = BCS:GetPlayerAura(L["Melee critical-hit chance reduced by (%d+)%%.\r\nSpell critical-hit chance reduced by (%d+)%%."], 'HARMFUL')
 	if critFromAura then
 		spellCrit = spellCrit - tonumber(critFromAura)
 	end
+
+	-- scan talents
+	local MAX_TABS = GetNumTalentTabs()
 	
-	return spellCrit
+	for tab=1, MAX_TABS do
+		local MAX_TALENTS = GetNumTalents(tab)
+		
+		for talent=1, MAX_TALENTS do
+			BCS_Tooltip:SetTalent(tab, talent)
+			local MAX_LINES = BCS_Tooltip:NumLines()
+
+			for line=1, MAX_LINES do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				if left:GetText() then
+					-- Priest
+					-- Holy Specialization
+					_,_, value = strfind(left:GetText(), L["Increases the critical effect chance of your Holy spells by (%d+)%%."])
+					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
+					if value and rank > 0 then
+						holyCrit = holyCrit + tonumber(value)
+						line = MAX_LINES
+					end
+
+					-- Priest
+					-- Force of Will
+					_,_, value, value2 = strfind(left:GetText(), L["^Increases your spell damage by (%d+)%% and the critical strike chance of your offensive spells by (%d+)%%."])
+					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
+					if value2 and rank > 0 then
+						offensiveCrit = offensiveCrit + tonumber(value2)
+						line = MAX_LINES
+					end
+
+					-- Paladin
+					-- Conviction					
+					_,_, value = strfind(left:GetText(), L["Increases your chance to get a critical strike with attacks and offensive spells by (%d+)%%."])
+					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
+					if value and rank > 0 then
+						offensiveCrit = offensiveCrit + tonumber(value)
+						line = MAX_LINES
+					end
+
+				end
+			end		
+
+		end	
+	end
+
+	Crit_Schools["Arcane"] = arcaneCrit
+	Crit_Schools["Fire"] = fireCrit
+	Crit_Schools["Frost"] = frostCrit
+	Crit_Schools["Holy"] = holyCrit
+	Crit_Schools["Nature"] = natureCrit
+	Crit_Schools["Shadow"] = shadowCrit
+	Crit_Schools["Offensive"] = offensiveCrit
+	
+	return spellCrit, Crit_Schools
 end
 
 function BCS:GetSpellPower()
@@ -738,6 +892,45 @@ function BCS:GetSpellPower()
 			end
 		end
 	end
+
+	-- scan talents
+	local MAX_TABS = GetNumTalentTabs()
+	
+	for tab=1, MAX_TABS do
+		local MAX_TALENTS = GetNumTalents(tab)		
+		
+		for talent=1, MAX_TALENTS do
+			BCS_Tooltip:SetTalent(tab, talent)
+			local MAX_LINES = BCS_Tooltip:NumLines()			
+			
+			for line=1, MAX_LINES do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				
+				if left:GetText() then
+					-- Priest
+					-- Spiritual Guidance
+					local _,_, value = strfind(left:GetText(), L["Increases spell damage and healing by up to (%d+)%% of your total Spirit."])
+					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
+					if value and rank > 0 then
+						local stat, effectiveStat = UnitStat("player", 5)
+						spellPower = spellPower + floor(((tonumber(value) / 100) * effectiveStat))
+						line = MAX_LINES
+					end
+
+					-- Paladin
+					-- Crusade
+					local _,_, value = strfind(left:GetText(), L["Increases spell damage and healing by up to (%d+)%% of your total Strength."])
+					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
+					if value and rank > 0 then
+						local stat, effectiveStat = UnitStat("player", 1)
+						spellPower = spellPower + floor(((tonumber(value) / 100) * effectiveStat))
+						line = MAX_LINES
+					end
+				end				
+			end
+			
+		end
+	end
 		
 	local _, _, spellPowerFromAura = BCS:GetPlayerAura(L["Magical damage dealt is increased by up to (%d+)."])
 	if spellPowerFromAura then
@@ -755,7 +948,8 @@ function BCS:GetSpellPower()
 	return math.floor(spellPower), SpellPower_Schools, math.floor(damagePower)
 end
 
-function BCS:GetSpellPower_old(school)
+--! Deprecated
+--[[function BCS:GetSpellPower_old(school)
 	if school then
 		if not L["Equip: Increases damage done by "..school.." spells and effects by up to (%d+)."] then return -1 end
 		local spellPower = 0;
@@ -931,7 +1125,7 @@ function BCS:GetSpellPower_old(school)
 					if left:GetText() then
 						-- Priest
 						-- Spiritual Guidance
-						local _,_, value = strfind(left:GetText(), L["Increases spell damage and healing by up to (%d+)%% of your total Spirit."])
+						local _,_, value = strfind(left:GetText(), L["^Increases spell damage and healing by up to (%d+)%% of your total Spirit."])
 						local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
 						if value and rank > 0 then
 							local stat, effectiveStat = UnitStat("player", 5)
@@ -985,7 +1179,7 @@ function BCS:GetSpellPower_old(school)
 		
 		return math.floor(spellPower), secondaryPower, secondaryPowerName, damagePower
 	end
-end
+end]]
 
 function BCS:GetHealingPower()
 	local healPower = 0;
