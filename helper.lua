@@ -366,7 +366,6 @@ function BCS:GetSpellHitRating()
 
 	return hit, hit_Schools
 	
-	-- !OLD return hit, hit_fire, hit_frost, hit_arcane, hit_shadow
 end
 
 local Cache_GetCritChance_SpellID, Cache_GetCritChance_BookType, Cache_GetCritChance_Line
@@ -718,10 +717,11 @@ function BCS:GetSpellPower()
 						shadowPower = shadowPower + tonumber(value)
 					end	
 					
-					_,_, value = strfind(left:GetText(), L["Equip: Increases spell damage by up to (%d+)% of your total Intellect and healing done by up to (%d+)% of your total Spirit."])
+					-- Priest AC Trinket
+					_,_, value = strfind(left:GetText(), L["^Equip: Increases spell damage by up to (%d+)%% of your total Intellect and healing done by up to (%d+)%% of your total Spirit."])
 					if value then
 						spellPower = spellPower + UnitStat("player",4)*0.08
-					end	
+					end
 	
 					_,_, value = strfind(left:GetText(), "(.+) %(%d/%d%)")
 					if value then

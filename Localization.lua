@@ -50,8 +50,8 @@ BCS["L"] = {
 	["^%+(%d+) Nature Spell Damage"] = "^%+(%d+) Nature Spell Damage",
 	["^%+(%d+) Shadow Spell Damage"] = "^%+(%d+) Shadow Spell Damage",
 	["^%+(%d+) mana every 5 sec."] = "^%+(%d+) mana every 5 sec.",
-	--TODO: Fix
-	["Equip: Increases spell damage by up to (%d+)% of your total Intellect and healing done by up to (%d+)% of your total Spirit."] = "Equip: Increases spell damage by up to (%d+)% of your total Intellect and healing done by up to (%d+)% of your total Spirit.",
+	["^Equip: Increases spell damage by up to (%d+)%% of your total Intellect and healing done by up to (%d+)%% of your total Spirit."] = 
+	"^Equip: Increases spell damage by up to (%d+)%% of your total Intellect and healing done by up to (%d+)%% of your total Spirit.",
 	
 	-- snowflakes ZG enchants
 	["/Hit %+(%d+)"] = "/Hit %+(%d+)",
