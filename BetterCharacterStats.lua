@@ -211,7 +211,6 @@ function BCS:SetStat(statFrame, statIndex)
 end
 
 function BCS:SetArmor(statFrame)
-
 	local base, effectiveArmor, armor, posBuff, negBuff = UnitArmor("player")
 	local totalBufs = posBuff + negBuff
 	local frame = statFrame
@@ -416,12 +415,11 @@ function BCS:SetSpellPower(statFrame, school)
 		frame:SetScript("OnEnter", function()
 			GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 			GameTooltip:SetText(this.tooltip)
-			GameTooltip:AddDoubleLine("Arcane", schools["Arcane"])
-			GameTooltip:AddDoubleLine("Fire", schools["Fire"])
-			GameTooltip:AddDoubleLine("Frost", schools["Frost"])
-			GameTooltip:AddDoubleLine("Holy", schools["Holy"])
-			GameTooltip:AddDoubleLine("Nature", schools["Nature"])
-			GameTooltip:AddDoubleLine("Shadow", schools["Shadow"])
+			for k, v in pairs(schools) do
+				if (v > 0) then
+					GameTooltip:AddDoubleLine(k, v)
+				end
+			end
 			GameTooltip:Show()
 		end)
 		frame:SetScript("OnLeave", function()
@@ -500,12 +498,11 @@ function BCS:SetRating(statFrame, ratingType)
 		frame:SetScript("OnEnter", function()
 			GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 			GameTooltip:AddLine(this.tooltip)
-			GameTooltip:AddDoubleLine("Arcane", schools["Arcane"] .. "%")
-			GameTooltip:AddDoubleLine("Fire", schools["Fire"] .. "%")
-			GameTooltip:AddDoubleLine("Frost", schools["Frost"] .. "%")
-			GameTooltip:AddDoubleLine("Holy", schools["Holy"] .. "%")
-			GameTooltip:AddDoubleLine("Nature", schools["Nature"] .. "%")
-			GameTooltip:AddDoubleLine("Shadow", schools["Shadow"] .. "%")
+			for k, v in pairs(schools) do
+				if (v > 0) then
+					GameTooltip:AddDoubleLine(k, v .. "%")
+				end
+			end
 			GameTooltip:AddLine(this.tooltipSubtext, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
 			GameTooltip:Show()
 		end)
@@ -530,9 +527,29 @@ function BCS:SetMeleeCritChance(statFrame)
 	local frame = statFrame 
 	local text = getglobal(statFrame:GetName() .. "StatText")
 	local label = getglobal(statFrame:GetName() .. "Label")
-	
+	local crit, schools = BCS:GetCritChance()
+	crit = format("%.2f%%", crit)
+	frame.tooltip = format(L["CRIT_TOOLTIP_HEADER"], crit)
+
 	label:SetText(L.MELEE_CRIT_COLON)
-	text:SetText(format("%.2f%%", BCS:GetCritChance()))
+	text:SetText(crit)
+
+	frame:SetScript("OnEnter", function()
+		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+		GameTooltip:AddLine(this.tooltip)
+		if (schools ~= nil) then
+			for k, v in pairs(schools) do
+				if (v > 0) then
+					GameTooltip:AddDoubleLine(k, v .. "%")
+				end
+			end
+		end
+		GameTooltip:Show()
+	end)	
+	
+	frame:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
 end
 
 function BCS:SetSpellCritChance(statFrame)
@@ -550,13 +567,11 @@ function BCS:SetSpellCritChance(statFrame)
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 		GameTooltip:AddLine(this.tooltip)
-		GameTooltip:AddDoubleLine("Arcane", schools["Arcane"] .. "%")
-		GameTooltip:AddDoubleLine("Fire", schools["Fire"] .. "%")
-		GameTooltip:AddDoubleLine("Frost", schools["Frost"] .. "%")
-		GameTooltip:AddDoubleLine("Holy", schools["Holy"] .. "%")
-		GameTooltip:AddDoubleLine("Nature", schools["Nature"] .. "%")
-		GameTooltip:AddDoubleLine("Shadow", schools["Shadow"] .. "%")
-		GameTooltip:AddDoubleLine("Offensive", schools["Offensive"] .. "%")
+		for k, v in pairs(schools) do
+			if (v > 0) then
+				GameTooltip:AddDoubleLine(k, v .. "%")
+			end
+		end
 		GameTooltip:Show()
 	end)	
 	
@@ -662,6 +677,15 @@ function BCS:SetBlock(statFrame)
 	
 	label:SetText(L.BLOCK_COLON)
 	text:SetText(format("%.2f%%", GetBlockChance()))
+end
+
+function BCS:SetResilience(statFrame)
+	local frame = statFrame 
+	local text = getglobal(statFrame:GetName() .. "StatText")
+	local label = getglobal(statFrame:GetName() .. "Label")
+	
+	label:SetText(L.RESILIENCE_COLON)
+	text:SetText(format("%.2f%%", BCS:GetResilienceChance()))
 end
 
 function BCS:SetDefense(statFrame)
@@ -924,7 +948,7 @@ function BCS:UpdatePaperdollStats(prefix, index)
 		BCS:SetDodge(stat3)
 		BCS:SetParry(stat4)
 		BCS:SetBlock(stat5)
-		stat6:Hide()
+		BCS:SetResilience(stat6)
 	end
 end
 
