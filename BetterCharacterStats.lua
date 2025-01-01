@@ -405,7 +405,9 @@ function BCS:SetSpellPower(statFrame, school)
 		
 		text:SetText(output)
 	else
-		local power, schools = BCS:GetSpellPower();
+		local power, schools, dmg = BCS:GetSpellPower();
+
+		power = power + dmg
 		
 		label:SetText(L.SPELL_POWER_COLON)
 		text:SetText(power);
@@ -556,7 +558,7 @@ function BCS:SetSpellCritChance(statFrame)
 	local frame = statFrame 
 	local text = getglobal(statFrame:GetName() .. "StatText")
 	local label = getglobal(statFrame:GetName() .. "Label")	
-	local spell_crit, schools = BCS:GetSpellCritChance()
+	local spell_crit, spell_crit_schools, spell_crit_damage_schools = BCS:GetSpellCritChance()
 	spell_crit = format("%.2f%%", spell_crit)
 
 	frame.tooltip = format(L["SPELL_CRIT_TOOLTIP_HEADER"], spell_crit)
@@ -567,10 +569,17 @@ function BCS:SetSpellCritChance(statFrame)
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 		GameTooltip:AddLine(this.tooltip)
-		for k, v in pairs(schools) do
+		for k, v in pairs(spell_crit_schools) do
 			if (v > 0) then
 				GameTooltip:AddDoubleLine(k, v .. "%")
-			end
+			end		
+		end
+		-- change V so that's the color is white?
+		GameTooltip:AddDoubleLine("Critical Strike Damage")
+		for k, v in pairs(spell_crit_damage_schools) do
+			if (v > 0) then
+				GameTooltip:AddDoubleLine(k, v .. "%")
+			end		
 		end
 		GameTooltip:Show()
 	end)	
@@ -597,8 +606,9 @@ function BCS:SetHealing(statFrame)
 	local power,_,dmg = BCS:GetSpellPower()
 	local heal = BCS:GetHealingPower()
 	
-	power = power-dmg;
-	healingPower = power + heal;
+	-- ! Needed?
+	-- power = power-dmg	
+	healingPower = power + heal
 	
 	label:SetText(L.HEAL_POWER_COLON)
 	text:SetText(power+heal)
@@ -686,6 +696,15 @@ function BCS:SetResilience(statFrame)
 	
 	label:SetText(L.RESILIENCE_COLON)
 	text:SetText(format("%.2f%%", BCS:GetResilienceChance()))
+end
+
+function BCS:SetSpellPen(statFrame)
+	local frame = statFrame 
+	local text = getglobal(statFrame:GetName() .. "StatText")
+	local label = getglobal(statFrame:GetName() .. "Label")
+	
+	label:SetText(L.SPELL_PEN_COLON)
+	text:SetText(BCS:GetSpellPen())
 end
 
 function BCS:SetDefense(statFrame)
@@ -941,7 +960,7 @@ function BCS:UpdatePaperdollStats(prefix, index)
 		BCS:SetRating(stat3, "SPELL")
 		BCS:SetSpellCritChance(stat4)
 		BCS:SetManaRegen(stat5)
-		stat6:Hide()
+		BCS:SetSpellPen(stat6)
 	elseif ( index == "PLAYERSTAT_DEFENSES" ) then
 		BCS:SetArmor(stat1)
 		BCS:SetDefense(stat2)

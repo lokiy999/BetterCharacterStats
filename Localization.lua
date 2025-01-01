@@ -68,7 +68,14 @@ BCS["L"] = {
 
 	-- Mana
 	["Equip: Restores (%d+) mana per 5 sec."] = "Equip: Restores (%d+) mana per 5 sec.",
-	
+
+	-- Enchants
+	["Flametongue (%d+)"] = "Flametongue (%d+)",
+	["Rockbiter (%d+)"] = "Rockbiter (%d+)",
+
+	-- Totems
+	["Flametongue Totem (%d+)"] = "Flametongue Totem (%d+)",
+
 	-- snowflakes ZG enchants
 	["/Hit %+(%d+)"] = "/Hit %+(%d+)",
 	["/Spell Hit %+(%d+)"] = "/Spell Hit %+(%d+)",
@@ -106,13 +113,27 @@ BCS["L"] = {
 	["Improves your chance to get a critical strike with your weapon attacks and Shock spells by (%d+)%%."] = "Improves your chance to get a critical strike with your weapon attacks and Shock spells by (%d+)%%.",
 	["Increases your chance to get a critical strike with Axe, Fist and Dagger weapons by (%d+)%%."] = "Increases your chance to get a critical strike with Axe, Fist and Dagger weapons by (%d+)%%.",
 	["Increases your chance to get a critical strike with Axes and Polearms by (%d+)%%."] = "Increases your chance to get a critical strike with Axes and Polearms by (%d+)%%.",
-	["Improves your chance to hit with Taunt, Challenging Shout and Moching Blow ablities by (%d+)%%."] = "Improves your chance to hit with Taunt, Challenging Shout and Moching Blow ablities by (%d+)%%.", 
+	["Improves your chance to hit with Taunt, Challenging Shout and Mocking Blow abilities by (%d+)%%."] = "Improves your chance to hit with Taunt, Challenging Shout and Mocking Blow abilities by (%d+)%%.", 
+	["Improves your chance to hit with spells by (%d+)%% and reduces your target's resistance to all your spells by (%d+)"] = "Improves your chance to hit with spells by (%d+)%% and reduces your target's resistance to all your spells by (%d+)",
+	["Reduces your target's resistance to all your spells by (%d+)"] = "Reduces your target's resistance to all spells by (%d+)",
+
+
+	["Increases the critical strike damage bonus of your offensive spells by (%d+)%% and for your feral abilities by (%d+)%%d."] = "Increases the critical strike damage bonus of your offensive spells by (%d+)%% and for your feral abilities by (%d+)%%d.",
+	["Increases the critical strike damage bonus of your Holy spells by (%d+)%% and increases damage dealt to Undead or Demons by (%d+)%%."] = "Increases the critical strike damage bonus of your Holy spells by (%d+)%% and increases damage dealt to Undead or Demons by (%d+)%%.",
+	["Increases the critical strike damage bonus of your Destruction spells by (%d+)%%."] = "Increases the critical strike damage bonus of your Destruction spells by (%d+)%%.",
+	["Increases the critical strike damage bonus of your Searing, Magma, and Fire Nova Totems, and your Fire, Frost and Nature spells by (%d+)%%."] = "Increases the critical strike damage bonus of your Searing, Magma, and Fire Nova Totems, and your Fire, Frost and Nature spells by (%d+)%%.",
+	["Increases the critical strike damage bonus of your spells by (%d+)%%."] = "Increases the critical strike damage bonus of your spells by (%d+)%%.",
+	["Increases the critical strike damage bonus of your Frost spells by (%d+)%%."] = "Increases the critical strike damage bonus of your Frost spells by (%d+)%%.",
+
 
 	-- V+ Specific Items
 	["^Equip: Increases spell damage by up to (%d+)%% of your total Intellect and healing done by up to (%d+)%% of your total Spirit."] = "^Equip: Increases spell damage by up to (%d+)%% of your total Intellect and healing done by up to (%d+)%% of your total Spirit.",
 
 	-- V+ Specific Enchants
 	["(%d+)%% Resilience"] = "(%d+)%% Resilience",
+
+	-- items
+	["Decreases the magical resistances of your spell targets by (%d+)."] = "Decreases the magical resistances of your spell targets by (%d+).",
 
 	-- auras
 	["Chance to hit increased by (%d)%%."] = 														"Chance to hit increased by (%d)%%.",
@@ -170,7 +191,7 @@ BCS["L"] = {
 	RANGED_HIT_RATING_COLON = "Hit Rating:",
 	SPELL_HIT_RATING_COLON = "Hit Rating:",
 	MELEE_CRIT_COLON = "Crit%:",
-	RANGED_CRIT_COLON = "Crit%",
+	RANGED_CRIT_COLON = "Crit%:",
 	SPELL_CRIT_COLON = "Crit%:",
 	DODGE_COLON = DODGE .. ":",
 	PARRY_COLON = PARRY .. ":",
@@ -181,6 +202,7 @@ BCS["L"] = {
 	SPELL_POWER_COLON = "Bonus Damage:",
 	HEAL_POWER_COLON = "Bonus Healing:",
 	MANA_REGEN_COLON = "Mana Regen:",
+	SPELL_PEN_COLON = "Spell Pen:",
 	
 	SPELL_SCHOOL_ARCANE = "Arcane",
 	SPELL_SCHOOL_FIRE = "Fire",
