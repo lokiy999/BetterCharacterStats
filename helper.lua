@@ -1696,7 +1696,7 @@ function BCS:GetSpellPen()
 	local spellPen = 0;
 	
 	local MAX_INVENTORY_SLOTS = 19
-	--local spellPen_Set_Bonus = {}
+	local spellPen_Set_Bonus = {}
 	
 	for slot=0, MAX_INVENTORY_SLOTS do
 		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
@@ -1708,23 +1708,22 @@ function BCS:GetSpellPen()
 				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
 				
 				if left:GetText() then
-					local _,_, value = strfind(left:GetText(), L["Decreases the magical resistances of your spell targets by (%d+)."])
+					local _,_, value = strfind(left:GetText(), L["Equip: Decreases the magical resistances of your spell targets by (%d+)."])
 					if value then
 						spellPen = spellPen + tonumber(value)
 					end
 
-					-- ! Set needed?
-					--[[
+					--Set needed?				
 					_,_, value = strfind(left:GetText(), "(.+) %(%d/%d%)")
 					if value then
 						SET_NAME = value
 					end
 					
-					_, _, value = strfind(left:GetText(), L["^Set: Increases damage and healing done by magical spells and effects by up to (%d+)%."])
+					_, _, value = strfind(left:GetText(), L["^Set: Decreases the magical resistances of your spell targets by (%d+)."])
 					if value and SET_NAME and not tContains(spellPen_Set_Bonus, SET_NAME) then
 						tinsert(spellPen_Set_Bonus, SET_NAME)
 						spellPen = spellPen + tonumber(value)
-					end]]					
+					end			
 				end
 			end
 		end
@@ -1746,7 +1745,7 @@ function BCS:GetSpellPen()
 				if left:GetText() then
 					-- Mage
 					-- Arcane Subtlety
-					local _,_, value = strfind(left:GetText(), L["Reduces your target's resistance to all your spells by (%d+)"])
+					local _,_, value, value2 = strfind(left:GetText(), L["Reduces your target's resistance to all your spells by (%d+) and reduces the threat caused by your Arcane spells by (%d+)."])
 					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
 					if value and rank > 0 then
 						spellPen = spellPen + tonumber(value)
@@ -1755,7 +1754,7 @@ function BCS:GetSpellPen()
 
 					-- Priest
 					-- Spell Focus
-					local _,_, value, value2 = strfind(left:GetText(), L["Improves your chance to hit with spells by (%d+)%% and reduces your target's resistance to all your spells by (%d+)"])
+					local _,_, value, value2 = strfind(left:GetText(), L["Improves your chance to hit with spells by (%d+)%% and reduces your target's resistance to all your spells by (%d+)."])
 					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
 					if value2 and rank > 0 then
 						spellPen = spellPen + tonumber(value2)

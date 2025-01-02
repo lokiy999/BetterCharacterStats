@@ -10,6 +10,7 @@ BCS["L"] = {
 	["^Set: Increases damage and healing done by magical spells and effects by up to (%d+)%."] = "^Set: Increases damage and healing done by magical spells and effects by up to (%d+)%.",
 	["^Set: Increases healing done by spells and effects by up to (%d+)%."] = "^Set: Increases healing done by spells and effects by up to (%d+)%.",
 	["^Set: Improves your critical strike chance for all attacks and spells by (%d)%%."] = "^Set: Improves your critical strike chance for all attacks and spells by (%d)%%.",
+	["^Set: Decreases the magical resistances of your spell targets by (%d+)."] = "^Set: Decreases the magical resistances of your spell targets by (%d+).",
 
 	-- Hit
 	["Equip: Improves your chance to hit by (%d)%%."] = "Equip: Improves your chance to hit by (%d)%%.",
@@ -114,8 +115,8 @@ BCS["L"] = {
 	["Increases your chance to get a critical strike with Axe, Fist and Dagger weapons by (%d+)%%."] = "Increases your chance to get a critical strike with Axe, Fist and Dagger weapons by (%d+)%%.",
 	["Increases your chance to get a critical strike with Axes and Polearms by (%d+)%%."] = "Increases your chance to get a critical strike with Axes and Polearms by (%d+)%%.",
 	["Improves your chance to hit with Taunt, Challenging Shout and Mocking Blow abilities by (%d+)%%."] = "Improves your chance to hit with Taunt, Challenging Shout and Mocking Blow abilities by (%d+)%%.", 
-	["Improves your chance to hit with spells by (%d+)%% and reduces your target's resistance to all your spells by (%d+)"] = "Improves your chance to hit with spells by (%d+)%% and reduces your target's resistance to all your spells by (%d+)",
-	["Reduces your target's resistance to all your spells by (%d+)"] = "Reduces your target's resistance to all spells by (%d+)",
+	["Improves your chance to hit with spells by (%d+)%% and reduces your target's resistance to all your spells by (%d+)."] = "Improves your chance to hit with spells by (%d+)%% and reduces your target's resistance to all your spells by (%d+).",
+	["Reduces your target's resistance to all your spells by (%d+) and reduces the threat caused by your Arcane spells by (%d+)."] = "Reduces your target's resistance to all your spells by (%d+) and reduces the threat caused by your Arcane spells by (%d+).",
 
 
 	["Increases the critical strike damage bonus of your offensive spells by (%d+)%% and for your feral abilities by (%d+)%%d."] = "Increases the critical strike damage bonus of your offensive spells by (%d+)%% and for your feral abilities by (%d+)%%d.",
@@ -133,7 +134,7 @@ BCS["L"] = {
 	["(%d+)%% Resilience"] = "(%d+)%% Resilience",
 
 	-- items
-	["Decreases the magical resistances of your spell targets by (%d+)."] = "Decreases the magical resistances of your spell targets by (%d+).",
+	["Equip: Decreases the magical resistances of your spell targets by (%d+)."] = "Equip: Decreases the magical resistances of your spell targets by (%d+).",
 
 	-- auras
 	["Chance to hit increased by (%d)%%."] = 														"Chance to hit increased by (%d)%%.",
