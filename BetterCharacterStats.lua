@@ -631,6 +631,7 @@ function BCS:SetManaRegen(statFrame)
 	local frame = statFrame 
 	local text = getglobal(statFrame:GetName() .. "StatText")
 	local label = getglobal(statFrame:GetName() .. "Label")
+	local floor = math.floor
 	
 	label:SetText(L.MANA_REGEN_COLON)
 	
@@ -643,13 +644,109 @@ function BCS:SetManaRegen(statFrame)
 		return
 	end
 	
-	local base, casting, mp5 = BCS:GetManaRegen()
-
-	text:SetText(format("%d", base+mp5))
-
+	local base, casting, mp5, paladinManaTick, paladinManaRegen, druidManaTick, druidManaRegen, finalBoWMP5, finalMtSVal = BCS:GetManaRegen()
 	
-	frame.tooltip = format(L["SPELL_MANA_REGEN_TOOLTIP_HEADER"], (base+mp5))
-	frame.tooltipSubtext = format(L.SPELL_MANA_REGEN_TOOLTIP, (base+mp5))
+	-- Check if Mana Spring Totem aura is active
+	local hasManaSpring = BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Nature_ManaRegenTotem")
+	local finalMtSVal = finalMtSVal or 0
+	local manaSpringtick = 0
+	local manaSpringmp5 = 0
+	local manaSpringText = ""
+
+	if hasManaSpring then
+		manaSpringtick = finalMtSVal -- 10 per tick
+		manaSpringmp5 = floor(finalMtSVal * 5 / 2) -- 25 MP5
+		manaSpringText = format(L["MANA_SPRING_TOTEM"], manaSpringtick, manaSpringmp5)
+	else
+		manaSpringtick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
+		manaSpringmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
+	end
+
+	-- Check if Blessing of Wisdom buff is active
+	local hasBlessingOfWisdom = BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Holy_SealOfWisdom")
+	local finalBoWMP5 = finalBoWMP5 or 0
+	local blessingegentick = 0
+	local blessingRegenmp5 = 0
+	local blessingRegenText = ""
+	
+	if hasBlessingOfWisdom then
+		blessingegentick = floor(finalBoWMP5 * 2 / 5) -- mana per tick from mp5 calc
+		blessingRegenmp5 = finalBoWMP5 --Blessing of Wisdom is already in mp5 calc
+		blessingRegenText = format(L["BLESSING_OF_WISDOM"], blessingegentick, blessingRegenmp5)
+	else
+		blessingegentick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
+		blessingRegenmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
+	end
+	
+	local hasWinsorsSacrifice = BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Frost_FrostBrand")
+	local hasWinsorsSacrificeTT = BCS:GetPlayerAuraValue("Increases hitpoints by 300. Movement, attack and casting speed increased by 5%. 30 mana regen every 5 seconds.")
+	local winsorsRegentick = 0
+	local winsorsRegenmp5 = 0
+	local winsorsRegenText = ""
+	
+	if hasWinsorsSacrifice and hasWinsorsSacrificeTT then
+		winsorsRegentick = 12
+		winsorsRegenmp5 = 30
+		winsorsRegenText = format(L["WINSORS_WBUFF"], winsorsRegentick, winsorsRegenmp5)
+	else
+		winsorsRegentick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
+		winsorsRegenmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
+	end
+	
+	-- Check if Brilliance Aura is active
+	local hasBrillianceAura = BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Nature_Brilliance")
+	local hasBrillianceAuraTT = BCS:GetPlayerAuraValue("Regenerates 1% of your Mana every 10 sec.")
+	local maxMana = UnitManaMax("player")
+	local brillRegen = 0
+	local brillRegenPercent = 0.01 -- 1% mana
+	local brillRegenInterval = 10 -- 10 seconds
+	local brillRegentick = 0
+	local brillRegenmp5 = 0
+	local brillRegenText = ""
+
+	if hasBrillianceAura and hasBrillianceAuraTT then
+		brillRegen = (maxMana * brillRegenPercent)
+		brillRegentick = floor(maxMana * brillRegenPercent * (2 / brillRegenInterval)) -- Convert to 2s tick
+		brillRegenmp5 = floor(maxMana * brillRegenPercent * (5 / brillRegenInterval)) -- Convert to MP5
+		brillRegenText = format(L["BRILLIANCE_AURA"], brillRegentick, brillRegenmp5)
+	else
+		brillRegentick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
+		brillRegenmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
+	end
+
+	-- Ensure paladinManaRegen and paladinManaTick always have a default value
+	paladinManaRegen = paladinManaRegen or 0
+	paladinManaTick = paladinManaTick or 0
+	druidManaRegen = druidManaRegen or 0
+	druidManaTick = druidManaTick or 0
+	manaSpringmp5 = (finalMtSVal * 5 / 2) or 0
+
+	-- In-game active amount
+	local tickSpirit = base -- Spirit regen per tick (2 sec in-game)
+	local tickMp2 = floor(mp5 * 2 / 5) -- MP5 regen converted to per 2 sec tick
+
+	-- Theorycrafting MP5 equivalents
+	local spiritMP5 = (base * 5 / 2) -- Convert Spirit regen to MP5 equivalent
+	local mp5Theo = (tickMp2 * 5 / 2) -- Convert MP2 regen to MP5 equivalent
+
+	-- Add both mana sources separately to final display
+	text:SetText(format("%d", (spiritMP5 + mp5Theo + paladinManaRegen + druidManaRegen + manaSpringmp5 + brillRegenmp5 + finalBoWMP5 + winsorsRegenmp5)))
+
+	 -- **Check if player is Paladin before adding Divine Concentration**
+    local _, playerClass = UnitClass("player")
+    local paladinText = ""
+	local druidText = ""
+
+	if playerClass == "PALADIN" and paladinManaRegen > 0 then
+        paladinText = format(L["DIVINE_CONCENTRATION"], paladinManaTick, paladinManaRegen)
+    end
+	
+	if playerClass == "DRUID" and druidManaRegen > 0 then
+		druidText = format(L["DREAMSTATE"], druidManaTick, druidManaRegen)
+	end
+
+	frame.tooltip = format(L["SPELL_MANA_REGEN_TOOLTIP_HEADER"], tickSpirit, spiritMP5, tickMp2, mp5Theo, tickSpirit + tickMp2, spiritMP5 + mp5Theo)
+	frame.tooltipSubtext = format(L["SPELL_MANA_REGEN_TOOLTIP"], tickSpirit, spiritMP5, tickMp2, mp5Theo, tickSpirit + tickMp2, spiritMP5 + mp5Theo) .. paladinText .. druidText .. blessingRegenText .. manaSpringText .. brillRegenText .. winsorsRegenText
 	
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")

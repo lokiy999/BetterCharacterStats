@@ -94,6 +94,7 @@ BCS["L"] = {
 	["Increases your chance to get a critical strike with attacks and offensive spells by (%d+)%%."] = "Increases your chance to get a critical strike with attacks and offensive spells by (%d+)%%.",
 	["Increases spell damage and healing by up to (%d+)%% of your total Spirit."] = "Increases spell damage and healing by up to (%d+)%% of your total Spirit.",
 	["Reduces your target's chance to resist your Shadow spells by (%d+)%%."] = "Reduces your target's chance to resist your Shadow spells by (%d+)%%.",
+	["Regenerates 1% of your total Mana every (%d+) seconds."] = "Regenerates 1% of your total Mana every (%d+) seconds.",	
 	
 	-- ! Test if works in-game
 	["Reduces the chance that the opponent can resist your Frost and Fire spells by (%d)%%."] = "Reduces the chance that the opponent can resist your Frost and Fire spells by (%d)%%.",
@@ -136,7 +137,7 @@ BCS["L"] = {
 	-- items
 	["Equip: Decreases the magical resistances of your spell targets by (%d+)."] = "Equip: Decreases the magical resistances of your spell targets by (%d+).",
 
-	-- auras
+	-- auras, buffs, etc.
 	["Chance to hit increased by (%d)%%."] = 														"Chance to hit increased by (%d)%%.",
 	["Magical damage dealt is increased by up to (%d+)."] = 										"Magical damage dealt is increased by up to (%d+).",
 	["Healing done by magical spells is increased by up to (%d+)."] = 								"Healing done by magical spells is increased by up to (%d+).",
@@ -181,6 +182,16 @@ BCS["L"] = {
 	+5% hit to always hit enemy players.
 	+8% hit to always hit with your special abilities against a raid boss.
 	+24.6% hit to always hit a raid boss.]],
+
+	["MANA_SPRING_TOTEM"] = "\n|cff0099ff%s|cff00ff00 per tick from Mana Spring Totem |cff0099ff%s|cff00ff00 mp5.|r",
+	["BRILLIANCE_AURA"] = "\n|cff0099ff%s|cff00ff00 per tick from Brilliance Aura |cff0099ff%s|cff00ff00 mp5.|r",
+	["BLESSING_OF_WISDOM"] = "\n|cff0099ff%s|cff00ff00 per tick from Blessing of Wisdom |cff0099ff%s|cff00ff00 mp5.|r",
+	["WINSORS_WBUFF"] = "\n|cff0099ff%s|cff00ff00 per tick from Winsor's Sacrifice |cff0099ff%s|cff00ff00 mp5.|r",
+
+	--Talent Tooltips
+	["DIVINE_CONCENTRATION"] = "\n|cff0099ff%s|cff00ff00 per tick from Divine Concentration. |cff0099ff%s|cff00ff00 mp5.|r",
+	["DREAMSTATE"] = "\n|cff0099ff%s|cff00ff00 per tick from Dreamstate. |cff0099ff%s|cff00ff00 mp5.|r",
+		
 
 	PLAYERSTAT_BASE_STATS = "Base Stats",
 	PLAYERSTAT_DEFENSES = "Defenses",

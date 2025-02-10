@@ -9,6 +9,8 @@ local L = BCS["L"]
 local strfind = strfind
 local tonumber = tonumber
 local tinsert = tinsert
+local lastBlessingOfWisdomMP5 = 0 -- Stores last detected MP5 from BoW
+local lastGearBonus = 1 --Stores the gear bonus snapshot (default 1.0)
 
 local function tContains(table, item)
 	local index = 1
@@ -62,6 +64,45 @@ function BCS:GetPlayerAura(searchText, auraType)
 			end
 		end
 	end
+end
+
+function BCS:GetPlayerAuraValue(searchText, auraType)
+    local maxAuras = auraType == "HARMFUL" and 6 or 31 -- 6 debuffs max, 32 buffs max
+
+    for i = 0, maxAuras do
+        local index = GetPlayerBuff(i, auraType)
+        if index > -1 then
+            BCS_Tooltip:SetPlayerBuff(index)
+            local MAX_LINES = BCS_Tooltip:NumLines()
+
+            for line = 1, MAX_LINES do
+                local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+                if left and left:GetText() then
+                    local _, _, value = strfind(left:GetText(), searchText)
+                    if value then
+                        return tonumber(value) -- Extracts and returns the numeric value found in the tooltip
+                    end
+                end
+            end
+        end
+    end
+
+    return 0 -- Return 0 if no match is found
+end
+
+--Added a 3rd way to find buffs in game by ~Khan to get ingame icons example: Interface\Icons\Spell_Holy_SealOfWisdom
+-- run this ingame : /script function m(s) DEFAULT_CHAT_FRAME:AddMessage(s); end for i=1,16 do s=UnitBuff("target", i); if(s) then m("B "..i..": "..s); end s=UnitDebuff("target", i); if(s) then m("D "..i..": "..s); end end
+-- or this: /script for i=1,32 do local t=UnitBuff("player",i); if t then DEFAULT_CHAT_FRAME:AddMessage(i..": "..t) end end
+function BCS:GetPlayerAuraTexture(auraTexture)
+    for i = 1, 40 do -- Max buffs in Vanilla is 40
+        local texture = UnitBuff("player", i)
+        if not texture then break end
+
+        if texture == auraTexture then
+            return true -- Buff found
+        end
+    end
+    return false -- Buff not found
 end
 
 -- ! Used in Ranged too
@@ -1560,6 +1601,72 @@ local function GetRegenMPPerSpirit()
 	return addvalue
 end
 
+--FUNC used in conjunction with GetGearSetBonus (Ten Storms ***NOT IMPLEMENTED YET***) to help facilitate SNAPSHOT /w Mana Spring Totem & Ranks 1-4 update tooltip
+function BCS:UpdateManaSpringTotem()
+	-- Get current Mana Spring Totem value from tooltip
+	local currentMsTVal = BCS:GetPlayerAuraValue("Gain (%d+) mana every 2 seconds.")
+	
+	-- If the buff is gone, reset
+	if not currentMsTVal or currentMsTVal == 0 then
+		lastMsTVal = currentMsTVal
+		return 0 -- No buff active
+	end
+	
+	-- Check if this is a differnt rank MsT
+	if currentMsTVal ~= lastMsTVal then
+		lastMsTVal = currentMsTVal
+	end
+	
+	return lastMsTVal --return last rank (can add snapshot for gear above)
+end
+
+--FUNC used in conjunction with GetGearSetBonus (Zaldalar 2pc) to help facilitate SNAPSHOT /w Blessing of Wisdom & Ranks 1-6 update tooltip
+function BCS:UpdateBlessingOfWisdom()
+    -- Get current BoW MP5 value from tooltip
+    local currentBoWMP5 = BCS:GetPlayerAuraValue("Restores (%d+) mana every 5 seconds.")
+
+    -- If the buff is gone, reset MP5 and check for gear bonus
+    if not currentBoWMP5 or currentBoWMP5 == 0 then
+        lastBlessingOfWisdomMP5 = 0
+		lastGearBonus = 1 -- Reset gear bonus since BoW is gone
+        --DEFAULT_CHAT_FRAME:AddMessage("Blessing of Wisdom lost! Gear snapshot reset to 100% multiplier, MP5 set to 0.")
+        return 0 -- No buff active
+    end
+
+    -- Check if this is a fresh BoW application
+    if currentBoWMP5 ~= lastBlessingOfWisdomMP5 then
+        lastBlessingOfWisdomMP5 = currentBoWMP5
+		lastGearBonus = BCS:GetGearSetBonus() -- Snapshot Zandalar gear bonus
+        --DEFAULT_CHAT_FRAME:AddMessage("Blessing of Wisdom (Updated): " .. lastBlessingOfWisdomMP5 .. " MP5 | Gear Bonus Snapshot: " .. lastGearBonus)
+    end
+
+    return lastBlessingOfWisdomMP5 -- Return current snapshot value
+end
+
+--FUNC used to get SNAPSHOT of Gear separated for bonuses even after equiping other gear
+function BCS:GetGearSetBonus()
+    local gearBonus = 1 -- Default multiplier (100%)
+
+    local MAX_INVENTORY_SLOTS = 19
+    for slot = 0, MAX_INVENTORY_SLOTS do
+        local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
+        if hasItem then
+            for line = 1, BCS_Tooltip:NumLines() do
+                local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+                if left and left:GetText() then
+                    local text = strlower(left:GetText())
+                    if strfind(text, "set: increases the effect of all blessings by 10%%") then
+                        gearBonus = 1.1 -- Apply the ZG 10% bonus
+                        break
+                    end
+                end
+            end
+        end
+    end
+
+    return gearBonus
+end
+
 function BCS:GetManaRegen()
 	-- to-maybe-do: apply buffs/talents
 	local base, casting
@@ -1567,8 +1674,137 @@ function BCS:GetManaRegen()
 	
 	casting = power_regen / 100
 	base = power_regen
+
+	local mp5 = 0					-- Initialize to prevent nil errors
+	local paladinManaRegen = 0
+	local paladinManaTick = 0
+
+	-- Fetch Updated Blessing of Wisdom Value
+    local blessingOfWisdomMP5 = BCS:UpdateBlessingOfWisdom()
 	
-	local mp5 = 0;
+	-- Default Multiplier
+	local divineGraceBonus = 1 -- Default 100% (no modifier)
+	
+	-- Get player's max mana
+	local maxMana = UnitManaMax("player")
+	
+	-- Check if the Player is a Paladin
+    local _, playerClass = UnitClass("player")
+	
+	-- Scan Talents First (Permanent Bonuses before gear)
+	if playerClass == "PALADIN" then
+		-- Scan talents
+		local MAX_TABS = GetNumTalentTabs()
+	
+		for tab=1, MAX_TABS do
+			local MAX_TALENTS = GetNumTalents(tab)
+		
+			for talent=1, MAX_TALENTS do
+				BCS_Tooltip:SetTalent(tab, talent)
+				local MAX_LINES = BCS_Tooltip:NumLines()	
+			
+				for line=1, MAX_LINES do
+					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				
+					if left:GetText() then
+						-- Paladin
+						-- Divine Concentration
+						local _,_, regenInterval = strfind(left:GetText(), "Regenerates 1%% of your total Mana every (%d+) seconds.")
+						local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
+						if regenInterval and rank > 0 then
+							regenInterval = tonumber(regenInterval)
+							local regenPercent = 0.01 -- 1% mana
+						
+							paladinManaTick = floor(maxMana * regenPercent * (2 / regenInterval)) -- 2 sec tick
+							paladinManaRegen = floor(maxMana * regenPercent * (5 / regenInterval)) -- MP5 equivalent
+							line = MAX_LINES
+						end
+						
+						 -- Divine Grace (Blessing of Wisdom Modifier)
+                        local _,_, bonusPercent = strfind(left:GetText(), "Increases the effect of your Seal and Judgement of Light, your Seal and Judgement of Wisdom, your Blessing of Wisdom, and your Blessing of Light by (%d+)%%.")
+                        if bonusPercent and rank > 0 then
+                            bonusPercent = tonumber(bonusPercent) / 100 --Convert 10% or 20% to 1.1 or 1.2
+                            divineGraceBonus = 1 + bonusPercent
+                            --DEFAULT_CHAT_FRAME:AddMessage("Divine Grace detected! Bonus: " .. (divineGraceBonus * 100) .. "%")
+							line = MAX_LINES
+						end
+					end
+				end
+			end
+		end
+	end
+	
+	--
+	if playerClass == "DRUID" then
+		
+		local MAX_TABS = GetNumTalentTabs()
+		
+			for tab=1, MAX_TABS do
+				local MAX_TALENTS = GetNumTalents(tab)
+				
+				for talent=1, MAX_TALENTS do
+					BCS_Tooltip:SetTalent(tab, talent)
+					local MAX_LINES = BCS_Tooltip:NumLines()
+					
+					for line=1, MAX_LINES do
+						local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+						
+						if left:GetText() then
+						--Druid
+						--Dreamstate
+						local _,_, regenPercent = strfind(left:GetText(), "Regenerates (%d+)%% of your total Mana every 10 seconds.")
+						local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
+						if regenPercent and rank > 0 then
+							regenPercent = tonumber(regenPercent) / 100 -- Convert to decimal (1% → 0.01, 2% → 0.02, 3% → 0.03)
+							local regenInterval = 10 -- 10 seconds
+							
+							druidManaTick = floor(maxMana * regenPercent * (2 / regenInterval)) -- 2 sec tick
+							druidManaRegen = floor(maxMana * regenPercent * (5 / regenInterval))-- MP5 equivalent
+							line = MAX_LINES
+						end
+					end
+				end
+			end
+		end
+	end
+	
+	--Fetch Updated Mana Spring Totem value
+	local manaSpringTotemMP2 = BCS:UpdateManaSpringTotem()
+	
+	local manaSpringBonus = 1
+	
+	if playerClass == "SHAMAN" then
+		
+		local MAX_TABS = GetNumTalentTabs()
+		
+			for tab=1, MAX_TABS do
+				local MAX_TALENTS = GetNumTalents(tab)
+				
+				for talent=1, MAX_TALENTS do
+					BCS_Tooltip:SetTalent(tab, talent)
+					local MAX_LINES = BCS_Tooltip:NumLines()
+					
+					for line=1, MAX_LINES do
+						local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+						
+						if left:GetText() then
+						--Shaman
+						--Restorative Totems (Mana Spring Totem Modifier)
+						local _,_, bonusPercent = strfind(left:GetText(), "Increases the effect of your Mana Tide, Mana Spring and Healing Stream Totems by (%d+)%%")
+						local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
+						if bonusPercent and rank > 0 then
+							bonusPercent = tonumber(bonusPercent) / 100 --Convert 30% or 50% to 1.3 or 1.5
+							manaSpringBonus = 1 + bonusPercent
+							--DEFAULT_CHAT_FRAME:AddMessage("Mana Spring Totem Detected! Bonus: " .. (manaSpringBonus * 100) .. "%")
+							line = MAX_LINES
+						end
+					end
+				end
+			end
+		end
+	end
+	
+	-- ***MOVED ZG BONUS TO ITS OWN SNAPSHOT FUNCTION ABOVE BCS:GetGearSetBonus()***
 	local MAX_INVENTORY_SLOTS = 19
 	
 	for slot=0, MAX_INVENTORY_SLOTS do
@@ -1578,32 +1814,64 @@ function BCS:GetManaRegen()
 			for line=1, BCS_Tooltip:NumLines() do
 				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
 				
-				if left:GetText() then
-					local _,_, value = strfind(left:GetText(), L["^Mana Regen %+(%d+)"])
-					if value then
-						mp5 = mp5 + tonumber(value)
-					end
-					_,_, value = strfind(left:GetText(), L["Equip: Restores (%d+) mana per 5 sec."])
-					if value then
-						mp5 = mp5 + tonumber(value)
-					end
-					_,_, value = strfind(left:GetText(), L["^%+(%d+) mana every 5 sec."])
-					if value then
-						mp5 = mp5 + tonumber(value)
-					end
+				-- Ensure 'left' exists and has valid text before using it
+				local text = left and left:GetText() or ""
+				text = strlower(text) -- Convert to lowercase for better matching
+				-- Debugging output
+				--DEFAULT_CHAT_FRAME:AddMessage("Scanning Tooltip: " .. text)
+				local _,_, value = strfind(text, "^mana regen %+(%d+)")
+				if value then
+					mp5 = mp5 + tonumber(value)
+				end
+				
+				-- Fix: Directly match lowercase tooltip text
+				_,_, value = strfind(text, "equip: restores (%d+) mana per 5 sec%.?")
+				if value then
+					mp5 = mp5 + tonumber(value)
+					-- Debugging output
+					--DEFAULT_CHAT_FRAME:AddMessage("Found MP5 from gear: " .. value)
+				end
+				
+				_,_, value = strfind(text, "^%+(%d+) mana every 5 sec%.?")
+				if value then
+					mp5 = mp5 + tonumber(value)
+				end
+				
+				---- Fix: Match both "heath" (game typo) and "health" (expected)
+				_,_, value = strfind(text, "(%d+) hea[lth]+ and mana per 5 sec%.?")
+				if value then
+					mp5 = mp5 + tonumber(value)
+					-- Debugging output
+					--DEFAULT_CHAT_FRAME:AddMessage("Found MP5 from enchant: " .. value)				
 				end
 			end
 		end
-		
+	end
+	-- Apply Bonuses and Maintain Snapshot
+    local finalBoWMP5 = floor(blessingOfWisdomMP5 * divineGraceBonus * lastGearBonus)
+	--DEFAULT_CHAT_FRAME:AddMessage("Blessing of Wisdom (Displayed MP5): " .. finalBoWMP5)
+	
+	-- Finalized math fixes here namely Blessing of Wisdom tooltip being off by 1 mana per 5:
+	if finalBoWMP5 == 43 then 
+		finalBoWMP5 = 42 -- BoW (Rank 6) WoW math fix 43 to 42 rounded down without messing up other correct ranks
+	elseif finalBoWMP5 == 33 then
+		finalBoWMP5 = 32 -- BoW (Rank 4) WoW math fix 33 to 32 rounded down without messing up other correct ranks
 	end
 	
-	-- buffs
-	local _, _, mp5FromAura = BCS:GetPlayerAura(L["Increases hitpoints by 300. 15%% haste to melee attacks. 10 mana regen every 5 seconds."])
-	if mp5FromAura then
-		mp5 = mp5 + 10
-	end
+	local finalMtSVal = floor(manaSpringTotemMP2 * manaSpringBonus)
 	
-	return base, casting, mp5
+		-- Can finalize Mana Spring Totem values here for correct ingame rounding in combat log but
+		-- I do not have 2 piece Ten Storms on my shaman (contact Luthering or Lokiy and see if
+		-- one of them can help you get correct values per rank like you did for BoW).
+		-- ***I still have to setup Ten Storms SNAPSHOT too next update will be so.***
+
+	-- buffs (Depreciated CODE --'ed out )
+	-- local _, _, mp5FromAura = BCS:GetPlayerAura("Increases hitpoints by 300. Movement, attack and casting speed increased by 5%. 30 mana regen every 5 seconds.")
+	--if mp5FromAura then
+	--	mp5 = mp5 + 10
+	--end
+	
+	return base, casting, mp5, paladinManaTick, paladinManaRegen, druidManaTick, druidManaRegen, finalBoWMP5, finalMtSVal
 end
 
 function BCS:GetResilienceChance()
