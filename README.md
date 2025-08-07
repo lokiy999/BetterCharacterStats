@@ -27,7 +27,6 @@ Features:
 - Displays character statistics in one place (just like the character tab in Burning Crusade).
 
 Known Issues:
-- Mana Regen not displayed correctly.
 - Primary stats still have the vanilla text instead of the TBC one.
-- Haste rating still not implemented
-- Class specific things missing
+- Haste rating still not implemented.
+- Class specific things missing.
