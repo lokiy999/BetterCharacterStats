@@ -50,6 +50,9 @@ BCS["L"] = {
 	["Equip: Increases damage done by Nature spells and effects by up to (%d+)."] = "Equip: Increases damage done by Nature spells and effects by up to (%d+).",
 	["Equip: Increases damage done by Shadow spells and effects by up to (%d+)."] = "Equip: Increases damage done by Shadow spells and effects by up to (%d+).",
 	
+	["Increases spell critical chance by (%d+)%%"] = "Increases spell critical chance by (%d+)%%",
+	["Spell critical chance increased by (%d+)%%."] = "Spell critical chance increased by (%d+)%%.",
+	
 	-- Damage
 	["Shadow Damage %+(%d+)"] = "Shadow Damage %+(%d+)",
 	["Spell Damage %+(%d+)"] = "Spell Damage %+(%d+)",
