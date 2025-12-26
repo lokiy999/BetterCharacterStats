@@ -858,6 +858,13 @@ function BCS:GetSpellCritChance()
 	if critFromAura then
 		spellCrit = spellCrit + tonumber(critFromAura)
 	end
+	if critFromAura then
+		spellCrit = spellCrit + tonumber(critFromAura)
+	end
+	_, _, critFromAura = BCS:GetPlayerAura(L["Spell critical chance increased by (%d+)%%."])
+	if critFromAura then
+		spellCrit = spellCrit + tonumber(critFromAura)
+	end
 
 	-- debuffs
 	_, _, _, critFromAura = BCS:GetPlayerAura(L["Melee critical-hit chance reduced by (%d+)%%.\r\nSpell critical-hit chance reduced by (%d+)%%."], 'HARMFUL')
