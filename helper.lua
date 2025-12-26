@@ -645,9 +645,64 @@ function BCS:GetCritChance()
 	return crit, Crit_Schools
 end
 
+--Khan's Ranged crit function fixes Monkey Asepct + Brutality (Lies) / Leaking to ranged! :'( below put above "BCS:GetRangedCritChance()"
+local function HasAspectOfTheMonkey()
+    return BCS:GetPlayerAuraTexture("Interface\\Icons\\Ability_Hunter_AspectOfTheMonkey")
+end
+
+local function GetMonkeyMeleeCritBonus()
+    local bonus = 0
+
+    -- Base Aspect bonus
+    if HasAspectOfTheMonkey() then
+        bonus = 5
+
+        -- Scan Beast Mastery talents for Improved Aspect of the Monkey
+        local MAX_TABS = GetNumTalentTabs()
+        for tab = 1, MAX_TABS do
+            local MAX_TALENTS = GetNumTalents(tab)
+            for talent = 1, MAX_TALENTS do
+                local name, _, _, _, rank = GetTalentInfo(tab, talent)
+                if name == "Improved Aspect of the Monkey" and rank and rank > 0 then
+                    bonus = bonus + rank -- +1% per point
+                    return bonus
+                end
+            end
+        end
+    end
+
+    return bonus
+end
+
+local function GetBrutalityMeleeCritBonus()
+    local MAX_TABS = GetNumTalentTabs()
+    for tab = 1, MAX_TABS do
+        local MAX_TALENTS = GetNumTalents(tab)
+        for talent = 1, MAX_TALENTS do
+            local name, _, _, _, rank = GetTalentInfo(tab, talent)
+            if name == "Brutality" and rank and rank > 0 then
+                return rank -- 1% per point, max 5
+            end
+        end
+    end
+    return 0
+end
+
 local Cache_GetRangedCritChance_Tab, Cache_GetRangedCritChance_Talent, Cache_GetRangedCritChance_Line
 function BCS:GetRangedCritChance()
 	local crit = BCS:GetCritChance()
+
+	    -- REMOVE Monkey melee-only crit
+    local monkeyCrit = GetMonkeyMeleeCritBonus()
+    if monkeyCrit > 0 then
+        crit = crit - monkeyCrit
+    end
+	
+	-- Remove Brutality melee-only crit
+    local brutalityCrit = GetBrutalityMeleeCritBonus()
+    if brutalityCrit > 0 then
+        crit = crit - brutalityCrit
+    end
 	
 	if Cache_GetRangedCritChance_Tab and Cache_GetRangedCritChance_Talent and Cache_GetRangedCritChance_Line then
 		BCS_Tooltip:SetTalent(Cache_GetRangedCritChance_Tab, Cache_GetRangedCritChance_Talent)
