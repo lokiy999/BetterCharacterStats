@@ -135,7 +135,7 @@ function BCS:GetHitRating(hitOnly)
 						hit = hit + tonumber(value)
 					end
 					_,_, value = strfind(left:GetText(), L["%+(%d+)%% Hit"])					
-					if value then
+					if value and slot ~= 18 then -- slot 18 is ranged weapon (Biznicks scope). Do NOT count for melee.
 						hit = hit + tonumber(value)
 					end
 					_,_, value = strfind(left:GetText(), "(.+) %(%d/%d%)")
