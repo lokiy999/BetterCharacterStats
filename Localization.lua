@@ -178,7 +178,7 @@ BCS["L"] = {
 	["SPELL_HEALING_POWER_TOOLTIP"] = "Increases your healing by %d.",	
 	
 	["SPELL_MANA_REGEN_TOOLTIP_HEADER"] = [[|cffffffffMana Regen|r]],
-	["SPELL_MANA_REGEN_TOOLTIP"] = "%d mana regenerated every 5 \r\nseconds while not casting.",
+	["SPELL_MANA_REGEN_TOOLTIP"] = "%d mana regenerated every 2 \r\nseconds while not casting.",
 	
 	["ROGUE_MELEE_HIT_TOOLTIP"] = [[
 	
