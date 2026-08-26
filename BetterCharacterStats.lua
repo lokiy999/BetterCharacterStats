@@ -833,6 +833,16 @@ function BCS:SetBlock(statFrame)
 
 	label:SetText(L.BLOCK_COLON)
 	text:SetText(format("%.2f%%", GetBlockChance()))
+
+	frame.tooltip = format("Block Value: %d", BCS:GetBlockValue())
+	frame:SetScript("OnEnter", function()
+		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+		GameTooltip:SetText(this.tooltip)
+		GameTooltip:Show()
+	end)
+	frame:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
 end
 
 function BCS:SetSpellHaste(statFrame)

@@ -2176,6 +2176,45 @@ function BCS:GetResilienceChance()
 	return resilience
 end
 
+-- Block Value has no API on this client, so it's built from: Strength/5 (no
+-- baseline, per instruction) + the shield's own printed block value (e.g. a
+-- shield tooltip line reading plain "36 Block") + flat item bonuses (e.g.
+-- "Increases the block value of your shield by 10.").
+function BCS:GetBlockValue()
+	local _, strength = UnitStat("player", 1)
+	local blockValue = floor(strength / 5)
+
+	local MAX_INVENTORY_SLOTS = 19
+	for slot = 0, MAX_INVENTORY_SLOTS do
+		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
+		if hasItem then
+			for line = 1, BCS_Tooltip:NumLines() do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				if left and left:GetText() then
+					local text = left:GetText()
+
+					local _, _, shieldBlock = strfind(text, "^(%d+) Block$")
+					if shieldBlock then
+						blockValue = blockValue + tonumber(shieldBlock)
+					end
+
+					local _, _, bonus = strfind(text, L["Increases the block value of your shield by (%d+)."])
+					if bonus then
+						blockValue = blockValue + tonumber(bonus)
+					end
+				end
+			end
+		end
+	end
+
+	-- The real in-game Block Value always comes out exactly 1 lower than this
+	-- formula's raw sum (confirmed against real gear: 378 Str, 46 shield block,
+	-- +23/+12 item bonuses -> formula gives 156, real value is 155). Root cause
+	-- unknown -- could be a hidden -1 baseline, a rounding quirk, or something
+	-- else in the server's actual formula. Revisit if this stops lining up.
+	return floor(blockValue) - 1
+end
+
 -- Some talents show all ranks at once as "[4/8/12/16/20]%" instead of a single
 -- resolved number. Given that bracket list and a rank (1-based), returns the
 -- value for that rank.

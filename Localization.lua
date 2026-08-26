@@ -26,6 +26,7 @@ BCS["L"] = {
 	["Increases your casting speed by (%d+)%%."] = "Increases your casting speed by (%d+)%%.",
 	["Increases the casting speed by (%d+)%%."] = "Increases the casting speed by (%d+)%%.",
 	["Increases the casting speed by %[([%d/]+)%]%%."] = "Increases the casting speed by %[([%d/]+)%]%%.",
+	["Increases the block value of your shield by (%d+)."] = "Increases the block value of your shield by (%d+).",
 
 	-- Hit
 	["Equip: Improves your chance to hit by (%d)%%."] = "Equip: Improves your chance to hit by (%d)%%.",
