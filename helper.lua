@@ -155,7 +155,7 @@ end
 -- be shown as their own "Talent" bucket instead of being lumped into "Buff".
 -- Percentage-based stat talents aren't handled here (rare, and need care to
 -- avoid double-counting against UnitStat's already-inclusive effective value).
-function BCS:GetTalentStatBonus(statName)
+function BCS:GetTalentStatBonus(statName, statIndex)
 	local total = 0
 	local MAX_TABS = GetNumTalentTabs()
 
@@ -182,6 +182,54 @@ function BCS:GetTalentStatBonus(statName)
 								value = floor((tonumber(percent) / 100) * UnitHealthMax("player"))
 							end
 						end
+						if not value then
+							-- Hunter "Lightning Reflexes": "Increases your attack
+							-- speed and Agility by X%." (Agility-only; the attack
+							-- speed portion is already reflected by UnitAttackSpeed).
+							local _, _, percent = strfind(text, L["Increases your attack speed and Agility by (%d+)%%."])
+							if percent and statName == L["Agility"] then
+								local _, effectiveStat = UnitStat("player", 2)
+								value = floor((tonumber(percent) / 100) * effectiveStat)
+							end
+						end
+						if not value then
+							-- Paladin "Divine Strength" / "Divine Intellect":
+							-- "Increases your <Stat> by X%." (percent of that
+							-- same stat's own current effective value).
+							local _, _, percent = strfind(text, "Increases your " .. statName .. " by (%d+)%%.")
+							if percent and statIndex then
+								local _, effectiveStat = UnitStat("player", statIndex)
+								value = floor((tonumber(percent) / 100) * effectiveStat)
+							end
+						end
+						if not value then
+							-- Rogue talent: "Reduces the cooldown of your Sprint
+							-- and Evasion abilities by 1 min and increases your
+							-- Strength by X%." (Strength-only.)
+							local _, _, percent = strfind(text, L["Reduces the cooldown of your Sprint and Evasion abilities by 1 min and increases your Strength by (%d+)%%."])
+							if percent and statName == L["Strength"] then
+								local _, effectiveStat = UnitStat("player", 1)
+								value = floor((tonumber(percent) / 100) * effectiveStat)
+							end
+						end
+						if not value then
+							-- Warlock "Fel Intellect": "Increases the maximum Mana
+							-- of your demons by X% and your total Intellect by X%."
+							local _, _, percent = strfind(text, L["Increases the maximum Mana of your demons by %d+%% and your total Intellect by (%d+)%%."])
+							if percent and statName == L["Intellect"] then
+								local _, effectiveStat = UnitStat("player", 4)
+								value = floor((tonumber(percent) / 100) * effectiveStat)
+							end
+						end
+						if not value then
+							-- Warlock "Fel Stamina": "Increases the maximum Health
+							-- of your demons by X% and your total Stamina by X%."
+							local _, _, percent = strfind(text, L["Increases the maximum Health of your demons by %d+%% and your total Stamina by (%d+)%%."])
+							if percent and statName == L["Stamina"] then
+								local _, effectiveStat = UnitStat("player", 3)
+								value = floor((tonumber(percent) / 100) * effectiveStat)
+							end
+						end
 						if value then
 							total = total + tonumber(value)
 						end
@@ -192,6 +240,85 @@ function BCS:GetTalentStatBonus(statName)
 	end
 
 	return total
+end
+
+-- Scans talents for the Holy damage/healing tradeoff pair:
+-- "Increases your Holy damage by X% but reduces your healing done by X%."
+-- "Increases your healing done by X% but reduces your Holy damage by X%."
+-- Returns (damagePercent, healPercent), each signed (+ or -). Only one of
+-- these is normally learned at a time (mutually exclusive talent choice).
+function BCS:GetHolyPowerTalentModifiers()
+	local damagePercent = 0
+	local healPercent = 0
+	local MAX_TABS = GetNumTalentTabs()
+
+	for tab = 1, MAX_TABS do
+		local MAX_TALENTS = GetNumTalents(tab)
+		for talent = 1, MAX_TALENTS do
+			local name, iconTexture, tier, column, rank = GetTalentInfo(tab, talent)
+			if rank and rank > 0 then
+				BCS_Tooltip:SetTalent(tab, talent)
+				for line = 1, BCS_Tooltip:NumLines() do
+					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+					if left and left:GetText() then
+						local text = left:GetText()
+
+						local _, _, dmgUp, healDown = strfind(text, L["Increases your Holy damage by (%d+)%% but reduces your healing done by (%d+)%%."])
+						if dmgUp then
+							damagePercent = damagePercent + tonumber(dmgUp)
+							healPercent = healPercent - tonumber(healDown)
+						end
+
+						local _, _, healUp, dmgDown = strfind(text, L["Increases your healing done by (%d+)%% but reduces your Holy damage by (%d+)%%."])
+						if healUp then
+							healPercent = healPercent + tonumber(healUp)
+							damagePercent = damagePercent - tonumber(dmgDown)
+						end
+					end
+				end
+			end
+		end
+	end
+
+	return damagePercent, healPercent
+end
+
+-- Druid "Moonkin Aura": "...increases spell damage and healing of all raid
+-- members within 20 yards by X%." Detected via the aura's own buff icon
+-- (it also affects the caster when in range of their own aura).
+function BCS:GetMoonkinAuraBonus()
+	local _, _, percent = BCS:GetPlayerAura(L["increases spell damage and healing of all raid members within 20 yards by (%d+)%%"])
+	if percent then
+		return tonumber(percent)
+	end
+	return 0
+end
+
+-- Mage talent (frost damage % portion only -- ignores the health/mana
+-- restore-while-stationary part of the same talent): "Increases your Frost
+-- damage by X% and restores X% of your health and mana every X sec after
+-- you have remained stationary for ~X sec."
+function BCS:GetFrostDamageTalentBonus()
+	local MAX_TABS = GetNumTalentTabs()
+	for tab = 1, MAX_TABS do
+		local MAX_TALENTS = GetNumTalents(tab)
+		for talent = 1, MAX_TALENTS do
+			local name, iconTexture, tier, column, rank = GetTalentInfo(tab, talent)
+			if rank and rank > 0 then
+				BCS_Tooltip:SetTalent(tab, talent)
+				for line = 1, BCS_Tooltip:NumLines() do
+					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+					if left and left:GetText() then
+						local _, _, percent = strfind(left:GetText(), L["Increases your Frost damage by (%d+)%%"])
+						if percent then
+							return tonumber(percent)
+						end
+					end
+				end
+			end
+		end
+	end
+	return 0
 end
 
 function BCS:GetPlayerAura(searchText, auraType)
@@ -1461,7 +1588,18 @@ function BCS:GetSpellPower()
 						spellPower = spellPower + floor(((tonumber(value) / 100) * effectiveStat))
 						line = MAX_LINES
 					end
-				end				
+
+					-- Shaman
+					-- (Stormstrike-related talent)
+					local _,_, value = strfind(left:GetText(), L["Increases your spell damage and healing by (%d+)%% of your Attack Power."])
+					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
+					if value and rank > 0 then
+						local base, posBuff, negBuff = UnitAttackPower("player")
+						local attackPower = base + posBuff + negBuff
+						spellPower = spellPower + floor(((tonumber(value) / 100) * attackPower))
+						line = MAX_LINES
+					end
+				end
 			end
 			
 		end
@@ -1476,7 +1614,18 @@ function BCS:GetSpellPower()
 		spellPower = spellPower + tonumber(spellPowerFromAura)
 		damagePower = damagePower + tonumber(spellPowerFromAura)
 	end
-	
+
+	-- Druid "Moonkin Form": "...increasing spell damage by up to X% of total
+	-- Intellect..." (detected via the Moonkin Form self-buff icon while shifted).
+	local _, _, moonkinFormPercent = BCS:GetPlayerAura(L["increasing spell damage by up to (%d+)%% of total Intellect"])
+	if moonkinFormPercent then
+		local _, effectiveInt = UnitStat("player", 4)
+		local moonkinFormBonus = floor((tonumber(moonkinFormPercent) / 100) * effectiveInt)
+		spellPower = spellPower + moonkinFormBonus
+		damagePower = damagePower + moonkinFormBonus
+	end
+
+
 	SpellPower_Schools["Holy"] = math.floor(holyPower);
 	SpellPower_Schools["Fire"] = math.floor(firePower);
 	SpellPower_Schools["Nature"] = math.floor(naturePower);
