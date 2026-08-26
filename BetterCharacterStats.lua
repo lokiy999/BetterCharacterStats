@@ -179,6 +179,11 @@ function BCS:SetStat(statFrame, statIndex)
 	statFrame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 		GameTooltip:SetText(this.tooltip)
+		if this.tooltipLines then
+			for i = 1, getn(this.tooltipLines) do
+				GameTooltip:AddLine(this.tooltipLines[i])
+			end
+		end
 		GameTooltip:Show()
 	end)
 
@@ -189,38 +194,43 @@ function BCS:SetStat(statFrame, statIndex)
 	label:SetText(TEXT(getglobal("SPELL_STAT"..(statIndex-1).."_NAME"))..":")
 	stat, effectiveStat, posBuff, negBuff = UnitStat("player", statIndex)
 
-	-- Set the tooltip text
-	local tooltipText = HIGHLIGHT_FONT_COLOR_CODE..getglobal("SPELL_STAT"..(statIndex-1).."_NAME").." "
+	local statLabel = getglobal("SPELL_STAT"..(statIndex-1).."_NAME")
 
 	if ( ( posBuff == 0 ) and ( negBuff == 0 ) ) then
 		text:SetText(effectiveStat)
-		statFrame.tooltip = tooltipText..effectiveStat..FONT_COLOR_CODE_CLOSE
+		statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..statLabel.." "..effectiveStat..FONT_COLOR_CODE_CLOSE
+		statFrame.tooltipLines = nil
 	else
-		-- Split the combined "posBuff" total into gear/enchant vs. temporary buffs,
-		-- by scanning equipped items for their flat stat bonuses.
+		-- Split the combined "posBuff" total into gear/enchant, talent, and
+		-- temporary-buff portions by scanning items and talents for flat bonuses.
 		local gearBonus = BCS:GetGearStatBonus(statNameTable[statIndex])
 		if ( gearBonus > posBuff ) then
 			gearBonus = posBuff -- clamp in case of an unexpected tooltip match
 		end
-		local tempBuff = posBuff - gearBonus
-
-		tooltipText = tooltipText..effectiveStat
-		if ( posBuff > 0 or negBuff < 0 ) then
-			tooltipText = tooltipText.." ("..(stat - posBuff - negBuff)..FONT_COLOR_CODE_CLOSE
+		local talentBonus = BCS:GetTalentStatBonus(statNameTable[statIndex])
+		if ( talentBonus > posBuff - gearBonus ) then
+			talentBonus = posBuff - gearBonus -- clamp in case of an unexpected tooltip match
 		end
+		local tempBuff = posBuff - gearBonus - talentBonus
+		local trueBase = stat - posBuff - negBuff
+
+		statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..statLabel.." "..effectiveStat..FONT_COLOR_CODE_CLOSE
+
+		local lines = {}
+		tinsert(lines, "Base: "..trueBase)
 		if ( gearBonus > 0 ) then
-			tooltipText = tooltipText..FONT_COLOR_CODE_CLOSE.."|cffffff00".."+"..gearBonus.." (Gear/Enchant)"..FONT_COLOR_CODE_CLOSE
+			tinsert(lines, "|cffffff00Gear/Enchant: +"..gearBonus..FONT_COLOR_CODE_CLOSE)
+		end
+		if ( talentBonus > 0 ) then
+			tinsert(lines, "|cff00ccffTalent: +"..talentBonus..FONT_COLOR_CODE_CLOSE)
 		end
 		if ( tempBuff > 0 ) then
-			tooltipText = tooltipText..FONT_COLOR_CODE_CLOSE..GREEN_FONT_COLOR_CODE.."+"..tempBuff.." (Buff)"..FONT_COLOR_CODE_CLOSE
+			tinsert(lines, GREEN_FONT_COLOR_CODE.."Buff: +"..tempBuff..FONT_COLOR_CODE_CLOSE)
 		end
 		if ( negBuff < 0 ) then
-			tooltipText = tooltipText..RED_FONT_COLOR_CODE.." "..negBuff..FONT_COLOR_CODE_CLOSE
+			tinsert(lines, RED_FONT_COLOR_CODE.."Debuff: "..negBuff..FONT_COLOR_CODE_CLOSE)
 		end
-		if ( posBuff > 0 or negBuff < 0 ) then
-			tooltipText = tooltipText..HIGHLIGHT_FONT_COLOR_CODE..")"..FONT_COLOR_CODE_CLOSE
-		end
-		statFrame.tooltip = tooltipText
+		statFrame.tooltipLines = lines
 
 		-- If there are any negative buffs then show the main number in red even if there are
 		-- positive buffs. Otherwise show in green.

@@ -42,13 +42,19 @@ function BCS:DebugGearStatBonus(statName)
 						setName = name
 					end
 
-					if strfind(text, statName) or strfind(text, L["%+(%d+) to all attributes"]) then
+					if strfind(text, statName) or strfind(text, L["%+(%d+) to all attributes"]) or strfind(text, "All Stats") then
 						local _, _, value = strfind(text, "%+(%d+) " .. statName)
 						if not value then
 							_, _, value = strfind(text, statName .. " %+(%d+)")
 						end
 						if not value then
 							_, _, value = strfind(text, L["%+(%d+) to all attributes"])
+						end
+						if not value then
+							_, _, value = strfind(text, L["%+(%d+) All Stats"])
+						end
+						if not value then
+							_, _, value = strfind(text, L["All Stats %+(%d+)"])
 						end
 						local r, g, b = left:GetTextColor()
 						BCS:Print("slot "..slot..": \""..text.."\" match=".. tostring(value) .." color=("..r..","..g..","..b..") setName=".. tostring(setName))
@@ -82,14 +88,20 @@ function BCS:GetGearStatBonus(statName)
 					end
 
 					-- Most lines read "+X <Stat>", but some (e.g. socket bonuses) read
-					-- "<Stat> +X" instead, and some ("Set: +27 to all attributes.")
-					-- apply to every stat at once, so check all three forms.
+					-- "<Stat> +X" instead, and some ("Set: +27 to all attributes." or
+					-- an "All Stats" enchant) apply to every stat at once.
 					local _, _, value = strfind(text, "%+(%d+) " .. statName)
 					if not value then
 						_, _, value = strfind(text, statName .. " %+(%d+)")
 					end
 					if not value then
 						_, _, value = strfind(text, L["%+(%d+) to all attributes"])
+					end
+					if not value then
+						_, _, value = strfind(text, L["%+(%d+) All Stats"])
+					end
+					if not value then
+						_, _, value = strfind(text, L["All Stats %+(%d+)"])
 					end
 					if value then
 						-- Blizzard repeats the same "Set: +X <Stat>" bonus line on every
@@ -111,6 +123,49 @@ function BCS:GetGearStatBonus(statName)
 								total = total + tonumber(value)
 							end
 						else
+							total = total + tonumber(value)
+						end
+					end
+				end
+			end
+		end
+	end
+
+	return total
+end
+
+-- Scans learned talents for flat stat bonuses (e.g. "+X <Stat>"), so they can
+-- be shown as their own "Talent" bucket instead of being lumped into "Buff".
+-- Percentage-based stat talents aren't handled here (rare, and need care to
+-- avoid double-counting against UnitStat's already-inclusive effective value).
+function BCS:GetTalentStatBonus(statName)
+	local total = 0
+	local MAX_TABS = GetNumTalentTabs()
+
+	for tab = 1, MAX_TABS do
+		local MAX_TALENTS = GetNumTalents(tab)
+		for talent = 1, MAX_TALENTS do
+			local name, iconTexture, tier, column, rank = GetTalentInfo(tab, talent)
+			if rank and rank > 0 then
+				BCS_Tooltip:SetTalent(tab, talent)
+				for line = 1, BCS_Tooltip:NumLines() do
+					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+					if left and left:GetText() then
+						local text = left:GetText()
+
+						local _, _, value = strfind(text, "%+(%d+) " .. statName)
+						if not value then
+							_, _, value = strfind(text, statName .. " %+(%d+)")
+						end
+						if not value then
+							-- Custom "Constitution" talent: "Increases your Strength,
+							-- Agility and Spirit by up to X% of your current Health."
+							local _, _, percent = strfind(text, L["by up to (%d+)%% of your current Health"])
+							if percent and strfind(text, statName) then
+								value = floor((tonumber(percent) / 100) * UnitHealthMax("player"))
+							end
+						end
+						if value then
 							total = total + tonumber(value)
 						end
 					end

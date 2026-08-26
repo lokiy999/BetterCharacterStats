@@ -19,6 +19,9 @@ BCS["L"] = {
 	["Intellect"] = "Intellect",
 	["Spirit"] = "Spirit",
 	["%+(%d+) to all attributes"] = "%+(%d+) to all attributes",
+	["%+(%d+) All Stats"] = "%+(%d+) All Stats",
+	["All Stats %+(%d+)"] = "All Stats %+(%d+)",
+	["by up to (%d+)%% of your current Health"] = "by up to (%d+)%% of your current Health",
 
 	-- Hit
 	["Equip: Improves your chance to hit by (%d)%%."] = "Equip: Improves your chance to hit by (%d)%%.",
