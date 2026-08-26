@@ -2254,6 +2254,28 @@ function BCS:GetSpellHaste()
 		haste = haste + tonumber(hasteFromAura)
 	end
 
+	-- scan spellbook passives (e.g. Night Elf "Quickness" racial:
+	-- "Increases your Agility, movement and casting speed by X%.")
+	local MAX_SPELL_TABS = GetNumSpellTabs()
+	for tab = 1, MAX_SPELL_TABS do
+		local name, texture, offset, numSpells = GetSpellTabInfo(tab)
+		for spell = 1, numSpells do
+			local currentPage = ceil(spell / SPELLS_PER_PAGE)
+			local SpellID = spell + offset + (SPELLS_PER_PAGE * (currentPage - 1))
+
+			BCS_Tooltip:SetSpell(SpellID, BOOKTYPE_SPELL)
+			for line = 1, BCS_Tooltip:NumLines() do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				if left and left:GetText() then
+					local _, _, value = strfind(left:GetText(), "casting speed by (%d+)%%")
+					if value then
+						haste = haste + tonumber(value)
+					end
+				end
+			end
+		end
+	end
+
 	return haste
 end
 
