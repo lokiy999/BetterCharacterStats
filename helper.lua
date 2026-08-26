@@ -23,6 +23,105 @@ local function tContains(table, item)
 	return nil
 end
 
+-- Temporary debug helper: prints every equipped-item tooltip line that matches
+-- "+X <StatName>" along with its slot number, so false-positive matches can be
+-- traced back to a specific item.
+function BCS:DebugGearStatBonus(statName)
+	local MAX_INVENTORY_SLOTS = 19
+	for slot = 0, MAX_INVENTORY_SLOTS do
+		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
+		if hasItem then
+			local setName = nil
+			for line = 1, BCS_Tooltip:NumLines() do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				if left and left:GetText() then
+					local text = left:GetText()
+
+					local _, _, name = strfind(text, "(.+) %(%d+/%d+%)")
+					if name then
+						setName = name
+					end
+
+					if strfind(text, statName) or strfind(text, "to all [Aa]ttributes") then
+						local _, _, value = strfind(text, "%+(%d+) " .. statName)
+						if not value then
+							_, _, value = strfind(text, statName .. " %+(%d+)")
+						end
+						if not value then
+							_, _, value = strfind(text, "%+(%d+) to all [Aa]ttributes")
+						end
+						local r, g, b = left:GetTextColor()
+						BCS:Print("slot "..slot..": \""..text.."\" match=".. tostring(value) .." color=("..r..","..g..","..b..") setName=".. tostring(setName))
+					end
+				end
+			end
+		end
+	end
+end
+
+-- Scans all equipped items (including permanent enchants, since they render as
+-- plain "+X <Stat>" lines in the item tooltip alongside the item's own stats)
+-- and sums every flat bonus to the given stat name (e.g. "Stamina").
+function BCS:GetGearStatBonus(statName)
+	local total = 0
+	local MAX_INVENTORY_SLOTS = 19
+	local seenSets = {}
+
+	for slot = 0, MAX_INVENTORY_SLOTS do
+		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
+		if hasItem then
+			local setName = nil
+			for line = 1, BCS_Tooltip:NumLines() do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				if left and left:GetText() then
+					local text = left:GetText()
+
+					local _, _, name = strfind(text, "(.+) %(%d+/%d+%)")
+					if name then
+						setName = name
+					end
+
+					-- Most lines read "+X <Stat>", but some (e.g. socket bonuses) read
+					-- "<Stat> +X" instead, and some ("Set: +27 to all attributes.")
+					-- apply to every stat at once, so check all three forms.
+					local _, _, value = strfind(text, "%+(%d+) " .. statName)
+					if not value then
+						_, _, value = strfind(text, statName .. " %+(%d+)")
+					end
+					if not value then
+						_, _, value = strfind(text, "%+(%d+) to all [Aa]ttributes")
+					end
+					if value then
+						-- Blizzard repeats the same "Set: +X <Stat>" bonus line on every
+						-- piece of the set, so only count it once per set name, and only
+						-- if the requirement is actually met (unmet tiers are still
+						-- printed, just grayed out).
+						if strfind(text, "Set:") then
+							local r, g, b = left:GetTextColor()
+							-- Met set bonuses render green (0,1,0); unmet ones render
+							-- gray (r==g==b). Detect gray by all channels matching.
+							local isGray = (math.abs(r - g) < 0.05) and (math.abs(g - b) < 0.05)
+							local isActive = not isGray
+							-- A set can have multiple active tiers (e.g. 2pc and 4pc
+							-- bonuses both met), so dedupe on setName+exact bonus text,
+							-- not just setName, or a second tier gets silently dropped.
+							local dedupeKey = tostring(setName) .. "|" .. text
+							if isActive and setName and not tContains(seenSets, dedupeKey) then
+								tinsert(seenSets, dedupeKey)
+								total = total + tonumber(value)
+							end
+						else
+							total = total + tonumber(value)
+						end
+					end
+				end
+			end
+		end
+	end
+
+	return total
+end
+
 function BCS:GetPlayerAura(searchText, auraType)
 	if not auraType then
 		-- buffs

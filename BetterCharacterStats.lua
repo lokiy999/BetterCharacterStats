@@ -166,31 +166,53 @@ function BCS:SetStat(statFrame, statIndex)
 		"INTELLECT",
 		"SPIRIT",
 	}
-	
+	-- English tooltip words used by item/enchant lines (e.g. "+15 Stamina"),
+	-- used to split gear/enchant bonuses out of the generic UnitStat buff total.
+	local statNameTable = {
+		"Strength",
+		"Agility",
+		"Stamina",
+		"Intellect",
+		"Spirit",
+	}
+
 	statFrame:SetScript("OnEnter", function()
-		PaperDollStatTooltip("player", statIndexTable[statIndex])
+		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+		GameTooltip:SetText(this.tooltip)
+		GameTooltip:Show()
 	end)
-	
+
 	statFrame:SetScript("OnLeave", function()
 		GameTooltip:Hide()
 	end)
-	
+
 	label:SetText(TEXT(getglobal("SPELL_STAT"..(statIndex-1).."_NAME"))..":")
 	stat, effectiveStat, posBuff, negBuff = UnitStat("player", statIndex)
-	
+
 	-- Set the tooltip text
 	local tooltipText = HIGHLIGHT_FONT_COLOR_CODE..getglobal("SPELL_STAT"..(statIndex-1).."_NAME").." "
 
 	if ( ( posBuff == 0 ) and ( negBuff == 0 ) ) then
 		text:SetText(effectiveStat)
 		statFrame.tooltip = tooltipText..effectiveStat..FONT_COLOR_CODE_CLOSE
-	else 
+	else
+		-- Split the combined "posBuff" total into gear/enchant vs. temporary buffs,
+		-- by scanning equipped items for their flat stat bonuses.
+		local gearBonus = BCS:GetGearStatBonus(statNameTable[statIndex])
+		if ( gearBonus > posBuff ) then
+			gearBonus = posBuff -- clamp in case of an unexpected tooltip match
+		end
+		local tempBuff = posBuff - gearBonus
+
 		tooltipText = tooltipText..effectiveStat
 		if ( posBuff > 0 or negBuff < 0 ) then
 			tooltipText = tooltipText.." ("..(stat - posBuff - negBuff)..FONT_COLOR_CODE_CLOSE
 		end
-		if ( posBuff > 0 ) then
-			tooltipText = tooltipText..FONT_COLOR_CODE_CLOSE..GREEN_FONT_COLOR_CODE.."+"..posBuff..FONT_COLOR_CODE_CLOSE
+		if ( gearBonus > 0 ) then
+			tooltipText = tooltipText..FONT_COLOR_CODE_CLOSE.."|cffffff00".."+"..gearBonus.." (Gear/Enchant)"..FONT_COLOR_CODE_CLOSE
+		end
+		if ( tempBuff > 0 ) then
+			tooltipText = tooltipText..FONT_COLOR_CODE_CLOSE..GREEN_FONT_COLOR_CODE.."+"..tempBuff.." (Buff)"..FONT_COLOR_CODE_CLOSE
 		end
 		if ( negBuff < 0 ) then
 			tooltipText = tooltipText..RED_FONT_COLOR_CODE.." "..negBuff..FONT_COLOR_CODE_CLOSE
