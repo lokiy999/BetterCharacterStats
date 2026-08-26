@@ -770,6 +770,13 @@ function BCS:GetCritChance()
 		end
 	end
 	
+	-- Orc racial "Blood Fury": "Increases your chance to get a critical strike
+	-- with all attacks and spells by X%."
+	local _, _, bloodFuryCrit = BCS:GetPlayerAura(L["Increases your chance to get a critical strike with all attacks and spells by (%d+)%%."])
+	if bloodFuryCrit then
+		crit = crit + tonumber(bloodFuryCrit)
+	end
+
 	-- speedup
 	if Cache_GetCritChance_SpellID and Cache_GetCritChance_BookType and Cache_GetCritChance_Line then
 		BCS_Tooltip:SetSpell(Cache_GetCritChance_SpellID, Cache_GetCritChance_BookType)
@@ -1076,6 +1083,12 @@ function BCS:GetSpellCritChance()
 	local _, _, critFromAura = BCS:GetPlayerAura(L["Chance for a critical hit with a spell increased by (%d+)%%."])
 	if critFromAura then
 		spellCrit = spellCrit + tonumber(critFromAura)
+	end
+	-- Orc racial "Blood Fury": "Increases your chance to get a critical strike
+	-- with all attacks and spells by X%."
+	local _, _, bloodFuryCrit = BCS:GetPlayerAura(L["Increases your chance to get a critical strike with all attacks and spells by (%d+)%%."])
+	if bloodFuryCrit then
+		spellCrit = spellCrit + tonumber(bloodFuryCrit)
 	end
 	_, _, critFromAura = BCS:GetPlayerAura(L["While active, target's critical hit chance with spells and attacks increases by 10%%."])
 	if critFromAura then

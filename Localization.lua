@@ -44,6 +44,7 @@ BCS["L"] = {
 	["Equip: Improves your critical strike chance for all attacks and spells by (%d)%%."] = "Equip: Improves your critical strike chance for all attacks and spells by (%d)%%.",	
 	["Increases your critical strike chance with ranged weapons by (%d)%%."] = "Increases your critical strike chance with ranged weapons by (%d)%%.",
 	["Increases your critical strike chance with all attacks by (%d)%%."] = "Increases your critical strike chance with all attacks by (%d)%%.",
+	["Increases your chance to get a critical strike with all attacks and spells by (%d+)%%."] = "Increases your chance to get a critical strike with all attacks and spells by (%d+)%%.",
 
 	["Increases the critical effect chance of your Arcane spells by (%d+)%%."] = "Increases the critical effect chance of your Arcane spells by (%d+)%%.",
 	["Increases the critical effect chance of your Fire spells by (%d+)%%."] = "Increases the critical effect chance of your Fire spells by (%d+)%%.",
