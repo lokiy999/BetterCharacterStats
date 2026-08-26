@@ -827,12 +827,21 @@ function BCS:SetParry(statFrame)
 end
 
 function BCS:SetBlock(statFrame)
-	local frame = statFrame 
+	local frame = statFrame
 	local text = getglobal(statFrame:GetName() .. "StatText")
 	local label = getglobal(statFrame:GetName() .. "Label")
-	
+
 	label:SetText(L.BLOCK_COLON)
 	text:SetText(format("%.2f%%", GetBlockChance()))
+end
+
+function BCS:SetSpellHaste(statFrame)
+	local frame = statFrame
+	local text = getglobal(statFrame:GetName() .. "StatText")
+	local label = getglobal(statFrame:GetName() .. "Label")
+
+	label:SetText(L.SPELL_HASTE_COLON)
+	text:SetText(format("%.2f%%", BCS:GetSpellHaste()))
 end
 
 function BCS:SetSpellPen(statFrame)
@@ -1060,6 +1069,7 @@ function BCS:UpdatePaperdollStats(prefix, index)
 	local stat4 = getglobal(prefix..4)
 	local stat5 = getglobal(prefix..5)
 	local stat6 = getglobal(prefix..6)
+	local stat7 = getglobal(prefix..7)
 
 	stat1:SetScript("OnEnter", nil)
 	stat2:SetScript("OnEnter", nil)
@@ -1068,7 +1078,8 @@ function BCS:UpdatePaperdollStats(prefix, index)
 	stat4:SetScript("OnEnter", nil)
 	stat5:SetScript("OnEnter", nil)
 	stat6:SetScript("OnEnter", nil)
-	
+	stat7:SetScript("OnEnter", nil)
+
 	stat1.tooltip = nil
 	stat2.tooltip = nil
 	stat3.tooltip = nil
@@ -1076,7 +1087,8 @@ function BCS:UpdatePaperdollStats(prefix, index)
 	stat4.tooltip = nil
 	stat5.tooltip = nil
 	stat6.tooltip = nil
-	
+	stat7.tooltip = nil
+
 	stat1.tooltipSubtext = nil
 	stat2.tooltipSubtext = nil
 	stat3.tooltipSubtext = nil
@@ -1084,10 +1096,12 @@ function BCS:UpdatePaperdollStats(prefix, index)
 	stat4.tooltipSubtext = nil
 	stat5.tooltipSubtext = nil
 	stat6.tooltipSubtext = nil
+	stat7.tooltipSubtext = nil
 
 	stat4:Show()
 	stat5:Show()
 	stat6:Show()
+	stat7:Show()
 
 	if ( index == "PLAYERSTAT_BASE_STATS" ) then
 		BCS:SetStat(stat1, 1)
@@ -1096,6 +1110,7 @@ function BCS:UpdatePaperdollStats(prefix, index)
 		BCS:SetStat(stat4, 4)
 		BCS:SetStat(stat5, 5)
 		BCS:SetArmor(stat6)
+		stat7:Hide()
 	elseif ( index == "PLAYERSTAT_MELEE_COMBAT" ) then
 		BCS:SetDamage(stat1)
 		BCS:SetAttackSpeed(stat2)
@@ -1103,6 +1118,7 @@ function BCS:UpdatePaperdollStats(prefix, index)
 		BCS:SetRating(stat4, "MELEE")
 		BCS:SetMeleeCritChance(stat5)
 		stat6:Hide()
+		stat7:Hide()
 	elseif ( index == "PLAYERSTAT_RANGED_COMBAT" ) then
 		BCS:SetRangedDamage(stat1)
 		BCS:SetRangedAttackSpeed(stat2)
@@ -1110,6 +1126,7 @@ function BCS:UpdatePaperdollStats(prefix, index)
 		BCS:SetRating(stat4, "RANGED")
 		BCS:SetRangedCritChance(stat5)
 		stat6:Hide()
+		stat7:Hide()
 	elseif ( index == "PLAYERSTAT_SPELL_COMBAT" ) then
 		BCS:SetSpellPower(stat1)
 		BCS:SetHealing(stat2)
@@ -1117,6 +1134,7 @@ function BCS:UpdatePaperdollStats(prefix, index)
 		BCS:SetSpellCritChance(stat4)
 		BCS:SetManaRegen(stat5)
 		BCS:SetSpellPen(stat6)
+		BCS:SetSpellHaste(stat7)
 	elseif ( index == "PLAYERSTAT_DEFENSES" ) then
 		BCS:SetArmor(stat1)
 		BCS:SetDefense(stat2)
@@ -1124,6 +1142,7 @@ function BCS:UpdatePaperdollStats(prefix, index)
 		BCS:SetParry(stat4)
 		BCS:SetBlock(stat5)
 		stat6:Hide()
+		stat7:Hide()
 	end
 end
 

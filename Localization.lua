@@ -22,6 +22,10 @@ BCS["L"] = {
 	["%+(%d+) All Stats"] = "%+(%d+) All Stats",
 	["All Stats %+(%d+)"] = "All Stats %+(%d+)",
 	["by up to (%d+)%% of your current Health"] = "by up to (%d+)%% of your current Health",
+	["Increases your attack and casting speed by (%d+)%%."] = "Increases your attack and casting speed by (%d+)%%.",
+	["Increases your casting speed by (%d+)%%."] = "Increases your casting speed by (%d+)%%.",
+	["Increases the casting speed by (%d+)%%."] = "Increases the casting speed by (%d+)%%.",
+	["Increases the casting speed by %[([%d/]+)%]%%."] = "Increases the casting speed by %[([%d/]+)%]%%.",
 
 	-- Hit
 	["Equip: Improves your chance to hit by (%d)%%."] = "Equip: Improves your chance to hit by (%d)%%.",
@@ -229,6 +233,7 @@ BCS["L"] = {
 	HEAL_POWER_COLON = "Bonus Healing:",
 	MANA_REGEN_COLON = "Mana Regen:",
 	SPELL_PEN_COLON = "Spell Pen:",
+	SPELL_HASTE_COLON = "Haste:",
 	
 	SPELL_SCHOOL_ARCANE = "Arcane",
 	SPELL_SCHOOL_FIRE = "Fire",

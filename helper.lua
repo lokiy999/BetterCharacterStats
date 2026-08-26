@@ -2176,6 +2176,122 @@ function BCS:GetResilienceChance()
 	return resilience
 end
 
+-- Some talents show all ranks at once as "[4/8/12/16/20]%" instead of a single
+-- resolved number. Given that bracket list and a rank (1-based), returns the
+-- value for that rank.
+local function GetBracketedRankValue(bracketList, rank)
+	local values = {}
+	local pos = 1
+	while true do
+		local s, e, v = strfind(bracketList, "(%d+)", pos)
+		if not s then break end
+		tinsert(values, tonumber(v))
+		pos = e + 1
+	end
+	return values[rank]
+end
+
+-- Spell Haste isn't exposed via any API on this client (no combat ratings), so
+-- like Resilience it's scanned from item/talent tooltip text. Confirmed wording:
+-- items: "Equip: Increases your attack and casting speed by X%."
+-- talents: "Increases your casting speed by X%." (e.g. "Improved Memory"), or
+-- "Increases the casting speed by [4/8/12/16/20]%." for talents that show all
+-- ranks at once (pick the value matching the talent's actual invested rank).
+function BCS:GetSpellHaste()
+	local haste = 0
+
+	local MAX_INVENTORY_SLOTS = 19
+	for slot = 0, MAX_INVENTORY_SLOTS do
+		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
+		if hasItem then
+			for line = 1, BCS_Tooltip:NumLines() do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				if left and left:GetText() then
+					local text = left:GetText()
+					local _, _, value = strfind(text, L["Increases your attack and casting speed by (%d+)%%."])
+					if value then
+						haste = haste + tonumber(value)
+					end
+				end
+			end
+		end
+	end
+
+	-- scan talents
+	local MAX_TABS = GetNumTalentTabs()
+	for tab = 1, MAX_TABS do
+		local MAX_TALENTS = GetNumTalents(tab)
+		for talent = 1, MAX_TALENTS do
+			local name, iconTexture, tier, column, rank = GetTalentInfo(tab, talent)
+			if rank and rank > 0 then
+				BCS_Tooltip:SetTalent(tab, talent)
+				for line = 1, BCS_Tooltip:NumLines() do
+					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+					if left and left:GetText() then
+						local text = left:GetText()
+						local _, _, value = strfind(text, L["Increases your casting speed by (%d+)%%."])
+						if not value then
+							_, _, value = strfind(text, L["Increases the casting speed by (%d+)%%."])
+						end
+						if not value then
+							local _, _, bracketList = strfind(text, L["Increases the casting speed by %[([%d/]+)%]%%."])
+							if bracketList then
+								value = GetBracketedRankValue(bracketList, rank)
+							end
+						end
+						if value then
+							haste = haste + tonumber(value)
+						end
+					end
+				end
+			end
+		end
+	end
+
+	-- scan buffs
+	local _, _, hasteFromAura = BCS:GetPlayerAura("casting speed by (%d+)%%")
+	if hasteFromAura then
+		haste = haste + tonumber(hasteFromAura)
+	end
+
+	return haste
+end
+
+-- Temporary debug helper: prints every gear/talent tooltip line mentioning
+-- "Haste" so the real pattern can be confirmed and GetSpellHaste adjusted.
+-- Usage: /script BCS:DebugSpellHaste()
+function BCS:DebugSpellHaste()
+	local MAX_INVENTORY_SLOTS = 19
+	for slot = 0, MAX_INVENTORY_SLOTS do
+		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
+		if hasItem then
+			for line = 1, BCS_Tooltip:NumLines() do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				if left and left:GetText() and strfind(left:GetText(), "Haste") then
+					BCS:Print("item slot "..slot..": \""..left:GetText().."\"")
+				end
+			end
+		end
+	end
+
+	local MAX_TABS = GetNumTalentTabs()
+	for tab = 1, MAX_TABS do
+		local MAX_TALENTS = GetNumTalents(tab)
+		for talent = 1, MAX_TALENTS do
+			local name, iconTexture, tier, column, rank = GetTalentInfo(tab, talent)
+			if rank and rank > 0 then
+				BCS_Tooltip:SetTalent(tab, talent)
+				for line = 1, BCS_Tooltip:NumLines() do
+					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+					if left and left:GetText() and strfind(left:GetText(), "Haste") then
+						BCS:Print("talent tab "..tab.." #"..talent..": \""..left:GetText().."\"")
+					end
+				end
+			end
+		end
+	end
+end
+
 function BCS:GetSpellPen()
 	local spellPen = 0;
 	
