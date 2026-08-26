@@ -1,14 +1,18 @@
 # Before merging `Overhaul` into master
 
-- Remove `BCS:DebugGearStatBonus` from `helper.lua` (temporary debug helper added
-  while diagnosing the set-bonus double-counting issue in `BCS:GetGearStatBonus`).
-  Usage was: `/script BCS:DebugGearStatBonus("Stamina")`
-- Remove `BCS:DebugSpellHaste` from `helper.lua` (temporary debug helper used to
-  confirm the real Haste tooltip wording: "Increases your attack and casting
-  speed by X%." on items, "Increases your casting speed by X%." on talents).
-- Remove `BCS:DebugBuffs` from `helper.lua` (temporary debug helper used to
-  confirm Bloodlust's actual buff tooltip wording: "Attack and casting speed
-  increased by X%." -- differs from the items/talents wording above).
+- Remove the "DEBUG HELPERS" block near the top of `helper.lua` (right after
+  `tContains`) before merging. It groups three temporary debug functions:
+  - `BCS:DebugGearStatBonus(statName)` -- used while diagnosing the set-bonus
+    double-counting issue in `BCS:GetGearStatBonus`.
+    Usage: `/script BCS:DebugGearStatBonus("Stamina")`
+  - `BCS:DebugSpellHaste()` -- used to confirm the real Haste tooltip wording
+    ("Increases your attack and casting speed by X%." on items, "Increases
+    your casting speed by X%." on talents).
+    Usage: `/script BCS:DebugSpellHaste()`
+  - `BCS:DebugBuffs()` -- used to confirm Bloodlust's actual buff tooltip
+    wording ("Attack and casting speed increased by X%." -- differs from the
+    items/talents wording above).
+    Usage: `/script BCS:DebugBuffs()`
 
 # Possible future features
 

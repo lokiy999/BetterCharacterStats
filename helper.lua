@@ -23,7 +23,12 @@ local function tContains(table, item)
 	return nil
 end
 
--- Temporary debug helper: prints every line of every active buff's tooltip.
+-- ============================================================
+-- DEBUG HELPERS -- temporary, remove before merging to master.
+-- See TODO_BEFORE_MERGE.md.
+-- ============================================================
+
+-- DEBUG: prints every line of every active buff's tooltip.
 -- Usage: /script BCS:DebugBuffs()
 function BCS:DebugBuffs()
 	for i = 0, 31 do
@@ -40,9 +45,9 @@ function BCS:DebugBuffs()
 	end
 end
 
--- Temporary debug helper: prints every equipped-item tooltip line that matches
--- "+X <StatName>" along with its slot number, so false-positive matches can be
--- traced back to a specific item.
+-- DEBUG: prints every equipped-item tooltip line that matches "+X <StatName>"
+-- along with its slot number, so false-positive matches can be traced back
+-- to a specific item. Usage: /script BCS:DebugGearStatBonus("Stamina")
 function BCS:DebugGearStatBonus(statName)
 	local MAX_INVENTORY_SLOTS = 19
 	for slot = 0, MAX_INVENTORY_SLOTS do
@@ -81,6 +86,45 @@ function BCS:DebugGearStatBonus(statName)
 		end
 	end
 end
+
+-- DEBUG: prints every gear/talent tooltip line mentioning "Haste" so the real
+-- pattern can be confirmed and GetSpellHaste adjusted.
+-- Usage: /script BCS:DebugSpellHaste()
+function BCS:DebugSpellHaste()
+	local MAX_INVENTORY_SLOTS = 19
+	for slot = 0, MAX_INVENTORY_SLOTS do
+		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
+		if hasItem then
+			for line = 1, BCS_Tooltip:NumLines() do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				if left and left:GetText() and strfind(left:GetText(), "Haste") then
+					BCS:Print("item slot "..slot..": \""..left:GetText().."\"")
+				end
+			end
+		end
+	end
+
+	local MAX_TABS = GetNumTalentTabs()
+	for tab = 1, MAX_TABS do
+		local MAX_TALENTS = GetNumTalents(tab)
+		for talent = 1, MAX_TALENTS do
+			local name, iconTexture, tier, column, rank = GetTalentInfo(tab, talent)
+			if rank and rank > 0 then
+				BCS_Tooltip:SetTalent(tab, talent)
+				for line = 1, BCS_Tooltip:NumLines() do
+					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+					if left and left:GetText() and strfind(left:GetText(), "Haste") then
+						BCS:Print("talent tab "..tab.." #"..talent..": \""..left:GetText().."\"")
+					end
+				end
+			end
+		end
+	end
+end
+
+-- ============================================================
+-- END DEBUG HELPERS
+-- ============================================================
 
 -- Scans all equipped items (including permanent enchants, since they render as
 -- plain "+X <Stat>" lines in the item tooltip alongside the item's own stats)
@@ -2680,41 +2724,6 @@ function BCS:GetSpellHaste()
 	end
 
 	return haste
-end
-
--- Temporary debug helper: prints every gear/talent tooltip line mentioning
--- "Haste" so the real pattern can be confirmed and GetSpellHaste adjusted.
--- Usage: /script BCS:DebugSpellHaste()
-function BCS:DebugSpellHaste()
-	local MAX_INVENTORY_SLOTS = 19
-	for slot = 0, MAX_INVENTORY_SLOTS do
-		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
-		if hasItem then
-			for line = 1, BCS_Tooltip:NumLines() do
-				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
-				if left and left:GetText() and strfind(left:GetText(), "Haste") then
-					BCS:Print("item slot "..slot..": \""..left:GetText().."\"")
-				end
-			end
-		end
-	end
-
-	local MAX_TABS = GetNumTalentTabs()
-	for tab = 1, MAX_TABS do
-		local MAX_TALENTS = GetNumTalents(tab)
-		for talent = 1, MAX_TALENTS do
-			local name, iconTexture, tier, column, rank = GetTalentInfo(tab, talent)
-			if rank and rank > 0 then
-				BCS_Tooltip:SetTalent(tab, talent)
-				for line = 1, BCS_Tooltip:NumLines() do
-					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
-					if left and left:GetText() and strfind(left:GetText(), "Haste") then
-						BCS:Print("talent tab "..tab.." #"..talent..": \""..left:GetText().."\"")
-					end
-				end
-			end
-		end
-	end
 end
 
 function BCS:GetSpellPen()
