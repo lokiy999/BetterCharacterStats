@@ -823,15 +823,6 @@ function BCS:SetBlock(statFrame)
 	text:SetText(format("%.2f%%", GetBlockChance()))
 end
 
-function BCS:SetResilience(statFrame)
-	local frame = statFrame 
-	local text = getglobal(statFrame:GetName() .. "StatText")
-	local label = getglobal(statFrame:GetName() .. "Label")
-	
-	label:SetText(L.RESILIENCE_COLON)
-	text:SetText(format("%.2f%%", BCS:GetResilienceChance()))
-end
-
 function BCS:SetSpellPen(statFrame)
 	local frame = statFrame 
 	local text = getglobal(statFrame:GetName() .. "StatText")
@@ -841,23 +832,42 @@ function BCS:SetSpellPen(statFrame)
 	text:SetText(BCS:GetSpellPen())
 end
 
+-- Resilience converts directly to Defense in this ruleset: 1 Resilience = 12.5 Defense.
+local RESILIENCE_TO_DEFENSE = 12.5
+
 function BCS:SetDefense(statFrame)
 	local base, modifier = UnitDefense("player")
 
 	local frame = statFrame
 	local label = getglobal(statFrame:GetName() .. "Label")
 	local text = getglobal(statFrame:GetName() .. "StatText")
-	
+
 	label:SetText(TEXT(DEFENSE_COLON))
-	
-	local posBuff = 0
+
+	local resilience = BCS:GetResilienceChance()
+	local resilienceDefense = resilience * RESILIENCE_TO_DEFENSE
+	-- Round down only for the displayed Defense number; the tooltip below keeps full precision.
+	local resilienceDefenseRounded = floor(resilienceDefense)
+
+	local posBuff = resilienceDefenseRounded
 	local negBuff = 0
 	if ( modifier > 0 ) then
-		posBuff = modifier
+		posBuff = posBuff + modifier
 	elseif ( modifier < 0 ) then
 		negBuff = modifier
 	end
 	PaperDollFormatStat(DEFENSE_COLON, base, posBuff, negBuff, frame, text)
+
+	frame.tooltipSubtext = format("Resilience: %.2f%% (+%.1f Defense)", resilience, resilienceDefense)
+	frame:SetScript("OnEnter", function()
+		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+		GameTooltip:SetText(this.tooltip)
+		GameTooltip:AddLine(this.tooltipSubtext, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
+		GameTooltip:Show()
+	end)
+	frame:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
 end
 
 function BCS:SetRangedDamage(statFrame)
@@ -1101,7 +1111,7 @@ function BCS:UpdatePaperdollStats(prefix, index)
 		BCS:SetDodge(stat3)
 		BCS:SetParry(stat4)
 		BCS:SetBlock(stat5)
-		BCS:SetResilience(stat6)
+		stat6:Hide()
 	end
 end
 

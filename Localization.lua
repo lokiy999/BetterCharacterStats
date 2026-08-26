@@ -220,8 +220,7 @@ BCS["L"] = {
 	DODGE_COLON = DODGE .. ":",
 	PARRY_COLON = PARRY .. ":",
 	BLOCK_COLON = BLOCK .. ":",
-	RESILIENCE_COLON = "Resilience:",
-	
+
 	
 	SPELL_POWER_COLON = "Bonus Damage:",
 	HEAL_POWER_COLON = "Bonus Healing:",
