@@ -166,39 +166,71 @@ function BCS:SetStat(statFrame, statIndex)
 		"INTELLECT",
 		"SPIRIT",
 	}
-	
+	-- Tooltip words used by item/enchant lines (e.g. "+15 Stamina"), used to
+	-- split gear/enchant bonuses out of the generic UnitStat buff total.
+	local statNameTable = {
+		L["Strength"],
+		L["Agility"],
+		L["Stamina"],
+		L["Intellect"],
+		L["Spirit"],
+	}
+
 	statFrame:SetScript("OnEnter", function()
-		PaperDollStatTooltip("player", statIndexTable[statIndex])
+		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+		GameTooltip:SetText(this.tooltip)
+		if this.tooltipLines then
+			for i = 1, getn(this.tooltipLines) do
+				GameTooltip:AddLine(this.tooltipLines[i])
+			end
+		end
+		GameTooltip:Show()
 	end)
-	
+
 	statFrame:SetScript("OnLeave", function()
 		GameTooltip:Hide()
 	end)
-	
+
 	label:SetText(TEXT(getglobal("SPELL_STAT"..(statIndex-1).."_NAME"))..":")
 	stat, effectiveStat, posBuff, negBuff = UnitStat("player", statIndex)
-	
-	-- Set the tooltip text
-	local tooltipText = HIGHLIGHT_FONT_COLOR_CODE..getglobal("SPELL_STAT"..(statIndex-1).."_NAME").." "
+
+	local statLabel = getglobal("SPELL_STAT"..(statIndex-1).."_NAME")
 
 	if ( ( posBuff == 0 ) and ( negBuff == 0 ) ) then
 		text:SetText(effectiveStat)
-		statFrame.tooltip = tooltipText..effectiveStat..FONT_COLOR_CODE_CLOSE
-	else 
-		tooltipText = tooltipText..effectiveStat
-		if ( posBuff > 0 or negBuff < 0 ) then
-			tooltipText = tooltipText.." ("..(stat - posBuff - negBuff)..FONT_COLOR_CODE_CLOSE
+		statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..statLabel.." "..effectiveStat..FONT_COLOR_CODE_CLOSE
+		statFrame.tooltipLines = nil
+	else
+		-- Split the combined "posBuff" total into gear/enchant, talent, and
+		-- temporary-buff portions by scanning items and talents for flat bonuses.
+		local gearBonus = BCS:GetGearStatBonus(statNameTable[statIndex])
+		if ( gearBonus > posBuff ) then
+			gearBonus = posBuff -- clamp in case of an unexpected tooltip match
 		end
-		if ( posBuff > 0 ) then
-			tooltipText = tooltipText..FONT_COLOR_CODE_CLOSE..GREEN_FONT_COLOR_CODE.."+"..posBuff..FONT_COLOR_CODE_CLOSE
+		local talentBonus = BCS:GetTalentStatBonus(statNameTable[statIndex], statIndex)
+		if ( talentBonus > posBuff - gearBonus ) then
+			talentBonus = posBuff - gearBonus -- clamp in case of an unexpected tooltip match
+		end
+		local tempBuff = posBuff - gearBonus - talentBonus
+		local trueBase = stat - posBuff - negBuff
+
+		statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..statLabel.." "..effectiveStat..FONT_COLOR_CODE_CLOSE
+
+		local lines = {}
+		tinsert(lines, "Base: "..trueBase)
+		if ( gearBonus > 0 ) then
+			tinsert(lines, "|cffffff00Gear/Enchant: +"..gearBonus..FONT_COLOR_CODE_CLOSE)
+		end
+		if ( talentBonus > 0 ) then
+			tinsert(lines, "|cff00ccffTalent: +"..talentBonus..FONT_COLOR_CODE_CLOSE)
+		end
+		if ( tempBuff > 0 ) then
+			tinsert(lines, GREEN_FONT_COLOR_CODE.."Buff: +"..tempBuff..FONT_COLOR_CODE_CLOSE)
 		end
 		if ( negBuff < 0 ) then
-			tooltipText = tooltipText..RED_FONT_COLOR_CODE.." "..negBuff..FONT_COLOR_CODE_CLOSE
+			tinsert(lines, RED_FONT_COLOR_CODE.."Debuff: "..negBuff..FONT_COLOR_CODE_CLOSE)
 		end
-		if ( posBuff > 0 or negBuff < 0 ) then
-			tooltipText = tooltipText..HIGHLIGHT_FONT_COLOR_CODE..")"..FONT_COLOR_CODE_CLOSE
-		end
-		statFrame.tooltip = tooltipText
+		statFrame.tooltipLines = lines
 
 		-- If there are any negative buffs then show the main number in red even if there are
 		-- positive buffs. Otherwise show in green.
@@ -235,7 +267,7 @@ function BCS:SetArmor(statFrame)
 	frame:SetScript("OnLeave", function()
 		GameTooltip:Hide()
 	end)
-	
+
 end
 
 function BCS:SetDamage(statFrame)
@@ -413,7 +445,11 @@ function BCS:SetSpellPower(statFrame, school)
 		text:SetText(power);
 		
 		frame.tooltip = format(L["SPELL_POWER_TOOLTIP_HEADER"], power)
-		
+
+		local damagePercent = BCS:GetHolyPowerTalentModifiers()
+		local moonkinAuraPercent = BCS:GetMoonkinAuraBonus()
+		local frostDamagePercent = BCS:GetFrostDamageTalentBonus()
+
 		frame:SetScript("OnEnter", function()
 			GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 			GameTooltip:SetText(this.tooltip)
@@ -421,6 +457,15 @@ function BCS:SetSpellPower(statFrame, school)
 				if (v > 0) then
 					GameTooltip:AddDoubleLine(k, v)
 				end
+			end
+			if damagePercent ~= 0 then
+				GameTooltip:AddLine(format("Holy Damage (Talent): %+d%%", damagePercent), 1, 1, 1)
+			end
+			if moonkinAuraPercent ~= 0 then
+				GameTooltip:AddLine(format("Damage (Moonkin Aura): +%d%%", moonkinAuraPercent), 1, 1, 1)
+			end
+			if frostDamagePercent ~= 0 then
+				GameTooltip:AddLine(format("Frost Damage (Talent): +%d%%", frostDamagePercent), 1, 1, 1)
 			end
 			GameTooltip:Show()
 		end)
@@ -615,11 +660,20 @@ function BCS:SetHealing(statFrame)
 	
 	frame.tooltip = format(L["SPELL_HEALING_POWER_TOOLTIP_HEADER"], healingPower);
 	frame.tooltipSubtext = format(L.SPELL_HEALING_POWER_TOOLTIP, healingPower, healingPower);
-	
+
+	local _, healPercent = BCS:GetHolyPowerTalentModifiers()
+	local moonkinAuraPercent = BCS:GetMoonkinAuraBonus()
+
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 		GameTooltip:SetText(this.tooltip)
 		GameTooltip:AddLine(this.tooltipSubtext)
+		if healPercent ~= 0 then
+			GameTooltip:AddLine(format("Healing (Talent): %+d%%", healPercent), 1, 1, 1)
+		end
+		if moonkinAuraPercent ~= 0 then
+			GameTooltip:AddLine(format("Healing (Moonkin Aura): +%d%%", moonkinAuraPercent), 1, 1, 1)
+		end
 		GameTooltip:Show()
 	end)
 	frame:SetScript("OnLeave", function()
@@ -635,10 +689,12 @@ function BCS:SetManaRegen(statFrame)
 	
 	label:SetText(L.MANA_REGEN_COLON)
 	
-	powerType, powerTypeString = UnitPowerType("player");
-
-	-- NEW CODE CHANGED BY Lokiy on 10/09/22
-	if powerType > 0 then
+	-- Only Warriors and Rogues have no mana pool at all. Other classes (notably
+	-- Druids) keep their mana pool while shapeshifted even though UnitPowerType
+	-- reports the form's resource (Rage/Energy) as currently active, so check
+	-- the class instead of the active power type.
+	local _, playerClass = UnitClass("player")
+	if playerClass == "WARRIOR" or playerClass == "ROGUE" then
 		text:SetText(NOT_APPLICABLE);
 		frame.tooltip = nil;
 		return
@@ -774,6 +830,32 @@ function BCS:SetManaRegen(statFrame)
 	end)
 end
 
+function BCS:SetMoveSpeed(statFrame)
+	local frame = statFrame
+	local text = getglobal(statFrame:GetName() .. "StatText")
+	local label = getglobal(statFrame:GetName() .. "Label")
+
+	label:SetText(L.MOVE_SPEED_COLON)
+
+	local runSpeed, mountSpeedBonus, mountedTotal = BCS:GetMovementSpeedBonus()
+	text:SetText(format("%d%%", runSpeed))
+
+	frame:SetScript("OnEnter", function()
+		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+		GameTooltip:SetText("Movement Speed")
+		GameTooltip:AddLine(format("Walking/Running: %d%%", runSpeed), 1, 1, 1)
+		if mountedTotal then
+			GameTooltip:AddLine(format("Mounted: %d%% (+%d%% bonus)", mountedTotal, mountSpeedBonus), 1, 1, 1)
+		else
+			GameTooltip:AddLine(format("Mounted Bonus: +%d%%", mountSpeedBonus), 1, 1, 1)
+		end
+		GameTooltip:Show()
+	end)
+	frame:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
+end
+
 function BCS:SetDodge(statFrame)
 	local frame = statFrame 
 	local text = getglobal(statFrame:GetName() .. "StatText")
@@ -793,21 +875,31 @@ function BCS:SetParry(statFrame)
 end
 
 function BCS:SetBlock(statFrame)
-	local frame = statFrame 
+	local frame = statFrame
 	local text = getglobal(statFrame:GetName() .. "StatText")
 	local label = getglobal(statFrame:GetName() .. "Label")
-	
+
 	label:SetText(L.BLOCK_COLON)
 	text:SetText(format("%.2f%%", GetBlockChance()))
+
+	frame.tooltip = format("Block Value: %d", BCS:GetBlockValue())
+	frame:SetScript("OnEnter", function()
+		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+		GameTooltip:SetText(this.tooltip)
+		GameTooltip:Show()
+	end)
+	frame:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
 end
 
-function BCS:SetResilience(statFrame)
-	local frame = statFrame 
+function BCS:SetSpellHaste(statFrame)
+	local frame = statFrame
 	local text = getglobal(statFrame:GetName() .. "StatText")
 	local label = getglobal(statFrame:GetName() .. "Label")
-	
-	label:SetText(L.RESILIENCE_COLON)
-	text:SetText(format("%.2f%%", BCS:GetResilienceChance()))
+
+	label:SetText(L.SPELL_HASTE_COLON)
+	text:SetText(format("%.2f%%", BCS:GetSpellHaste()))
 end
 
 function BCS:SetSpellPen(statFrame)
@@ -819,23 +911,42 @@ function BCS:SetSpellPen(statFrame)
 	text:SetText(BCS:GetSpellPen())
 end
 
+-- Resilience converts directly to Defense in this ruleset: 1 Resilience = 12.5 Defense.
+local RESILIENCE_TO_DEFENSE = 12.5
+
 function BCS:SetDefense(statFrame)
 	local base, modifier = UnitDefense("player")
 
 	local frame = statFrame
 	local label = getglobal(statFrame:GetName() .. "Label")
 	local text = getglobal(statFrame:GetName() .. "StatText")
-	
+
 	label:SetText(TEXT(DEFENSE_COLON))
-	
-	local posBuff = 0
+
+	local resilience = BCS:GetResilienceChance()
+	local resilienceDefense = resilience * RESILIENCE_TO_DEFENSE
+	-- Round down only for the displayed Defense number; the tooltip below keeps full precision.
+	local resilienceDefenseRounded = floor(resilienceDefense)
+
+	local posBuff = resilienceDefenseRounded
 	local negBuff = 0
 	if ( modifier > 0 ) then
-		posBuff = modifier
+		posBuff = posBuff + modifier
 	elseif ( modifier < 0 ) then
 		negBuff = modifier
 	end
 	PaperDollFormatStat(DEFENSE_COLON, base, posBuff, negBuff, frame, text)
+
+	frame.tooltipSubtext = format("Resilience: %.2f%% (+%.1f Defense)", resilience, resilienceDefense)
+	frame:SetScript("OnEnter", function()
+		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+		GameTooltip:SetText(this.tooltip)
+		GameTooltip:AddLine(this.tooltipSubtext, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
+		GameTooltip:Show()
+	end)
+	frame:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
 end
 
 function BCS:SetRangedDamage(statFrame)
@@ -1016,6 +1127,7 @@ function BCS:UpdatePaperdollStats(prefix, index)
 	local stat4 = getglobal(prefix..4)
 	local stat5 = getglobal(prefix..5)
 	local stat6 = getglobal(prefix..6)
+	local stat7 = getglobal(prefix..7)
 
 	stat1:SetScript("OnEnter", nil)
 	stat2:SetScript("OnEnter", nil)
@@ -1024,7 +1136,8 @@ function BCS:UpdatePaperdollStats(prefix, index)
 	stat4:SetScript("OnEnter", nil)
 	stat5:SetScript("OnEnter", nil)
 	stat6:SetScript("OnEnter", nil)
-	
+	stat7:SetScript("OnEnter", nil)
+
 	stat1.tooltip = nil
 	stat2.tooltip = nil
 	stat3.tooltip = nil
@@ -1032,7 +1145,8 @@ function BCS:UpdatePaperdollStats(prefix, index)
 	stat4.tooltip = nil
 	stat5.tooltip = nil
 	stat6.tooltip = nil
-	
+	stat7.tooltip = nil
+
 	stat1.tooltipSubtext = nil
 	stat2.tooltipSubtext = nil
 	stat3.tooltipSubtext = nil
@@ -1040,10 +1154,12 @@ function BCS:UpdatePaperdollStats(prefix, index)
 	stat4.tooltipSubtext = nil
 	stat5.tooltipSubtext = nil
 	stat6.tooltipSubtext = nil
+	stat7.tooltipSubtext = nil
 
 	stat4:Show()
 	stat5:Show()
 	stat6:Show()
+	stat7:Show()
 
 	if ( index == "PLAYERSTAT_BASE_STATS" ) then
 		BCS:SetStat(stat1, 1)
@@ -1052,6 +1168,7 @@ function BCS:UpdatePaperdollStats(prefix, index)
 		BCS:SetStat(stat4, 4)
 		BCS:SetStat(stat5, 5)
 		BCS:SetArmor(stat6)
+		BCS:SetMoveSpeed(stat7)
 	elseif ( index == "PLAYERSTAT_MELEE_COMBAT" ) then
 		BCS:SetDamage(stat1)
 		BCS:SetAttackSpeed(stat2)
@@ -1059,6 +1176,7 @@ function BCS:UpdatePaperdollStats(prefix, index)
 		BCS:SetRating(stat4, "MELEE")
 		BCS:SetMeleeCritChance(stat5)
 		stat6:Hide()
+		stat7:Hide()
 	elseif ( index == "PLAYERSTAT_RANGED_COMBAT" ) then
 		BCS:SetRangedDamage(stat1)
 		BCS:SetRangedAttackSpeed(stat2)
@@ -1066,6 +1184,7 @@ function BCS:UpdatePaperdollStats(prefix, index)
 		BCS:SetRating(stat4, "RANGED")
 		BCS:SetRangedCritChance(stat5)
 		stat6:Hide()
+		stat7:Hide()
 	elseif ( index == "PLAYERSTAT_SPELL_COMBAT" ) then
 		BCS:SetSpellPower(stat1)
 		BCS:SetHealing(stat2)
@@ -1073,13 +1192,15 @@ function BCS:UpdatePaperdollStats(prefix, index)
 		BCS:SetSpellCritChance(stat4)
 		BCS:SetManaRegen(stat5)
 		BCS:SetSpellPen(stat6)
+		BCS:SetSpellHaste(stat7)
 	elseif ( index == "PLAYERSTAT_DEFENSES" ) then
 		BCS:SetArmor(stat1)
 		BCS:SetDefense(stat2)
 		BCS:SetDodge(stat3)
 		BCS:SetParry(stat4)
 		BCS:SetBlock(stat5)
-		BCS:SetResilience(stat6)
+		stat6:Hide()
+		stat7:Hide()
 	end
 end
 
