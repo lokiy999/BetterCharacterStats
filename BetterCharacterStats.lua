@@ -166,14 +166,14 @@ function BCS:SetStat(statFrame, statIndex)
 		"INTELLECT",
 		"SPIRIT",
 	}
-	-- English tooltip words used by item/enchant lines (e.g. "+15 Stamina"),
-	-- used to split gear/enchant bonuses out of the generic UnitStat buff total.
+	-- Tooltip words used by item/enchant lines (e.g. "+15 Stamina"), used to
+	-- split gear/enchant bonuses out of the generic UnitStat buff total.
 	local statNameTable = {
-		"Strength",
-		"Agility",
-		"Stamina",
-		"Intellect",
-		"Spirit",
+		L["Strength"],
+		L["Agility"],
+		L["Stamina"],
+		L["Intellect"],
+		L["Spirit"],
 	}
 
 	statFrame:SetScript("OnEnter", function()

@@ -42,13 +42,13 @@ function BCS:DebugGearStatBonus(statName)
 						setName = name
 					end
 
-					if strfind(text, statName) or strfind(text, "to all [Aa]ttributes") then
+					if strfind(text, statName) or strfind(text, L["%+(%d+) to all attributes"]) then
 						local _, _, value = strfind(text, "%+(%d+) " .. statName)
 						if not value then
 							_, _, value = strfind(text, statName .. " %+(%d+)")
 						end
 						if not value then
-							_, _, value = strfind(text, "%+(%d+) to all [Aa]ttributes")
+							_, _, value = strfind(text, L["%+(%d+) to all attributes"])
 						end
 						local r, g, b = left:GetTextColor()
 						BCS:Print("slot "..slot..": \""..text.."\" match=".. tostring(value) .." color=("..r..","..g..","..b..") setName=".. tostring(setName))
@@ -89,7 +89,7 @@ function BCS:GetGearStatBonus(statName)
 						_, _, value = strfind(text, statName .. " %+(%d+)")
 					end
 					if not value then
-						_, _, value = strfind(text, "%+(%d+) to all [Aa]ttributes")
+						_, _, value = strfind(text, L["%+(%d+) to all attributes"])
 					end
 					if value then
 						-- Blizzard repeats the same "Set: +X <Stat>" bonus line on every

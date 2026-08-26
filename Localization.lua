@@ -12,6 +12,14 @@ BCS["L"] = {
 	["^Set: Improves your critical strike chance for all attacks and spells by (%d)%%."] = "^Set: Improves your critical strike chance for all attacks and spells by (%d)%%.",
 	["^Set: Decreases the magical resistances of your spell targets by (%d+)."] = "^Set: Decreases the magical resistances of your spell targets by (%d+).",
 
+	-- Base Stats (Gear/Enchant breakdown)
+	["Strength"] = "Strength",
+	["Agility"] = "Agility",
+	["Stamina"] = "Stamina",
+	["Intellect"] = "Intellect",
+	["Spirit"] = "Spirit",
+	["%+(%d+) to all attributes"] = "%+(%d+) to all attributes",
+
 	-- Hit
 	["Equip: Improves your chance to hit by (%d)%%."] = "Equip: Improves your chance to hit by (%d)%%.",
 	["Equip: Improves your chance to hit with spells by (%d)%%."] = "Equip: Improves your chance to hit with spells by (%d)%%.",
