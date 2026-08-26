@@ -23,6 +23,23 @@ local function tContains(table, item)
 	return nil
 end
 
+-- Temporary debug helper: prints every line of every active buff's tooltip.
+-- Usage: /script BCS:DebugBuffs()
+function BCS:DebugBuffs()
+	for i = 0, 31 do
+		local index = GetPlayerBuff(i, 'HELPFUL')
+		if index > -1 then
+			BCS_Tooltip:SetPlayerBuff(index)
+			for line = 1, BCS_Tooltip:NumLines() do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				if left and left:GetText() then
+					BCS:Print("buff "..i.." line "..line..": \""..left:GetText().."\"")
+				end
+			end
+		end
+	end
+end
+
 -- Temporary debug helper: prints every equipped-item tooltip line that matches
 -- "+X <StatName>" along with its slot number, so false-positive matches can be
 -- traced back to a specific item.
@@ -187,15 +204,18 @@ function BCS:GetPlayerAura(searchText, auraType)
 			if index > -1 then
 				BCS_Tooltip:SetPlayerBuff(index)
 				local MAX_LINES = BCS_Tooltip:NumLines()
-					
+				-- Join all lines before matching, since a sentence can wrap
+				-- across multiple tooltip lines and split the search text apart.
+				local fullText = ""
 				for line=1, MAX_LINES do
 					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
 					if left:GetText() then
-						local value = {strfind(left:GetText(), searchText)}
-						if value[1] then
-							return unpack(value)
-						end
+						fullText = fullText .. " " .. left:GetText()
 					end
+				end
+				local value = {strfind(fullText, searchText)}
+				if value[1] then
+					return unpack(value)
 				end
 			end
 		end
@@ -205,15 +225,16 @@ function BCS:GetPlayerAura(searchText, auraType)
 			if index > -1 then
 				BCS_Tooltip:SetPlayerBuff(index)
 				local MAX_LINES = BCS_Tooltip:NumLines()
-					
+				local fullText = ""
 				for line=1, MAX_LINES do
 					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
 					if left:GetText() then
-						local value = {strfind(left:GetText(), searchText)}
-						if value[1] then
-							return unpack(value)
-						end
+						fullText = fullText .. " " .. left:GetText()
 					end
+				end
+				local value = {strfind(fullText, searchText)}
+				if value[1] then
+					return unpack(value)
 				end
 			end
 		end
@@ -661,6 +682,11 @@ function BCS:GetSpellHitRating()
 	local _, _, hitFromAura = BCS:GetPlayerAura(L["Spell hit chance increased by (%d+)%%."])
 	if hitFromAura then
 		hit = hit + tonumber(hitFromAura)
+	end
+
+	local clearcastingAura = BCS:GetPlayerAura(L["Your next damage spell has its Mana cost and cast time reduced by 100%%."])
+	if clearcastingAura then
+		hit = hit + 10
 	end
 
 	Hit_Schools["Affliction"] = afflictionHit
@@ -2289,12 +2315,19 @@ function BCS:GetSpellHaste()
 
 	-- scan buffs
 	local _, _, hasteFromAura = BCS:GetPlayerAura("casting speed by (%d+)%%")
+	if not hasteFromAura then
+		_, _, hasteFromAura = BCS:GetPlayerAura("casting speed increased by (%d+)%%")
+	end
 	if hasteFromAura then
 		haste = haste + tonumber(hasteFromAura)
 	end
 
 	-- scan spellbook passives (e.g. Night Elf "Quickness" racial:
-	-- "Increases your Agility, movement and casting speed by X%.")
+	-- "Increases your Agility, movement and casting speed by X%."). Only count
+	-- entries actually marked "Passive" -- otherwise an active spell you cast
+	-- on others (e.g. Bloodlust) gets counted permanently just because its own
+	-- spell description mentions "casting speed", regardless of whether its
+	-- buff is actually active on you.
 	local MAX_SPELL_TABS = GetNumSpellTabs()
 	for tab = 1, MAX_SPELL_TABS do
 		local name, texture, offset, numSpells = GetSpellTabInfo(tab)
@@ -2303,14 +2336,23 @@ function BCS:GetSpellHaste()
 			local SpellID = spell + offset + (SPELLS_PER_PAGE * (currentPage - 1))
 
 			BCS_Tooltip:SetSpell(SpellID, BOOKTYPE_SPELL)
+			local isPassive = false
+			local hasteValue = nil
 			for line = 1, BCS_Tooltip:NumLines() do
 				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
 				if left and left:GetText() then
-					local _, _, value = strfind(left:GetText(), "casting speed by (%d+)%%")
+					local text = left:GetText()
+					if text == "Passive" then
+						isPassive = true
+					end
+					local _, _, value = strfind(text, "casting speed by (%d+)%%")
 					if value then
-						haste = haste + tonumber(value)
+						hasteValue = tonumber(value)
 					end
 				end
+			end
+			if isPassive and hasteValue then
+				haste = haste + hasteValue
 			end
 		end
 	end

@@ -172,7 +172,8 @@ BCS["L"] = {
 	["Destruction spell critical hit chance increased by (%d+)%%."] = 								"Destruction spell critical hit chance increased by (%d+)%%.",
 	["Arcane spell critical hit chance increased by (%d+)%%.\r\nArcane spell critical hit damage increased by (%d+)%%."] = "Arcane spell critical hit chance increased by (%d+)%%.\r\nArcane spell critical hit damage increased by (%d+)%%.",
 	["Spell hit chance increased by (%d+)%%."] = 													"Spell hit chance increased by (%d+)%%.",
-	
+	["Your next damage spell has its Mana cost and cast time reduced by 100%%."] = 					"Your next damage spell has its Mana cost and cast time reduced by 100%%.",
+
 	["Increases chance for a melee, ranged, or spell critical by (%d+)%% and all attributes by %d+."] = "Increases chance for a melee, ranged, or spell critical by (%d+)%% and all attributes by %d+.",
 	["Melee critical-hit chance reduced by (%d+)%%.\r\nSpell critical-hit chance reduced by (%d+)%%."] = "Melee critical-hit chance reduced by (%d+)%%.\r\nSpell critical-hit chance reduced by (%d+)%%.",
 	["Increases critical chance of spells by 10%%, melee and ranged by 5%% and grants 140 attack power. 120 minute duration."] = "Increases critical chance of spells by 10%%, melee and ranged by 5%% and grants 140 attack power. 120 minute duration.",

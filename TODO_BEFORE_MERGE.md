@@ -6,3 +6,6 @@
 - Remove `BCS:DebugSpellHaste` from `helper.lua` (temporary debug helper used to
   confirm the real Haste tooltip wording: "Increases your attack and casting
   speed by X%." on items, "Increases your casting speed by X%." on talents).
+- Remove `BCS:DebugBuffs` from `helper.lua` (temporary debug helper used to
+  confirm Bloodlust's actual buff tooltip wording: "Attack and casting speed
+  increased by X%." -- differs from the items/talents wording above).
