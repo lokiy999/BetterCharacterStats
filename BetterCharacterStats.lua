@@ -667,10 +667,12 @@ function BCS:SetManaRegen(statFrame)
 	
 	label:SetText(L.MANA_REGEN_COLON)
 	
-	powerType, powerTypeString = UnitPowerType("player");
-
-	-- NEW CODE CHANGED BY Lokiy on 10/09/22
-	if powerType > 0 then
+	-- Only Warriors and Rogues have no mana pool at all. Other classes (notably
+	-- Druids) keep their mana pool while shapeshifted even though UnitPowerType
+	-- reports the form's resource (Rage/Energy) as currently active, so check
+	-- the class instead of the active power type.
+	local _, playerClass = UnitClass("player")
+	if playerClass == "WARRIOR" or playerClass == "ROGUE" then
 		text:SetText(NOT_APPLICABLE);
 		frame.tooltip = nil;
 		return
