@@ -31,6 +31,12 @@ BCS["L"] = {
 	["increasing spell damage by up to (%d+)%% of total Intellect"] = "increasing spell damage by up to (%d+)%% of total Intellect",
 	["increases spell damage and healing of all raid members within 20 yards by (%d+)%%"] = "increases spell damage and healing of all raid members within 20 yards by (%d+)%%",
 	["Increases your Frost damage by (%d+)%%"] = "Increases your Frost damage by (%d+)%%",
+	["Increases spell damage by up to (%d+)%% of your total Intellect and increases the effect of your Arcane Intellect by (%d+)%%."] = "Increases spell damage by up to (%d+)%% of your total Intellect and increases the effect of your Arcane Intellect by (%d+)%%.",
+	["Set: Increases run speed by (%d+)%%."] = "Set: Increases run speed by (%d+)%%.",
+	["Equip: Increases mount speed by (%d+)%%."] = "Equip: Increases mount speed by (%d+)%%.",
+	["and increases movement speed by (%d+)%% This does not stack with other movement speed increasing effects"] = "and increases movement speed by (%d+)%% This does not stack with other movement speed increasing effects",
+	["Increases movement and mounted movement speed by (%d+)%% This does not stack with other movement speed increasing effects"] = "Increases movement and mounted movement speed by (%d+)%% This does not stack with other movement speed increasing effects",
+	["Increases speed by (%d+)%%."] = "Increases speed by (%d+)%%.",
 	["Increases your attack and casting speed by (%d+)%%."] = "Increases your attack and casting speed by (%d+)%%.",
 	["Increases your casting speed by (%d+)%%."] = "Increases your casting speed by (%d+)%%.",
 	["Increases the casting speed by (%d+)%%."] = "Increases the casting speed by (%d+)%%.",
@@ -240,6 +246,7 @@ BCS["L"] = {
 	DODGE_COLON = DODGE .. ":",
 	PARRY_COLON = PARRY .. ":",
 	BLOCK_COLON = BLOCK .. ":",
+	MOVE_SPEED_COLON = "Move Speed:",
 
 	
 	SPELL_POWER_COLON = "Bonus Damage:",

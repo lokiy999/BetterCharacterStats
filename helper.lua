@@ -203,6 +203,15 @@ function BCS:GetTalentStatBonus(statName, statIndex)
 							end
 						end
 						if not value then
+							-- Same as above but phrased "Increases your total
+							-- <Stat> by X%." (e.g. Mage Intellect talent).
+							local _, _, percent = strfind(text, "Increases your total " .. statName .. " by (%d+)%%.")
+							if percent and statIndex then
+								local _, effectiveStat = UnitStat("player", statIndex)
+								value = floor((tonumber(percent) / 100) * effectiveStat)
+							end
+						end
+						if not value then
 							-- Rogue talent: "Reduces the cooldown of your Sprint
 							-- and Evasion abilities by 1 min and increases your
 							-- Strength by X%." (Strength-only.)
@@ -240,6 +249,145 @@ function BCS:GetTalentStatBonus(statName, statIndex)
 	end
 
 	return total
+end
+
+-- Movement Speed has no live API on this client (no GetUnitSpeed), so it's
+-- built the same way as Haste/Resilience: scanning gear/talents/buffs for
+-- specific, confirmed speed-related text. Every pattern here must be an exact
+-- known phrase -- deliberately NOT a generic "increased by X%" match, since
+-- that would false-positive on unrelated buffs (crit, attack power, stats,
+-- etc.) that happen to use the same wording for something else entirely.
+--
+-- Running and mounted speed are tracked SEPARATELY, since in-game they don't
+-- share bonuses (a "+X% run speed" effect does nothing while mounted, and
+-- vice versa). Effects that say "does not stack with other movement speed
+-- increasing effects" are grouped and only the single best one counts,
+-- instead of adding them all together.
+--
+-- While mounted, per-item/talent mount bonuses (Carrot on a Stick, spurs,
+-- etc.) don't add onto the mount's own speed directly -- they're summed
+-- together first, then applied as a multiplier on top of the mount's total
+-- speed: (100 + mountOwnSpeed%) * (1 + sumOfBonuses/100). E.g. a 100%-speed
+-- mount with a 5% trinket and a 2% enchant = 200% * 1.07 = 214%.
+--
+-- Returns (runSpeedPercent, mountBonusPercent, mountedTotalPercent).
+-- runSpeedPercent is a full percentage (100 = normal run speed).
+-- mountBonusPercent is just the summed item/talent bonus (informational).
+-- mountedTotalPercent is the fully computed speed while actually mounted, or
+-- nil if no mount buff is currently detected.
+function BCS:GetMovementSpeedBonus()
+	local runAdditive = 0
+	local runNonStackingBest = 0
+	local mountAdditive = 0
+	local mountNonStackingBest = 0
+	local seenSets = {}
+
+	-- Gear/enchants/set bonuses
+	local MAX_INVENTORY_SLOTS = 19
+	for slot = 0, MAX_INVENTORY_SLOTS do
+		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
+		if hasItem then
+			local setName = nil
+			for line = 1, BCS_Tooltip:NumLines() do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				if left and left:GetText() then
+					local text = left:GetText()
+
+					local _, _, sName = strfind(text, "(.+) %(%d+/%d+%)")
+					if sName then
+						setName = sName
+					end
+
+					-- Set bonus: "Set: Increases run speed by X%." (5-piece)
+					local _, _, runSetValue = strfind(text, L["Set: Increases run speed by (%d+)%%."])
+					if runSetValue then
+						local r, g, b = left:GetTextColor()
+						local isGray = (math.abs(r - g) < 0.05) and (math.abs(g - b) < 0.05)
+						local dedupeKey = tostring(setName) .. "|" .. text
+						if (not isGray) and setName and not tContains(seenSets, dedupeKey) then
+							tinsert(seenSets, dedupeKey)
+							runAdditive = runAdditive + tonumber(runSetValue)
+						end
+					end
+
+					-- "Equip: Increases mount speed by X%." (Carrot on a
+					-- Stick, Equestrian's Gloves)
+					local _, _, mountValue = strfind(text, L["Equip: Increases mount speed by (%d+)%%."])
+					if mountValue then
+						mountAdditive = mountAdditive + tonumber(mountValue)
+					end
+
+					-- Mithril Spurs / Minor Mount Speed enchants have no
+					-- numeric tooltip text at all, just the enchant name
+					-- itself -- fixed values confirmed directly (not derived
+					-- from tooltip text).
+					if text == "Mithril Spurs" then
+						mountAdditive = mountAdditive + 4
+					end
+					if text == "Minor Mount Speed Increase" then
+						mountAdditive = mountAdditive + 2
+					end
+				end
+			end
+		end
+	end
+
+	-- Talents (matched by tooltip text + learned rank, not hardcoded tab/slot
+	-- position, since talent tree layout isn't guaranteed stable)
+	local MAX_TABS = GetNumTalentTabs()
+	for tab = 1, MAX_TABS do
+		local MAX_TALENTS = GetNumTalents(tab)
+		for talent = 1, MAX_TALENTS do
+			local name, iconTexture, tier, column, rank = GetTalentInfo(tab, talent)
+			if rank and rank > 0 then
+				BCS_Tooltip:SetTalent(tab, talent)
+				-- Join all lines before matching -- a sentence can wrap
+				-- across multiple separate tooltip lines and split the
+				-- search text apart otherwise.
+				local fullText = ""
+				for line = 1, BCS_Tooltip:NumLines() do
+					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+					if left and left:GetText() then
+						fullText = fullText .. " " .. left:GetText()
+					end
+				end
+
+				-- "...and increases movement speed by X%. This does
+				-- not stack with other movement speed increasing
+				-- effects." (run-only)
+				local _, _, runOnlyValue = strfind(fullText, L["and increases movement speed by (%d+)%% This does not stack with other movement speed increasing effects"])
+				if runOnlyValue and tonumber(runOnlyValue) > runNonStackingBest then
+					runNonStackingBest = tonumber(runOnlyValue)
+				end
+
+				-- "Increases movement and mounted movement speed by
+				-- X%. This does not stack with other movement speed
+				-- increasing effects." (both pools)
+				local _, _, bothValue = strfind(fullText, L["Increases movement and mounted movement speed by (%d+)%% This does not stack with other movement speed increasing effects"])
+				if bothValue then
+					if tonumber(bothValue) > runNonStackingBest then
+						runNonStackingBest = tonumber(bothValue)
+					end
+					if tonumber(bothValue) > mountNonStackingBest then
+						mountNonStackingBest = tonumber(bothValue)
+					end
+				end
+			end
+		end
+	end
+
+	local runSpeed = 100 + runAdditive + runNonStackingBest
+	local mountSpeedBonus = mountAdditive + mountNonStackingBest
+
+	-- Detect the currently active mount's own speed bonus generically (works
+	-- for any mount, 60%/100%/etc., without hardcoding specific mounts).
+	local _, _, mountOwnSpeed = BCS:GetPlayerAura(L["Increases speed by (%d+)%%."])
+	local mountedTotal = nil
+	if mountOwnSpeed then
+		mountedTotal = floor((100 + tonumber(mountOwnSpeed)) * (1 + mountSpeedBonus / 100))
+	end
+
+	return runSpeed, mountSpeedBonus, mountedTotal
 end
 
 -- Scans talents for the Holy damage/healing tradeoff pair:
@@ -1599,9 +1747,21 @@ function BCS:GetSpellPower()
 						spellPower = spellPower + floor(((tonumber(value) / 100) * attackPower))
 						line = MAX_LINES
 					end
+
+					-- Mage
+					-- (Arcane Mind-style talent; ignores the "effect of your
+					-- Arcane Intellect" clause, which buffs a spell cast on
+					-- others rather than a stat this addon tracks.)
+					local _,_, value = strfind(left:GetText(), L["Increases spell damage by up to (%d+)%% of your total Intellect and increases the effect of your Arcane Intellect by (%d+)%%."])
+					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
+					if value and rank > 0 then
+						local _, effectiveStat = UnitStat("player", 4)
+						spellPower = spellPower + floor(((tonumber(value) / 100) * effectiveStat))
+						line = MAX_LINES
+					end
 				end
 			end
-			
+
 		end
 	end
 

@@ -267,7 +267,7 @@ function BCS:SetArmor(statFrame)
 	frame:SetScript("OnLeave", function()
 		GameTooltip:Hide()
 	end)
-	
+
 end
 
 function BCS:SetDamage(statFrame)
@@ -830,6 +830,32 @@ function BCS:SetManaRegen(statFrame)
 	end)
 end
 
+function BCS:SetMoveSpeed(statFrame)
+	local frame = statFrame
+	local text = getglobal(statFrame:GetName() .. "StatText")
+	local label = getglobal(statFrame:GetName() .. "Label")
+
+	label:SetText(L.MOVE_SPEED_COLON)
+
+	local runSpeed, mountSpeedBonus, mountedTotal = BCS:GetMovementSpeedBonus()
+	text:SetText(format("%d%%", runSpeed))
+
+	frame:SetScript("OnEnter", function()
+		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+		GameTooltip:SetText("Movement Speed")
+		GameTooltip:AddLine(format("Walking/Running: %d%%", runSpeed), 1, 1, 1)
+		if mountedTotal then
+			GameTooltip:AddLine(format("Mounted: %d%% (+%d%% bonus)", mountedTotal, mountSpeedBonus), 1, 1, 1)
+		else
+			GameTooltip:AddLine(format("Mounted Bonus: +%d%%", mountSpeedBonus), 1, 1, 1)
+		end
+		GameTooltip:Show()
+	end)
+	frame:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
+end
+
 function BCS:SetDodge(statFrame)
 	local frame = statFrame 
 	local text = getglobal(statFrame:GetName() .. "StatText")
@@ -1142,7 +1168,7 @@ function BCS:UpdatePaperdollStats(prefix, index)
 		BCS:SetStat(stat4, 4)
 		BCS:SetStat(stat5, 5)
 		BCS:SetArmor(stat6)
-		stat7:Hide()
+		BCS:SetMoveSpeed(stat7)
 	elseif ( index == "PLAYERSTAT_MELEE_COMBAT" ) then
 		BCS:SetDamage(stat1)
 		BCS:SetAttackSpeed(stat2)
