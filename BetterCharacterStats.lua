@@ -821,8 +821,16 @@ function BCS:SetManaRegen(statFrame)
 	local tickNotCasting = floor(tickSpirit + tickMp2)
 	local tickCasting = floor(casting + tickMp2)
 
+	-- The server floors the flat-mp5 tick independently each tick with no
+	-- fractional carry-over, so mp5 between breakpoints (every 2.5 mp5) is dead
+	-- weight. Show the breakpoint the player is on and where the next one is.
+	local mp5Breakpoint = ""
+	if mp5 > 0 then
+		mp5Breakpoint = format(L["MANA_REGEN_MP5_BREAKPOINT"], ceil(tickMp2 * 2.5), ceil((tickMp2 + 1) * 2.5))
+	end
+
 	frame.tooltip = format(L["SPELL_MANA_REGEN_TOOLTIP_HEADER"], tickSpirit, spiritMP5, tickMp2, mp5Theo, tickSpirit + tickMp2, spiritMP5 + mp5Theo)
-	frame.tooltipSubtext = format(L["SPELL_MANA_REGEN_TOOLTIP"], tickNotCasting, tickCasting, mp5) .. paladinText .. druidText .. blessingRegenText .. manaSpringText .. brillRegenText .. winsorsRegenText .. warchiefsRegenText
+	frame.tooltipSubtext = format(L["SPELL_MANA_REGEN_TOOLTIP"], tickNotCasting, tickCasting, mp5, mp5Breakpoint) .. paladinText .. druidText .. blessingRegenText .. manaSpringText .. brillRegenText .. winsorsRegenText .. warchiefsRegenText
 	
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
