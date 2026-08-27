@@ -816,8 +816,13 @@ function BCS:SetManaRegen(statFrame)
 		druidText = format(L["DREAMSTATE"], druidManaTick, druidManaRegen)
 	end
 
+	-- Flat mp5 effects (gear/enchants) ignore the five-second rule, so they
+	-- contribute their per-tick amount both while casting and while not casting.
+	local tickNotCasting = floor(tickSpirit + tickMp2)
+	local tickCasting = floor(casting + tickMp2)
+
 	frame.tooltip = format(L["SPELL_MANA_REGEN_TOOLTIP_HEADER"], tickSpirit, spiritMP5, tickMp2, mp5Theo, tickSpirit + tickMp2, spiritMP5 + mp5Theo)
-	frame.tooltipSubtext = format(L["SPELL_MANA_REGEN_TOOLTIP"], tickSpirit, spiritMP5, tickMp2, mp5Theo, tickSpirit + tickMp2, spiritMP5 + mp5Theo) .. paladinText .. druidText .. blessingRegenText .. manaSpringText .. brillRegenText .. winsorsRegenText .. warchiefsRegenText
+	frame.tooltipSubtext = format(L["SPELL_MANA_REGEN_TOOLTIP"], tickNotCasting, tickCasting, floor(tickSpirit), tickMp2) .. paladinText .. druidText .. blessingRegenText .. manaSpringText .. brillRegenText .. winsorsRegenText .. warchiefsRegenText
 	
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
