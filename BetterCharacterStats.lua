@@ -418,61 +418,46 @@ function BCS:SetAttackPower(statFrame)
 	end)
 end
 
-function BCS:SetSpellPower(statFrame, school)
-	local frame = statFrame 
+function BCS:SetSpellPower(statFrame)
+	local frame = statFrame
 	local text = getglobal(statFrame:GetName() .. "StatText")
 	local label = getglobal(statFrame:GetName() .. "Label")
-	
-	local colorPos = "|cff20ff20"
-	local colorNeg = "|cffff2020"
-	
-	if school then
-		label:SetText(L["SPELL_SCHOOL_"..strupper(school)])
-		local base, schools = BCS:GetSpellPower()
-		local output = base + fromSchool
-		
-		if fromSchool > 0 then
-			output = colorPos .. output .. "|r"
+
+	local power, schools, dmg = BCS:GetSpellPower()
+
+	power = power + dmg
+
+	label:SetText(L.SPELL_POWER_COLON)
+	text:SetText(power)
+
+	frame.tooltip = format(L["SPELL_POWER_TOOLTIP_HEADER"], power)
+
+	local damagePercent = BCS:GetHolyPowerTalentModifiers()
+	local moonkinAuraPercent = BCS:GetMoonkinAuraBonus()
+	local frostDamagePercent = BCS:GetFrostDamageTalentBonus()
+
+	frame:SetScript("OnEnter", function()
+		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+		GameTooltip:SetText(this.tooltip)
+		for k, v in pairs(schools) do
+			if (v > 0) then
+				GameTooltip:AddDoubleLine(k, v)
+			end
 		end
-		
-		text:SetText(output)
-	else
-		local power, schools, dmg = BCS:GetSpellPower();
-
-		power = power + dmg
-		
-		label:SetText(L.SPELL_POWER_COLON)
-		text:SetText(power);
-		
-		frame.tooltip = format(L["SPELL_POWER_TOOLTIP_HEADER"], power)
-
-		local damagePercent = BCS:GetHolyPowerTalentModifiers()
-		local moonkinAuraPercent = BCS:GetMoonkinAuraBonus()
-		local frostDamagePercent = BCS:GetFrostDamageTalentBonus()
-
-		frame:SetScript("OnEnter", function()
-			GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-			GameTooltip:SetText(this.tooltip)
-			for k, v in pairs(schools) do
-				if (v > 0) then
-					GameTooltip:AddDoubleLine(k, v)
-				end
-			end
-			if damagePercent ~= 0 then
-				GameTooltip:AddLine(format("Holy Damage (Talent): %+d%%", damagePercent), 1, 1, 1)
-			end
-			if moonkinAuraPercent ~= 0 then
-				GameTooltip:AddLine(format("Damage (Moonkin Aura): +%d%%", moonkinAuraPercent), 1, 1, 1)
-			end
-			if frostDamagePercent ~= 0 then
-				GameTooltip:AddLine(format("Frost Damage (Talent): +%d%%", frostDamagePercent), 1, 1, 1)
-			end
-			GameTooltip:Show()
-		end)
-		frame:SetScript("OnLeave", function()
-			GameTooltip:Hide()
-		end)
-	end
+		if damagePercent ~= 0 then
+			GameTooltip:AddLine(format("Holy Damage (Talent): %+d%%", damagePercent), 1, 1, 1)
+		end
+		if moonkinAuraPercent ~= 0 then
+			GameTooltip:AddLine(format("Damage (Moonkin Aura): +%d%%", moonkinAuraPercent), 1, 1, 1)
+		end
+		if frostDamagePercent ~= 0 then
+			GameTooltip:AddLine(format("Frost Damage (Talent): +%d%%", frostDamagePercent), 1, 1, 1)
+		end
+		GameTooltip:Show()
+	end)
+	frame:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
 end
 
 function BCS:SetRating(statFrame, ratingType)
