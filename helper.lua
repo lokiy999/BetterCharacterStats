@@ -122,6 +122,27 @@ function BCS:DebugSpellHaste()
 	end
 end
 
+-- DEBUG: prints every equipped-item tooltip line mentioning mana/regen/"5 sec"
+-- with its slot number and color, then the values GetManaRegen computed, so a
+-- mismatch with the in-game tick can be traced to an unparsed mp5 source.
+-- Usage: /script BCS:DebugManaRegen()
+function BCS:DebugManaRegen()
+	for slot = 0, 19 do
+		if BCS_Tooltip:SetInventoryItem("player", slot) then
+			for line = 1, BCS_Tooltip:NumLines() do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				local text = left and left:GetText()
+				if text and (strfind(strlower(text), "mana") or strfind(strlower(text), "regen") or strfind(strlower(text), "5 sec")) then
+					local r, g, b = left:GetTextColor()
+					BCS:Print("slot "..slot..": \""..text.."\" color=("..r..","..g..","..b..")")
+				end
+			end
+		end
+	end
+	local base, casting, mp5 = BCS:GetManaRegen()
+	BCS:Print("GetManaRegen: base="..tostring(base).." casting="..tostring(casting).." mp5="..tostring(mp5))
+end
+
 -- ============================================================
 -- END DEBUG HELPERS
 -- ============================================================

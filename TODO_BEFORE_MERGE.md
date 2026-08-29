@@ -13,6 +13,9 @@
     wording ("Attack and casting speed increased by X%." -- differs from the
     items/talents wording above).
     Usage: `/script BCS:DebugBuffs()`
+  - `BCS:DebugManaRegen()` -- used to trace mp5 gear/enchant lines the scanner
+    in `GetManaRegen` misses (in-game tick higher than the tooltip).
+    Usage: `/script BCS:DebugManaRegen()`
 
 # Possible future features
 
