@@ -197,7 +197,13 @@ BCS["L"] = {
 	["Holy spell critical hit chance increased by (%d+)%%."] = "Holy spell critical hit chance increased by (%d+)%%.",
 	["Destruction spell critical hit chance increased by (%d+)%%."] = "Destruction spell critical hit chance increased by (%d+)%%.",
 	["Critical strike chance with spells and melee attacks increased by (%d+)%%."] = "Critical strike chance with spells and melee attacks increased by (%d+)%%.",
-	
+
+	-- Mana regeneration while casting (five-second-rule bypass).
+	-- Covers Meditation / Reflection talents, the Transcendence 2-set bonus, etc.
+	["(%d+)%% of your [Mm]ana regeneration to continue while casting"] = "(%d+)%% of your [Mm]ana regeneration to continue while casting",
+	-- Aura of the Blue Dragon (Ace of Beasts trinket set)
+	["(%d+)%% of your [Mm]ana regeneration continuing while casting"] = "(%d+)%% of your [Mm]ana regeneration continuing while casting",
+
 	-- Headers or Tooltips
 	["HIT_TOOLTIP_HEADER"] = [[|cffffffffHit Rating      %s|r]],
 	["HIT_TOOLTIP"] = "Increases your %s chance to hit a target of level %d by %s\r\n",

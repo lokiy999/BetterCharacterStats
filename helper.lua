@@ -2279,9 +2279,53 @@ function BCS:GetManaRegen()
 	-- to-maybe-do: apply buffs/talents
 	local base, casting
 	local power_regen = GetRegenMPPerSpirit()
-	
-	casting = power_regen / 100
+
 	base = power_regen
+
+	-- Percentage of Spirit-based mana regen that continues while casting
+	-- (five-second-rule bypass). Talents (Meditation, Reflection, ...), set
+	-- bonuses (Transcendence 2-set) and auras (Aura of the Blue Dragon) that
+	-- grant this stack additively and are capped at 100%.
+	local castingRegenPercent = 0
+	local castingRegenPatterns = {
+		L["(%d+)%% of your [Mm]ana regeneration to continue while casting"],
+		L["(%d+)%% of your [Mm]ana regeneration continuing while casting"],
+	}
+
+	-- Talents
+	for tab = 1, GetNumTalentTabs() do
+		for talent = 1, GetNumTalents(tab) do
+			local _, _, _, _, rank = GetTalentInfo(tab, talent)
+			if rank and rank > 0 then
+				BCS_Tooltip:SetTalent(tab, talent)
+				for line = 1, BCS_Tooltip:NumLines() do
+					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+					if left and left:GetText() then
+						for _, pattern in ipairs(castingRegenPatterns) do
+							local _, _, pct = strfind(left:GetText(), pattern)
+							if pct then
+								castingRegenPercent = castingRegenPercent + tonumber(pct)
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	-- Buffs / auras
+	for _, pattern in ipairs(castingRegenPatterns) do
+		local match = { BCS:GetPlayerAura(pattern) }
+		if match[3] then
+			castingRegenPercent = castingRegenPercent + tonumber(match[3])
+		end
+	end
+
+	if castingRegenPercent > 100 then
+		castingRegenPercent = 100
+	end
+
+	casting = power_regen * castingRegenPercent / 100
 
 	local mp5 = 0					-- Initialize to prevent nil errors
 	local paladinManaRegen = 0
