@@ -41,6 +41,20 @@ the addon works. Grouped by type, roughly most to least important.
       Meditation / Arcane Meditation / Reflection in `GetManaRegen`'s
       casting-regen scan; adjust if it reads the wrong rank.
 
+## Correctness gaps (cont.)
+
+- [ ] **`GetSpellPower` double-counts some damage auras.** `SetSpellPower`
+      (no-school branch) shows `spellPower + damagePower`. But
+      `"Magical damage dealt is increased by up to X."` (Zandalarian Hero Charm)
+      and the Moonkin Form bonus are added to **both** `spellPower` and
+      `damagePower` (helper.lua ~1853/1871), so they count twice in the Bonus
+      Damage number. They should go in `damagePower` only (like the weapon
+      enchant and the new flat Lightning Shield buff do).
+- [ ] **`SetSpellPower` per-school branch is broken.** `BetterCharacterStats.lua`
+      ~432 uses an undefined `fromSchool` (`base + fromSchool`, `fromSchool > 0`).
+      Only unreached because `UpdatePaperdollStats` never calls it with a school
+      arg. Fix or delete the `if school then` branch.
+
 ## Code smells (work, but should be cleaned)
 
 - [ ] **Dead block in `GetHitRating`.** `helper.lua` lines ~715-779 are a

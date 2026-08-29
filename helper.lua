@@ -1854,6 +1854,14 @@ function BCS:GetSpellPower()
 		damagePower = damagePower + tonumber(spellPowerFromAura)
 	end
 
+	-- Flat spell-damage buffs, e.g. Shaman "Lightning Shield" on this realm:
+	-- "Increases spell damage by X." Damage only (not healing), so it goes in
+	-- damagePower, which SetSpellPower adds on top of spellPower.
+	local _, _, flatSpellDamageAura = BCS:GetPlayerAura(L["Increases spell damage by (%d+)%."])
+	if flatSpellDamageAura then
+		damagePower = damagePower + tonumber(flatSpellDamageAura)
+	end
+
 	-- Druid "Moonkin Form": "...increasing spell damage by up to X% of total
 	-- Intellect..." (detected via the Moonkin Form self-buff icon while shifted).
 	local _, _, moonkinFormPercent = BCS:GetPlayerAura(L["increasing spell damage by up to (%d+)%% of total Intellect"])
