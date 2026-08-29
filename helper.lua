@@ -2492,19 +2492,30 @@ function BCS:GetManaRegen()
 	
 	-- ***MOVED ZG BONUS TO ITS OWN SNAPSHOT FUNCTION ABOVE BCS:GetGearSetBonus()***
 	local MAX_INVENTORY_SLOTS = 19
-	
+	local countedSetMp5 = {} -- set-bonus mp5 lines already counted (keyed by set|value)
+
 	for slot=0, MAX_INVENTORY_SLOTS do
 		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
-		
+
 		if hasItem then
+			local currentSet = nil
 			for line=1, BCS_Tooltip:NumLines() do
 				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
-				
+
 				-- Ensure 'left' exists and has valid text before using it
-				local text = left and left:GetText() or ""
-				text = strlower(text) -- Convert to lowercase for better matching
+				local rawText = left and left:GetText() or ""
+				local text = strlower(rawText) -- Convert to lowercase for better matching
 				-- Debugging output
 				--DEFAULT_CHAT_FRAME:AddMessage("Scanning Tooltip: " .. text)
+
+				-- Track the set this tooltip belongs to ("Name (x/y)" header) so a
+				-- set-bonus mp5 line, which repeats on every equipped piece, is
+				-- only counted once.
+				local _,_, setName = strfind(rawText, "^(.+) %(%d+/%d+%)")
+				if setName then
+					currentSet = setName
+				end
+
 				local _,_, value = strfind(text, "^mana regen %+(%d+)")
 				if value then
 					mp5 = mp5 + tonumber(value)
@@ -2528,7 +2539,21 @@ function BCS:GetManaRegen()
 				if value then
 					mp5 = mp5 + tonumber(value)
 					-- Debugging output
-					--DEFAULT_CHAT_FRAME:AddMessage("Found MP5 from enchant: " .. value)				
+					--DEFAULT_CHAT_FRAME:AddMessage("Found MP5 from enchant: " .. value)
+				end
+
+				-- Set bonus, e.g. "Set: Restores 5 mana per 5 sec." The line shows
+				-- on every equipped piece of the set, so key it by set + value and
+				-- count it once. Skip greyed-out (inactive) bonuses.
+				_,_, value = strfind(text, "set: restores (%d+) mana per 5 sec%.?")
+				if value then
+					local r, g, b = left:GetTextColor()
+					local isGrey = (r > 0.45 and r < 0.55 and g > 0.45 and g < 0.55 and b > 0.45 and b < 0.55)
+					local key = (currentSet or "?") .. "|" .. value
+					if not isGrey and not countedSetMp5[key] then
+						countedSetMp5[key] = true
+						mp5 = mp5 + tonumber(value)
+					end
 				end
 			end
 		end
