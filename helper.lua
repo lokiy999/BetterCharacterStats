@@ -2324,6 +2324,7 @@ function BCS:GetManaRegen()
 	local castingRegenPatterns = {
 		L["(%d+)%% of your [Mm]ana regeneration to continue while casting"],
 		L["(%d+)%% of your [Mm]ana regeneration continuing while casting"],
+		L["(%d+)%% of [Mm]ana regeneration while casting"],
 	}
 
 	-- Talents
@@ -2555,8 +2556,24 @@ function BCS:GetManaRegen()
 						mp5 = mp5 + tonumber(value)
 					end
 				end
+
+				-- Weapon mana oils only show as their name on the weapon.
+				if strfind(text, "minor mana oil") then
+					mp5 = mp5 + 4
+				elseif strfind(text, "lesser mana oil") then
+					mp5 = mp5 + 8
+				elseif strfind(text, "brilliant mana oil") then
+					mp5 = mp5 + 12
+				end
 			end
 		end
+	end
+
+	-- Flat mp5 from food buffs (e.g. Nightfin Soup "well fed"). The spirit part
+	-- of such buffs is already reflected in UnitStat.
+	local wellFed = { BCS:GetPlayerAura(L["[Rr]egenerating (%d+) [Mm]ana every 5 seconds"]) }
+	if wellFed[3] then
+		mp5 = mp5 + tonumber(wellFed[3])
 	end
 	-- Apply Bonuses and Maintain Snapshot
     local finalBoWMP5 = floor(blessingOfWisdomMP5 * divineGraceBonus * lastGearBonus)

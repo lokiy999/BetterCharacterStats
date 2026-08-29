@@ -199,10 +199,16 @@ BCS["L"] = {
 	["Critical strike chance with spells and melee attacks increased by (%d+)%%."] = "Critical strike chance with spells and melee attacks increased by (%d+)%%.",
 
 	-- Mana regeneration while casting (five-second-rule bypass).
-	-- Covers Meditation / Reflection talents, the Transcendence 2-set bonus, etc.
+	-- Covers Meditation / Arcane Meditation / Reflection talents, the
+	-- Transcendence 2-set bonus, etc.
 	["(%d+)%% of your [Mm]ana regeneration to continue while casting"] = "(%d+)%% of your [Mm]ana regeneration to continue while casting",
 	-- Aura of the Blue Dragon (Ace of Beasts trinket set)
 	["(%d+)%% of your [Mm]ana regeneration continuing while casting"] = "(%d+)%% of your [Mm]ana regeneration continuing while casting",
+	-- Spirit Tap proc buff ("allows 50% of mana regeneration while casting")
+	["(%d+)%% of [Mm]ana regeneration while casting"] = "(%d+)%% of [Mm]ana regeneration while casting",
+
+	-- Flat mp5 from food buffs, e.g. Nightfin Soup "well fed"
+	["[Rr]egenerating (%d+) [Mm]ana every 5 seconds"] = "[Rr]egenerating (%d+) [Mm]ana every 5 seconds",
 
 	-- Headers or Tooltips
 	["HIT_TOOLTIP_HEADER"] = [[|cffffffffHit Rating      %s|r]],
