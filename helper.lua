@@ -2846,6 +2846,22 @@ function BCS:GetSpellHaste()
 		haste = haste + tonumber(hasteFromAura)
 	end
 
+	-- scan debuffs: casting-speed slows (Curse of Tongues, Mind-numbing Poison,
+	-- Slow, ...) subtract from Haste. Different wordings, so try each.
+	local slowPatterns = {
+		"[Ss]lows casting speed by (%d+)%%",
+		"[Cc]asting speed reduced by (%d+)%%",
+		"[Cc]asting speed slowed by (%d+)%%",
+		"[Cc]asting speed decreased by (%d+)%%",
+		"[Ii]ncreas.- casting time by (%d+)%%",
+	}
+	for _, pat in ipairs(slowPatterns) do
+		local _s, _e, slowValue = BCS:GetPlayerAura(pat, 'HARMFUL')
+		if slowValue then
+			haste = haste - tonumber(slowValue)
+		end
+	end
+
 	-- scan spellbook passives (e.g. Night Elf "Quickness" racial:
 	-- "Increases your Agility, movement and casting speed by X%."). Only count
 	-- entries actually marked "Passive" -- otherwise an active spell you cast

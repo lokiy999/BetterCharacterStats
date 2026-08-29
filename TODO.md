@@ -5,10 +5,9 @@ the addon works. Grouped by type, roughly most to least important.
 
 ## Correctness gaps
 
-- [ ] **`GetSpellHaste` ignores casting-speed slows.** `helper.lua` `GetSpellHaste`
-      only ever adds. Curse of Tongues / similar ("reduces casting speed by X%")
-      are never subtracted, so Haste reads too high under those debuffs. Add a
-      HARMFUL aura scan and subtract.
+- [x] **`GetSpellHaste` ignores casting-speed slows.** Now scans HARMFUL for
+      Curse of Tongues / Mind-numbing Poison / Slow wordings and subtracts.
+      Verify the pattern list matches this server's actual debuff tooltips.
 - [ ] **`GetSpellHaste` only counts one haste buff.** The buff scan uses
       `BCS:GetPlayerAura(...)`, which returns the first match. Two simultaneous
       haste buffs (trinket + Mind Quickening, etc.) undercount. Needs a loop
