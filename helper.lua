@@ -1862,6 +1862,14 @@ function BCS:GetSpellPower()
 		damagePower = damagePower + tonumber(flatSpellDamageAura)
 	end
 
+	-- "Attack power, Magical damage and healing dealt are increased by X."
+	-- Affects both damage and healing, so it goes in spellPower (the shared
+	-- bucket). The attack-power part is reflected by UnitAttackPower already.
+	local _, _, apMdhAura = BCS:GetPlayerAura(L["Attack power, Magical damage and healing dealt are increased by (%d+)%."])
+	if apMdhAura then
+		spellPower = spellPower + tonumber(apMdhAura)
+	end
+
 	-- Druid "Moonkin Form": "...increasing spell damage by up to X% of total
 	-- Intellect..." (detected via the Moonkin Form self-buff icon while shifted).
 	local _, _, moonkinFormPercent = BCS:GetPlayerAura(L["increasing spell damage by up to (%d+)%% of total Intellect"])
@@ -2171,6 +2179,12 @@ function BCS:GetHealingPower()
 	local _, _, healPowerFromAura = BCS:GetPlayerAura(L["Healing done by magical spells is increased by up to (%d+)."])
 	if healPowerFromAura then
 		healPower = healPower + tonumber(healPowerFromAura)
+	end
+
+	-- "Attack power, Magical damage and healing dealt are increased by X."
+	local _, _, apMdhAura = BCS:GetPlayerAura(L["Attack power, Magical damage and healing dealt are increased by (%d+)%."])
+	if apMdhAura then
+		healPower = healPower + tonumber(apMdhAura)
 	end
 
 	-- enchants

@@ -60,6 +60,8 @@ the addon works. Grouped by type, roughly most to least important.
 - [ ] **Dead block in `GetHitRating`.** `helper.lua` lines ~715-779 are a
       commented-out `--[[ ]]` cached-talent scan. Remove it (and the
       `Localization.lua` line it references, below).
+- [ ] **Dead `GetSpellPower_old`.** `helper.lua` ~1887-2117 is a ~230-line
+      commented-out old implementation. Remove.
 - [ ] **Implicit globals from `GetTalentInfo`.** ~7 spots in `helper.lua` do
       `name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq
       = GetTalentInfo(...)` with no `local`, leaking `rank`, `name`, etc. to the

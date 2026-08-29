@@ -180,6 +180,7 @@ BCS["L"] = {
 	["Chance to hit increased by (%d)%%."] = 														"Chance to hit increased by (%d)%%.",
 	["Magical damage dealt is increased by up to (%d+)."] = 										"Magical damage dealt is increased by up to (%d+).",
 	["Increases spell damage by (%d+)%."] = 														"Increases spell damage by (%d+)%.", -- flat, e.g. V+ Lightning Shield
+	["Attack power, Magical damage and healing dealt are increased by (%d+)%."] = 					"Attack power, Magical damage and healing dealt are increased by (%d+)%.",
 	["Healing done by magical spells is increased by up to (%d+)."] = 								"Healing done by magical spells is increased by up to (%d+).",
 	["Chance to hit reduced by (%d+)%%."] = 														"Chance to hit reduced by (%d+)%%.",
 	["Chance to hit decreased by (%d+)%% and %d+ Nature damage every %d+ sec."] = 					"Chance to hit decreased by (%d+)%% and %d+ Nature damage every %d+ sec.",
