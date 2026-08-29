@@ -938,6 +938,14 @@ function BCS:SetSpellHaste(statFrame)
 	text:SetText(format("%.2f%%", BCS:GetSpellHaste()))
 end
 
+function BCS:SetMeleeHaste(statFrame)
+	local text = getglobal(statFrame:GetName() .. "StatText")
+	local label = getglobal(statFrame:GetName() .. "Label")
+
+	label:SetText(L.SPELL_HASTE_COLON)
+	text:SetText(format("%.2f%%", BCS:GetMeleeHaste()))
+end
+
 function BCS:SetSpellPen(statFrame)
 	local frame = statFrame 
 	local text = getglobal(statFrame:GetName() .. "StatText")
@@ -1211,7 +1219,7 @@ function BCS:UpdatePaperdollStats(prefix, index)
 		BCS:SetAttackPower(stat3)
 		BCS:SetRating(stat4, "MELEE")
 		BCS:SetMeleeCritChance(stat5)
-		stat6:Hide()
+		BCS:SetMeleeHaste(stat6)
 		stat7:Hide()
 	elseif ( index == "PLAYERSTAT_RANGED_COMBAT" ) then
 		BCS:SetRangedDamage(stat1)

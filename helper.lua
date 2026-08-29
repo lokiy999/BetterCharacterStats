@@ -2884,6 +2884,60 @@ function BCS:GetSpellHaste()
 	return haste
 end
 
+-- Base (unmodified) weapon speed for an equipped slot, read from the item
+-- tooltip's "Speed X.XX" line. Buffs/haste never change the item tooltip, so
+-- this is always the base. Returns nil if the slot is empty / has no speed.
+function BCS:GetBaseWeaponSpeed(slot)
+	if not BCS_Tooltip:SetInventoryItem("player", slot) then
+		return nil
+	end
+	for line = 1, BCS_Tooltip:NumLines() do
+		local right = getglobal(BCS_Prefix .. "TextRight" .. line)
+		local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+		local rt = right and right:GetText()
+		local lt = left and left:GetText()
+		local _, _, spd = strfind(rt or "", "Speed (%d+%.%d+)")
+		if not spd then
+			_, _, spd = strfind(lt or "", "Speed (%d+%.%d+)")
+		end
+		if spd then
+			return tonumber(spd)
+		end
+	end
+	return nil
+end
+
+-- Melee haste %, derived from current vs base main-hand swing speed. This
+-- captures every source at once (gear, enchants, talents, buffs AND slows),
+-- since UnitAttackSpeed already reflects all of them. Druid forms use the
+-- form's own base speed, not the equipped weapon's.
+function BCS:GetMeleeHaste()
+	local currentSpeed = UnitAttackSpeed("player")
+	if not currentSpeed or currentSpeed <= 0 then
+		return 0
+	end
+
+	local baseSpeed
+	local formIndex = GetShapeshiftForm()
+	if formIndex and formIndex > 0 then
+		local _, formName = GetShapeshiftFormInfo(formIndex)
+		if formName == "Cat Form" then
+			baseSpeed = 1.0
+		elseif formName == "Bear Form" or formName == "Dire Bear Form" then
+			baseSpeed = 2.5
+		end
+	end
+	if not baseSpeed then
+		baseSpeed = BCS:GetBaseWeaponSpeed(16) or 2.0 -- 2.0 = unarmed
+	end
+
+	local haste = (baseSpeed / currentSpeed - 1) * 100
+	if haste < 0.005 and haste > -0.005 then
+		haste = 0
+	end
+	return haste
+end
+
 function BCS:GetSpellPen()
 	local spellPen = 0;
 	

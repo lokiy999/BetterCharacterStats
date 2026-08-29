@@ -73,6 +73,17 @@ the addon works. Grouped by type, roughly most to least important.
 - [ ] **`Localization.lua`** the `-- ! Deprecated ["Increases hit chance by
       ..."]` commented line -- only referenced by the dead `GetHitRating` block;
       remove with it.
+- [ ] **`Localization.lua:183`** `"...15% haste to melee attacks..."` (Warchief's
+      wording) is unreferenced. `GetMeleeHaste` derives haste from swing speed
+      instead of scanning, so this entry can be removed.
+
+## Melee Haste (added -- verify)
+
+- [ ] `GetMeleeHaste` derives % from `base weapon speed / UnitAttackSpeed`.
+      Verify against known setups. Edge cases handled: unarmed (2.0), Cat Form
+      (1.0), Bear/Dire Bear Form (2.5). NOT handled: off-hand shown separately,
+      non-melee druid forms (Moonkin/Travel fall through to weapon speed),
+      servers that show haste-modified speed in the weapon tooltip.
 
 ## Before merging `fixes` -> master
 
