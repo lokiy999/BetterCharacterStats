@@ -122,19 +122,32 @@ function BCS:DebugSpellHaste()
 	end
 end
 
--- DEBUG: prints every equipped-item tooltip line mentioning mana/regen/"5 sec"
--- with its slot number and color, then the values GetManaRegen computed, so a
--- mismatch with the in-game tick can be traced to an unparsed mp5 source.
+-- DEBUG: for every equipped item that has a "mana per 5 sec" line, prints the
+-- whole tooltip (set header, piece count, each bonus line) with an active/grey
+-- classification, then the values GetManaRegen computed. Lets an mp5 mismatch
+-- with the in-game tick be traced to an unparsed or mis-counted source.
 -- Usage: /script BCS:DebugManaRegen()
 function BCS:DebugManaRegen()
 	for slot = 0, 19 do
 		if BCS_Tooltip:SetInventoryItem("player", slot) then
+			local relevant = false
 			for line = 1, BCS_Tooltip:NumLines() do
 				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
 				local text = left and left:GetText()
-				if text and (strfind(strlower(text), "mana") or strfind(strlower(text), "regen") or strfind(strlower(text), "5 sec")) then
-					local r, g, b = left:GetTextColor()
-					BCS:Print("slot "..slot..": \""..text.."\" color=("..r..","..g..","..b..")")
+				if text and strfind(strlower(text), "mana per 5 sec") then relevant = true end
+			end
+			if relevant then
+				BCS:Print("--- slot "..slot.." ---")
+				for line = 1, BCS_Tooltip:NumLines() do
+					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+					local text = left and left:GetText()
+					-- only set headers ("Name (x/y)"), set-bonus lines and mp5 lines
+					if text and (strfind(text, "%(%d+/%d+%)") or strfind(strlower(text), "set:") or strfind(strlower(text), "mana per 5 sec")) then
+						local r, g, b = left:GetTextColor()
+						-- grey bonus line ~ (0.5,0.5,0.5); active ~ green/white
+						local state = (r > 0.45 and r < 0.55 and g > 0.45 and g < 0.55) and "GREY" or "active"
+						BCS:Print(line..": \""..text.."\" ["..state.."]")
+					end
 				end
 			end
 		end
