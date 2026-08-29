@@ -38,6 +38,9 @@ BCS["L"] = {
 	["Increases movement and mounted movement speed by (%d+)%% This does not stack with other movement speed increasing effects"] = "Increases movement and mounted movement speed by (%d+)%% This does not stack with other movement speed increasing effects",
 	["Increases speed by (%d+)%%."] = "Increases speed by (%d+)%%.",
 	["Increases your attack and casting speed by (%d+)%%."] = "Increases your attack and casting speed by (%d+)%%.",
+	-- Short gear/enchant haste wordings, e.g. "+2% Haste" / "Haste +2%"
+	["%+(%d+)%% [Hh]aste"] = "%+(%d+)%% [Hh]aste",
+	["[Hh]aste %+(%d+)%%"] = "[Hh]aste %+(%d+)%%",
 	["Increases your casting speed by (%d+)%%."] = "Increases your casting speed by (%d+)%%.",
 	["Increases the casting speed by (%d+)%%."] = "Increases the casting speed by (%d+)%%.",
 	["Increases the casting speed by %[([%d/]+)%]%%."] = "Increases the casting speed by %[([%d/]+)%]%%.",

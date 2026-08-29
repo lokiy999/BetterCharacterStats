@@ -13,6 +13,11 @@ the addon works. Grouped by type, roughly most to least important.
       `BCS:GetPlayerAura(...)`, which returns the first match. Two simultaneous
       haste buffs (trinket + Mind Quickening, etc.) undercount. Needs a loop
       over all buffs like the crit scan does, or repeated patterns.
+- [ ] **`GetSpellHaste` gear scan wordings.** Now matches
+      `Increases your attack and casting speed by X%.`, `+X% Haste` and
+      `Haste +X%` (with set-bonus dedup). Still does NOT try the talent-style
+      `Increases your casting speed by X%.` on gear/enchants, nor any other
+      custom Vanilla+ phrasing -- add patterns as they turn up.
 - [ ] **`SetRangedAttackSpeed` has a large dead block.** `BetterCharacterStats.lua`
       `SetRangedAttackSpeed` lines ~1073-1117 compute and set a damage range into
       `damageText`, which is then unconditionally overwritten with the attack

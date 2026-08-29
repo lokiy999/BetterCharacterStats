@@ -2753,16 +2753,42 @@ function BCS:GetSpellHaste()
 	local haste = 0
 
 	local MAX_INVENTORY_SLOTS = 19
+	local countedSetHaste = {} -- set-bonus haste already counted (keyed by set|value)
 	for slot = 0, MAX_INVENTORY_SLOTS do
 		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
 		if hasItem then
+			local currentSet = nil
 			for line = 1, BCS_Tooltip:NumLines() do
 				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
 				if left and left:GetText() then
 					local text = left:GetText()
+
+					-- Track the set this tooltip belongs to, so a set-bonus haste
+					-- line (which repeats on every equipped piece) is counted once.
+					local _, _, setName = strfind(text, "^(.+) %(%d+/%d+%)")
+					if setName then
+						currentSet = setName
+					end
+
+					-- "Equip: Increases your attack and casting speed by X%." or a
+					-- short gear/enchant wording like "+2% Haste" / "Haste +2%".
 					local _, _, value = strfind(text, L["Increases your attack and casting speed by (%d+)%%."])
+					if not value then
+						_, _, value = strfind(text, L["%+(%d+)%% [Hh]aste"])
+					end
+					if not value then
+						_, _, value = strfind(text, L["[Hh]aste %+(%d+)%%"])
+					end
 					if value then
-						haste = haste + tonumber(value)
+						if strfind(strlower(text), "set:") then
+							local key = (currentSet or "?") .. "|" .. value
+							if not countedSetHaste[key] then
+								countedSetHaste[key] = true
+								haste = haste + tonumber(value)
+							end
+						else
+							haste = haste + tonumber(value)
+						end
 					end
 				end
 			end
