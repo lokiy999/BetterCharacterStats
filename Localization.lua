@@ -225,7 +225,7 @@ BCS["L"] = {
 	
 	["SPELL_MANA_REGEN_TOOLTIP_HEADER"] = [[|cffffffffMana Regen|r]],
 	["SPELL_MANA_REGEN_TOOLTIP"] = "%d mana every 2 seconds while not casting.\r\n%d mana every 2 seconds while casting.\r\n|cff33c8ffmp5: %d|r%s",
-	["MANA_REGEN_MP5_BREAKPOINT"] = " |cff808080(+%.1f mp5 to next tick)|r",
+	["MANA_REGEN_MP5_BREAKPOINT"] = " |cff808080(breakpoint %d, next %d)|r",
 	
 	["ROGUE_MELEE_HIT_TOOLTIP"] = [[
 	

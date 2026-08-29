@@ -840,14 +840,16 @@ function BCS:SetManaRegen(statFrame)
 	-- Headline: the combined tick as a rate (x 2.5), plus the periodic sources.
 	text:SetText(format("%d", floor(tickNotCasting * 5 / 2 + periodicMp5)))
 
-	-- Fraction of a tick the combined value is currently short of the next whole
-	-- point, expressed in mp5 -- i.e. how much more flat mp5 buys +1 to the tick.
+	-- Flat-mp5 breakpoints against the REAL combined tick: "breakpoint" is the
+	-- flat mp5 at which the current tick level starts (drop below it and the
+	-- tick falls by 1), "next" is the flat mp5 that raises the tick by 1. Both
+	-- account for Spirit's own fractional part, so they shift with Spirit.
 	local mp5Breakpoint = ""
 	if flatMp5 > 0 then
-		local toNext = (1 - (spiritTick + flatMp5Tick - floor(spiritTick + flatMp5Tick))) * 5 / 2
-		if toNext >= 0.05 and toNext < 2.5 then
-			mp5Breakpoint = format(L["MANA_REGEN_MP5_BREAKPOINT"], toNext)
-		end
+		local bp = ceil((tickNotCasting - spiritTick) * 5 / 2)
+		local nextBp = ceil((tickNotCasting + 1 - spiritTick) * 5 / 2)
+		if bp < 0 then bp = 0 end
+		mp5Breakpoint = format(L["MANA_REGEN_MP5_BREAKPOINT"], bp, nextBp)
 	end
 
 	frame.tooltip = format(L["SPELL_MANA_REGEN_TOOLTIP_HEADER"], tickNotCasting, tickNotCasting * 5 / 2)
