@@ -25,7 +25,7 @@ end
 
 -- ============================================================
 -- DEBUG HELPERS -- temporary, remove before merging to master.
--- See TODO_BEFORE_MERGE.md.
+-- See TODO.md ("Before merging").
 -- ============================================================
 
 -- DEBUG: prints every line of every active buff's tooltip.
