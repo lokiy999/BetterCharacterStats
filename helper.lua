@@ -152,8 +152,9 @@ function BCS:DebugManaRegen()
 			end
 		end
 	end
-	local base, casting, mp5 = BCS:GetManaRegen()
-	BCS:Print("GetManaRegen: base="..tostring(base).." casting="..tostring(casting).." mp5="..tostring(mp5))
+	local base, casting, mp5, _, _, _, _, bow, mts, pct = BCS:GetManaRegen()
+	BCS:Print("GetManaRegen: base(spiritTick)="..tostring(base).." casting(spiritTick)="..tostring(casting)
+		.." gearMp5="..tostring(mp5).." bowMp5="..tostring(bow).." mtsTick="..tostring(mts).." castingPct="..tostring(pct))
 end
 
 -- ============================================================
@@ -2599,7 +2600,7 @@ function BCS:GetManaRegen()
 	--	mp5 = mp5 + 10
 	--end
 	
-	return base, casting, mp5, paladinManaTick, paladinManaRegen, druidManaTick, druidManaRegen, finalBoWMP5, finalMtSVal
+	return base, casting, mp5, paladinManaTick, paladinManaRegen, druidManaTick, druidManaRegen, finalBoWMP5, finalMtSVal, castingRegenPercent
 end
 
 function BCS:GetResilienceChance()

@@ -700,7 +700,7 @@ function BCS:SetManaRegen(statFrame)
 		return
 	end
 	
-	local base, casting, mp5, paladinManaTick, paladinManaRegen, druidManaTick, druidManaRegen, finalBoWMP5, finalMtSVal = BCS:GetManaRegen()
+	local base, casting, mp5, paladinManaTick, paladinManaRegen, druidManaTick, druidManaRegen, finalBoWMP5, finalMtSVal, castingRegenPercent = BCS:GetManaRegen()
 	
 	-- Check if Mana Spring Totem aura is active
 	local hasManaSpring = BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Nature_ManaRegenTotem")
@@ -790,18 +790,36 @@ function BCS:SetManaRegen(statFrame)
 	paladinManaTick = paladinManaTick or 0
 	druidManaRegen = druidManaRegen or 0
 	druidManaTick = druidManaTick or 0
-	manaSpringmp5 = (finalMtSVal * 5 / 2) or 0
 
-	-- In-game active amount
-	local tickSpirit = base -- Spirit regen per tick (2 sec in-game)
-	local tickMp2 = floor(mp5 * 2 / 5) -- MP5 regen converted to per 2 sec tick
+	-- ==========================================================================
+	-- Mana regen model -- see docs/mana-regen.md for the full rationale.
+	--
+	-- The server keeps ONE combined rate (SPELL_AURA_MOD_POWER_REGEN + spirit),
+	-- and every 2s tick it does a SINGLE floor on that combined value. So Spirit
+	-- regen and all flat "mana per 5 sec" effects (gear/enchant/set/oil/food,
+	-- Blessing of Wisdom, Mana Spring Totem, Warchief's/Winsor's) must be summed
+	-- FIRST and floored ONCE -- never rounded per source, or the fractions drift
+	-- and the headline reads 1-2 high/low.
+	--
+	-- Percentage-of-max-mana periodic effects (Brilliance Aura, Divine
+	-- Concentration, Dreamstate) are SEPARATE periodic-energize events with their
+	-- own independent floor, so they stay outside the combined tick.
+	-- ==========================================================================
 
-	-- Theorycrafting MP5 equivalents
-	local spiritMP5 = (base * 5 / 2) -- Convert Spirit regen to MP5 equivalent
-	local mp5Theo = (tickMp2 * 5 / 2) -- Convert MP2 regen to MP5 equivalent
+	-- Flat mp5 that the server folds into the single combined tick.
+	local flatMp5 = mp5
+	if hasBlessingOfWisdom then flatMp5 = flatMp5 + finalBoWMP5 end
+	if hasManaSpring then flatMp5 = flatMp5 + (finalMtSVal * 5 / 2) end
+	if hasWarchiefsBlessing and hasWarchiefsBlessingTT then flatMp5 = flatMp5 + warchiefsRegenmp5 end
+	if hasWinsorsSacrifice and hasWinsorsSacrificeTT then flatMp5 = flatMp5 + winsorsRegenmp5 end
 
-	-- Add both mana sources separately to final display
-	text:SetText(format("%d", (spiritMP5 + mp5Theo + paladinManaRegen + druidManaRegen + manaSpringmp5 + brillRegenmp5 + finalBoWMP5 + winsorsRegenmp5 + warchiefsRegenmp5)))
+	local flatMp5Tick = flatMp5 * 2 / 5   -- per 2s tick, UNfloored
+	local spiritTick = base               -- per 2s tick, UNfloored
+	local spiritTickCasting = casting     -- already base * castingRegenPercent/100
+
+	-- The server's single per-tick floor.
+	local tickNotCasting = floor(spiritTick + flatMp5Tick)
+	local tickCasting = floor(spiritTickCasting + flatMp5Tick)
 
 	 -- **Check if player is Paladin before adding Divine Concentration**
     local _, playerClass = UnitClass("player")
@@ -811,26 +829,29 @@ function BCS:SetManaRegen(statFrame)
 	if playerClass == "PALADIN" and paladinManaRegen > 0 then
         paladinText = format(L["DIVINE_CONCENTRATION"], paladinManaTick, paladinManaRegen)
     end
-	
+
 	if playerClass == "DRUID" and druidManaRegen > 0 then
 		druidText = format(L["DREAMSTATE"], druidManaTick, druidManaRegen)
 	end
 
-	-- Flat mp5 effects (gear/enchants) ignore the five-second rule, so they
-	-- contribute their per-tick amount both while casting and while not casting.
-	local tickNotCasting = floor(tickSpirit + tickMp2)
-	local tickCasting = floor(casting + tickMp2)
+	-- Separate periodic-energize sources, each already floored on its own timer.
+	local periodicMp5 = brillRegenmp5 + paladinManaRegen + druidManaRegen
 
-	-- The server floors the flat-mp5 tick independently each tick with no
-	-- fractional carry-over, so mp5 between breakpoints (every 2.5 mp5) is dead
-	-- weight. Show the breakpoint the player is on and where the next one is.
+	-- Headline: the combined tick as a rate (x 2.5), plus the periodic sources.
+	text:SetText(format("%d", floor(tickNotCasting * 5 / 2 + periodicMp5)))
+
+	-- Fraction of a tick the combined value is currently short of the next whole
+	-- point, expressed in mp5 -- i.e. how much more flat mp5 buys +1 to the tick.
 	local mp5Breakpoint = ""
-	if mp5 > 0 then
-		mp5Breakpoint = format(L["MANA_REGEN_MP5_BREAKPOINT"], ceil(tickMp2 * 2.5), ceil((tickMp2 + 1) * 2.5))
+	if flatMp5 > 0 then
+		local toNext = (1 - (spiritTick + flatMp5Tick - floor(spiritTick + flatMp5Tick))) * 5 / 2
+		if toNext >= 0.05 and toNext < 2.5 then
+			mp5Breakpoint = format(L["MANA_REGEN_MP5_BREAKPOINT"], toNext)
+		end
 	end
 
-	frame.tooltip = format(L["SPELL_MANA_REGEN_TOOLTIP_HEADER"], tickSpirit, spiritMP5, tickMp2, mp5Theo, tickSpirit + tickMp2, spiritMP5 + mp5Theo)
-	frame.tooltipSubtext = format(L["SPELL_MANA_REGEN_TOOLTIP"], tickNotCasting, tickCasting, mp5, mp5Breakpoint) .. paladinText .. druidText .. blessingRegenText .. manaSpringText .. brillRegenText .. winsorsRegenText .. warchiefsRegenText
+	frame.tooltip = format(L["SPELL_MANA_REGEN_TOOLTIP_HEADER"], tickNotCasting, tickNotCasting * 5 / 2)
+	frame.tooltipSubtext = format(L["SPELL_MANA_REGEN_TOOLTIP"], tickNotCasting, tickCasting, floor(flatMp5), mp5Breakpoint) .. paladinText .. druidText .. blessingRegenText .. manaSpringText .. brillRegenText .. winsorsRegenText .. warchiefsRegenText
 	
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
