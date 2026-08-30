@@ -96,7 +96,8 @@ the addon works. Grouped by type, roughly most to least important.
       (2.0), Cat Form (1.0), Bear/Dire Bear Form (2.5, detected by
       `Ability_Druid_CatForm` / `Ability_Racial_BearForm` buff icons). NOT
       handled: off-hand shown separately, servers that show haste-modified
-      speed in the weapon tooltip.
+      speed in the weapon tooltip. Displayed as a whole % -- the swing-speed
+      division carries ~0.04% of noise that isn't a real stat.
 
 ## Before merging `fixes` -> master
 

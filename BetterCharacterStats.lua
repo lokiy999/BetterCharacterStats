@@ -900,7 +900,10 @@ function BCS:SetMeleeHaste(statFrame)
 	local label = getglobal(statFrame:GetName() .. "Label")
 
 	label:SetText(L.SPELL_HASTE_COLON)
-	text:SetText(format("%.2f%%", BCS:GetMeleeHaste()))
+	-- Whole % only: this value is derived from base-vs-current swing speed, and
+	-- the game reports those to ~2 decimals, so the division carries fractional
+	-- noise (a true 2% reads as ~2.04%). Real melee haste comes in whole chunks.
+	text:SetText(format("%.0f%%", BCS:GetMeleeHaste()))
 end
 
 function BCS:SetSpellPen(statFrame)
