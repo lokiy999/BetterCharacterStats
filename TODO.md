@@ -3,6 +3,11 @@
 Findings from a review pass on the `fixes` branch. Nothing here is a crash;
 the addon works. Grouped by type, roughly most to least important.
 
+**Status (2026-08-30):** the review/cleanup pass is done. Everything still
+unchecked is either (a) waiting on in-game verification, (b) a standing
+"add wordings as they turn up" note, or (c) the feature backlog at the
+bottom (out of scope for this pass).
+
 ## Correctness gaps
 
 - [x] **`GetSpellHaste` ignores casting-speed slows.** Now scans HARMFUL for
@@ -101,10 +106,13 @@ the addon works. Grouped by type, roughly most to least important.
 
 ## Before merging `fixes` -> master
 
-- [ ] Remove the `DEBUG HELPERS` block in `helper.lua` (`DebugBuffs`,
-      `DebugGearStatBonus`, `DebugSpellHaste`, `DebugManaRegen`,
-      `DebugCastingRegenTalent`). Also drop the `docs/mana-regen.md` reference to
-      `DebugManaRegen` if it goes.
+- [ ] ~~Remove the `DEBUG HELPERS` block in `helper.lua`~~ -- **decided to keep**
+      (`DebugBuffs`, `DebugGearStatBonus`, `DebugSpellHaste`, `DebugManaRegen`,
+      `DebugCastingRegenTalent`). They never run on load, only when called
+      manually via `/script`, so the cost of shipping them is low and they stay
+      useful for the next server-wording issue. Revisit only if the file gets
+      unwieldy -- then move them to a separate `debug.lua` left out of the
+      `.toc`.
 
 ## Features not implemented anywhere
 
