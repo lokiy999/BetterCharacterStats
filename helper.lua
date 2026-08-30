@@ -11,6 +11,7 @@ local tonumber = tonumber
 local tinsert = tinsert
 local lastBlessingOfWisdomMP5 = 0 -- Stores last detected MP5 from BoW
 local lastGearBonus = 1 --Stores the gear bonus snapshot (default 1.0)
+local lastMsTVal = 0 -- Stores last detected Mana Spring Totem per-2s value
 
 local function tContains(table, item)
 	local index = 1
@@ -794,7 +795,9 @@ function BCS:GetSpellHitRating()
 	local hit_Set_Bonus = {}
 
 	local Hit_Schools = {}
-	
+
+	local value, value2 -- reused by the strfind scans below
+
 	-- scan gear
 	local MAX_INVENTORY_SLOTS = 19
 	for slot=0, MAX_INVENTORY_SLOTS do
@@ -1229,6 +1232,8 @@ function BCS:GetSpellCritChance()
 	local natureCritDamage = 0
 	local offensiveCritDamage = 0
 	local firetotemCritDamage = 0
+
+	local value, value2 -- reused by the strfind scans below
 
 	local _, intellect = UnitStat("player", 4)
 	local _, class = UnitClass("player")
@@ -1813,6 +1818,7 @@ function BCS:GetHealingPower()
 	local healPower = 0;
 	local healPower_Set_Bonus = {}
 	local MAX_INVENTORY_SLOTS = 19
+	local value, value2 -- reused by the strfind scans below
 	
 	for slot=0, MAX_INVENTORY_SLOTS do
 		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)

@@ -63,12 +63,11 @@ the addon works. Grouped by type, roughly most to least important.
 - [x] **Implicit globals from `GetTalentInfo`.** The `GetHitRating` live loop
       wrote `name/rank/...` as globals in 3 places; rewritten to fetch `rank`
       once per talent as a local. Everything else already used `local`.
-- [ ] **Implicit global `value2`.** ~8 spots do `_,_, value, value2 = strfind(...)`
-      without `local` (helper.lua ~923, 932, 1410, 1455, 1464, 1482, 1491, 1841).
-      Benign (write-only, always reassigned before read) but should be `local`.
-- [ ] **`lastMsTVal` is an implicit global.** `helper.lua`
-      `UpdateManaSpringTotem`. Make it a file-local like `lastBlessingOfWisdomMP5`
-      / `lastGearBonus` at the top of the file.
+- [x] **Implicit global `value` / `value2`.** Added `local value, value2` at the
+      top of `GetSpellHitRating`, `GetSpellCritChance` and `GetHealingPower`, so
+      the bare `_,_, value[, value2] = strfind(...)` scans no longer leak.
+- [x] **`lastMsTVal` is an implicit global.** Now a file-local next to
+      `lastBlessingOfWisdomMP5` / `lastGearBonus`.
 - [x] **Duplicate `stat4` lines in `UpdatePaperdollStats`.** Replaced the reset
       block with a `for i = 1, 7` loop (also now resets `OnLeave`).
 - [ ] **`BCS.SPELLHIT = { -- soon(tm) }`** in `BetterCharacterStats.lua` -- empty
@@ -82,9 +81,8 @@ the addon works. Grouped by type, roughly most to least important.
       removed (talents/buffs are applied now).
 - [x] **`Localization.lua`** the `-- ! Deprecated ["Increases hit chance by
       ..."]` commented line -- removed with the dead `GetHitRating` block.
-- [ ] **`Localization.lua:183`** `"...15% haste to melee attacks..."` (Warchief's
-      wording) is unreferenced. `GetMeleeHaste` derives haste from swing speed
-      instead of scanning, so this entry can be removed.
+- [x] **`Localization.lua`** unreferenced `"...15% haste to melee attacks..."`
+      (Warchief's) entry removed -- `GetMeleeHaste` derives from swing speed.
 
 ## Melee Haste (added -- verify)
 
