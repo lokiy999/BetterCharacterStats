@@ -43,13 +43,10 @@ the addon works. Grouped by type, roughly most to least important.
 
 ## Correctness gaps (cont.)
 
-- [ ] **`GetSpellPower` double-counts some damage auras.** `SetSpellPower`
-      (no-school branch) shows `spellPower + damagePower`. But
-      `"Magical damage dealt is increased by up to X."` (Zandalarian Hero Charm)
-      and the Moonkin Form bonus are added to **both** `spellPower` and
-      `damagePower` (helper.lua ~1853/1871), so they count twice in the Bonus
-      Damage number. They should go in `damagePower` only (like the weapon
-      enchant and the new flat Lightning Shield buff do).
+- [x] **`GetSpellPower` double-counts some damage auras.** The Zandalarian Hero
+      Charm aura and the Moonkin Form spell-damage bonus were added to both
+      `spellPower` and `damagePower`; `SetSpellPower` shows `spellPower +
+      damagePower`, so they counted twice. Now `damagePower` only.
 - [x] **`SetSpellPower` per-school branch is broken.** Removed -- the per-school
       breakdown is already in the Bonus Damage hover tooltip, so the dead
       `if school then` branch (undefined `fromSchool`) was redundant.

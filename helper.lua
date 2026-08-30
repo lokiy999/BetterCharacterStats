@@ -1806,9 +1806,11 @@ function BCS:GetSpellPower()
 	local enchantDamage, _ = BCS:GetWeaponEnchant()
 	damagePower = damagePower + enchantDamage
 
+	-- "Magical damage dealt is increased by up to X." (Zandalarian Hero Charm):
+	-- damage only, so damagePower only -- SetSpellPower shows spellPower +
+	-- damagePower, and adding to both double-counts it.
 	local _, _, spellPowerFromAura = BCS:GetPlayerAura(L["Magical damage dealt is increased by up to (%d+)."])
 	if spellPowerFromAura then
-		spellPower = spellPower + tonumber(spellPowerFromAura)
 		damagePower = damagePower + tonumber(spellPowerFromAura)
 	end
 
@@ -1830,12 +1832,11 @@ function BCS:GetSpellPower()
 
 	-- Druid "Moonkin Form": "...increasing spell damage by up to X% of total
 	-- Intellect..." (detected via the Moonkin Form self-buff icon while shifted).
+	-- Spell damage only -> damagePower only (see note above).
 	local _, _, moonkinFormPercent = BCS:GetPlayerAura(L["increasing spell damage by up to (%d+)%% of total Intellect"])
 	if moonkinFormPercent then
 		local _, effectiveInt = UnitStat("player", 4)
-		local moonkinFormBonus = floor((tonumber(moonkinFormPercent) / 100) * effectiveInt)
-		spellPower = spellPower + moonkinFormBonus
-		damagePower = damagePower + moonkinFormBonus
+		damagePower = damagePower + floor((tonumber(moonkinFormPercent) / 100) * effectiveInt)
 	end
 
 
