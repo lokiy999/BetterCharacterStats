@@ -1908,11 +1908,10 @@ function BCS:GetHealingPower()
 		healPower = healPower + tonumber(healPowerFromAura)
 	end
 
-	-- "Attack power, Magical damage and healing dealt are increased by X."
-	local _, _, apMdhAura = BCS:GetPlayerAura(L["Attack power, Magical damage and healing dealt are increased by (%d+)%."])
-	if apMdhAura then
-		healPower = healPower + tonumber(apMdhAura)
-	end
+	-- NOTE: "Attack power, Magical damage and healing dealt are increased by X"
+	-- is NOT counted here. It boosts damage AND healing, so it lives in
+	-- GetSpellPower's spellPower; SetHealing already adds GetSpellPower() +
+	-- GetHealingPower(), and GetHealingPower only holds healing-ONLY sources.
 
 	-- enchants
 	local _, enchantHealing = BCS:GetWeaponEnchant()
