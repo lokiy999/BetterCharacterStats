@@ -712,119 +712,37 @@ function BCS:GetHitRating(hitOnly)
 	
 	local MAX_TABS = GetNumTalentTabs()
 	
-	-- ! Can I remove this part?
-	--[[
-	local Cache_GetHitRating_Tab, Cache_GetHitRating_Talent
-	if Cache_GetHitRating_Tab and Cache_GetHitRating_Talent then
-		BCS_Tooltip:SetTalent(Cache_GetHitRating_Tab, Cache_GetHitRating_Talent)
-		local MAX_LINES = BCS_Tooltip:NumLines()
-		
-		for line=1, MAX_LINES do
-			local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
-			if left:GetText() then
-				local _,_, value = strfind(left:GetText(), L["Increases your chance to hit with all attacks and spells by (%d+)%%."])
-				local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(Cache_GetHitRating_Tab, Cache_GetHitRating_Talent)
-				if value and rank > 0 then
-					hit = hit + tonumber(value)		
-					line = MAX_LINES
-				end
-
-				-- Hunter
-				-- Killer Instinct
-				_,_, value = strfind(left:GetText(), L["Increases hit and crit chance by (%d+)%% for both you and your pet."])
-				name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(Cache_GetHitRating_Tab, Cache_GetHitRating_Talent)
-				if value and rank > 0 then
-					hit = hit + tonumber(value)
-					line = MAX_LINES
-				end
-
-				-- Rogue / Warrior
-				-- Precision / Precision
-				_,_, value = strfind(left:GetText(), L["Increases your chance to hit with melee weapons by (%d)%%."])
-				name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(Cache_GetHitRating_Tab, Cache_GetHitRating_Talent)
-				if value and rank > 0 then
-					hit = hit + tonumber(value)
-					line = MAX_LINES
-				end
-				
-				-- Hunter
-				-- ?? what talent, if any
-				-- ! deprecated?
-				_,_, value = strfind(left:GetText(), L["Increases hit chance by (%d)%% and increases the chance movement impairing effects will be resisted by an additional %d+%%."])
-				name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(Cache_GetHitRating_Tab, Cache_GetHitRating_Talent)
-				if value and rank > 0 then
-					hit = hit + tonumber(value)
-					line = MAX_LINES
-				end
-
-				-- Paladin / Shaman
-				-- Precision / Nature's Guidance			
-				_,_, value = strfind(left:GetText(), L["Increases your chance to hit with melee attacks and spells by (%d+)%%."])
-				name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(Cache_GetHitRating_Tab, Cache_GetHitRating_Talent)
-				if value and rank > 0 then
-					hit = hit + tonumber(value)
-					line = MAX_LINES
-				end
-			end
-		end
-		
-		if not hitOnly then
-			hit = hit - hit_debuff
-			if hit < 0 then hit = 0 end
-			return hit
-		else
-			return hit
-		end
-	end
-	--]]
-	
 	for tab=1, MAX_TABS do
 		local MAX_TALENTS = GetNumTalents(tab)
-		
+
 		for talent=1, MAX_TALENTS do
-			BCS_Tooltip:SetTalent(tab, talent);
-			local MAX_LINES = BCS_Tooltip:NumLines()
-			
-			for line=1, MAX_LINES do
-				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
-				if left:GetText() then	
-					-- Druid
-					-- Accuracy
-					local _,_, value = strfind(left:GetText(), L["Increases your chance to hit with all attacks and spells by (%d+)%%."])
-					name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
-					if value and rank > 0 then
-						hit = hit + tonumber(value)
-						line = MAX_LINES
-					end
+			local _, _, _, _, rank = GetTalentInfo(tab, talent)
+			if rank and rank > 0 then
+				BCS_Tooltip:SetTalent(tab, talent)
 
-					-- Hunter
-					-- Killer Instinct
-					_,_, value = strfind(left:GetText(), L["Increases hit and crit chance by (%d+)%% for both you and your pet."])
-					name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
-					if value and rank > 0 then
-						hit = hit + tonumber(value)
-						line = MAX_LINES
+				for line=1, BCS_Tooltip:NumLines() do
+					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+					local text = left and left:GetText()
+					if text then
+						-- Druid Accuracy / Hunter Killer Instinct /
+						-- Rogue-Warrior Precision / Paladin-Shaman Precision & Nature's Guidance
+						local _,_, value = strfind(text, L["Increases your chance to hit with all attacks and spells by (%d+)%%."])
+						if not value then
+							_,_, value = strfind(text, L["Increases hit and crit chance by (%d+)%% for both you and your pet."])
+						end
+						if not value then
+							_,_, value = strfind(text, L["Increases your chance to hit with melee weapons by (%d)%%."])
+						end
+						if not value then
+							_,_, value = strfind(text, L["Increases your chance to hit with melee attacks and spells by (%d+)%%."])
+						end
+						if value then
+							hit = hit + tonumber(value)
+							break
+						end
 					end
-
-					-- Rogue / Warrior
-					-- Precision / Precision
-					_,_, value = strfind(left:GetText(), L["Increases your chance to hit with melee weapons by (%d)%%."])
-					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
-					if value and rank > 0 then
-						hit = hit + tonumber(value)
-						line = MAX_LINES
-					end
-
-					-- Paladin / Shaman
-					-- Precision / Nature's Guidance		 		
-					_,_, value = strfind(left:GetText(), L["Increases your chance to hit with melee attacks and spells by (%d+)%%."])
-					name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
-					if value and rank > 0 then
-						hit = hit + tonumber(value)
-						line = MAX_LINES
-					end
-				end	
-			end			
+				end
+			end
 		end
 	end
 	

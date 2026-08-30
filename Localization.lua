@@ -53,7 +53,6 @@ BCS["L"] = {
 	["Increases your chance to hit with melee attacks and spells by (%d+)%%."] = "Increases your chance to hit with melee attacks and spells by (%d+)%%.",
 	["Increases your chance to hit with melee weapons by (%d)%%."] = "Increases your chance to hit with melee weapons by (%d)%%.",
 	["Improves your chance to hit with spells by (%d+)%%."] = "Improves your chance to hit with spells by (%d+)%%.",
-	-- ! Deprecated ["Increases hit chance by (%d)%% and increases the chance movement impairing effects will be resisted by an additional %d+%%."] = "Increases hit chance by (%d)%% and increases the chance movement impairing effects will be resisted by an additional %d+%%.",
 	["%+(%d+)%% Hit"] = "%+(%d+)%% Hit",
 	["+(%d)%% Hit"] = "+(%d)%% Hit",
 

@@ -56,21 +56,21 @@ the addon works. Grouped by type, roughly most to least important.
 
 ## Code smells (work, but should be cleaned)
 
-- [ ] **Dead block in `GetHitRating`.** `helper.lua` lines ~715-779 are a
-      commented-out `--[[ ]]` cached-talent scan. Remove it (and the
-      `Localization.lua` line it references, below).
+- [x] **Dead block in `GetHitRating`.** Removed the commented-out cached-talent
+      scan and the `Localization.lua` line only it referenced; the live talent
+      loop was also refactored (see next item).
 - [x] **Dead `GetSpellPower_old`.** Removed (~230-line commented-out block).
-- [ ] **Implicit globals from `GetTalentInfo`.** ~7 spots in `helper.lua` do
-      `name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq
-      = GetTalentInfo(...)` with no `local`, leaking `rank`, `name`, etc. to the
-      global namespace. Add `local`.
+- [x] **Implicit globals from `GetTalentInfo`.** The `GetHitRating` live loop
+      wrote `name/rank/...` as globals in 3 places; rewritten to fetch `rank`
+      once per talent as a local. Everything else already used `local`.
+- [ ] **Implicit global `value2`.** ~8 spots do `_,_, value, value2 = strfind(...)`
+      without `local` (helper.lua ~923, 932, 1410, 1455, 1464, 1482, 1491, 1841).
+      Benign (write-only, always reassigned before read) but should be `local`.
 - [ ] **`lastMsTVal` is an implicit global.** `helper.lua`
       `UpdateManaSpringTotem`. Make it a file-local like `lastBlessingOfWisdomMP5`
       / `lastGearBonus` at the top of the file.
-- [ ] **Duplicate `stat4` lines in `UpdatePaperdollStats`.**
-      `BetterCharacterStats.lua` ~1168-1193 clears `stat4`'s `OnEnter` /
-      `.tooltip` / `.tooltipSubtext` twice each and never a missing one --
-      harmless copy-paste, just tidy it (a loop over `stat1..stat7` would do).
+- [x] **Duplicate `stat4` lines in `UpdatePaperdollStats`.** Replaced the reset
+      block with a `for i = 1, 7` loop (also now resets `OnLeave`).
 - [ ] **`BCS.SPELLHIT = { -- soon(tm) }`** in `BetterCharacterStats.lua` -- empty
       placeholder table, either use or remove.
 - [ ] **No hover tooltip on Haste / Spell Pen / Dodge / Parry.** Dodge/Parry
@@ -83,9 +83,8 @@ the addon works. Grouped by type, roughly most to least important.
       implemented (Spell tab). Update the Known Issues list.
 - [ ] **`helper.lua` `GetManaRegen`** `-- to-maybe-do: apply buffs/talents` --
       casting-regen talents/buffs are applied now; reword or drop.
-- [ ] **`Localization.lua`** the `-- ! Deprecated ["Increases hit chance by
-      ..."]` commented line -- only referenced by the dead `GetHitRating` block;
-      remove with it.
+- [x] **`Localization.lua`** the `-- ! Deprecated ["Increases hit chance by
+      ..."]` commented line -- removed with the dead `GetHitRating` block.
 - [ ] **`Localization.lua:183`** `"...15% haste to melee attacks..."` (Warchief's
       wording) is unreferenced. `GetMeleeHaste` derives haste from swing speed
       instead of scanning, so this entry can be removed.

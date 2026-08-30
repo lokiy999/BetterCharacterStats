@@ -1150,45 +1150,18 @@ function BCS:SetRangedAttackPower(statFrame)
 end
 
 function BCS:UpdatePaperdollStats(prefix, index)
-	local stat1 = getglobal(prefix..1)
-	local stat2 = getglobal(prefix..2)
-	local stat3 = getglobal(prefix..3)
-	local stat4 = getglobal(prefix..4)
-	local stat5 = getglobal(prefix..5)
-	local stat6 = getglobal(prefix..6)
-	local stat7 = getglobal(prefix..7)
-
-	stat1:SetScript("OnEnter", nil)
-	stat2:SetScript("OnEnter", nil)
-	stat3:SetScript("OnEnter", nil)
-	stat4:SetScript("OnEnter", nil)
-	stat4:SetScript("OnEnter", nil)
-	stat5:SetScript("OnEnter", nil)
-	stat6:SetScript("OnEnter", nil)
-	stat7:SetScript("OnEnter", nil)
-
-	stat1.tooltip = nil
-	stat2.tooltip = nil
-	stat3.tooltip = nil
-	stat4.tooltip = nil
-	stat4.tooltip = nil
-	stat5.tooltip = nil
-	stat6.tooltip = nil
-	stat7.tooltip = nil
-
-	stat1.tooltipSubtext = nil
-	stat2.tooltipSubtext = nil
-	stat3.tooltipSubtext = nil
-	stat4.tooltipSubtext = nil
-	stat4.tooltipSubtext = nil
-	stat5.tooltipSubtext = nil
-	stat6.tooltipSubtext = nil
-	stat7.tooltipSubtext = nil
-
-	stat4:Show()
-	stat5:Show()
-	stat6:Show()
-	stat7:Show()
+	local stats = {}
+	for i = 1, 7 do
+		local s = getglobal(prefix..i)
+		stats[i] = s
+		s:SetScript("OnEnter", nil)
+		s:SetScript("OnLeave", nil)
+		s.tooltip = nil
+		s.tooltipSubtext = nil
+		s:Show()
+	end
+	local stat1, stat2, stat3, stat4, stat5, stat6, stat7 =
+		stats[1], stats[2], stats[3], stats[4], stats[5], stats[6], stats[7]
 
 	if ( index == "PLAYERSTAT_BASE_STATS" ) then
 		BCS:SetStat(stat1, 1)
