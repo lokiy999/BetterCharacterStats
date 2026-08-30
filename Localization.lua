@@ -229,7 +229,7 @@ BCS["L"] = {
 	["SPELL_MANA_REGEN_TOOLTIP"] = "%d mana every 2 sec while not casting  |cff808080(= %d mp5)|r\r\n%d mana every 2 sec while casting",
 	["MANA_REGEN_GEAR_LINE"] = "\r\nGear & enchants: %d mp5%s",
 	["MANA_REGEN_MP5_BREAKPOINT"] = " |cff808080(breakpoint %d, next %d)|r",
-	["MANA_REGEN_PERIODIC_HEADER"] = "\n|cffffd100Also regenerating -- already in the total:|r",
+	["MANA_REGEN_PERIODIC_HEADER"] = "\n|cffffd100Already in the total:|r",
 	
 	["ROGUE_MELEE_HIT_TOOLTIP"] = [[
 	

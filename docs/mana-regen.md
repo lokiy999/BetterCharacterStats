@@ -86,7 +86,7 @@ fires on its own timer and is floored independently:
   - `Gear & enchants: G mp5 (breakpoint B, next X)` — only when `G > 0`. `B` is
     the flat mp5 at which the current tick level starts, `X` the flat mp5 that
     raises it by one. Both shift with Spirit's own fraction.
-  - `Also regenerating -- already in the total:` then one `+K mp5` line per active
+  - `Already in the total:` then one `+K mp5` line per active
     periodic source. No total line -- the headline stat (labelled
     `Regen (mp5):`) already is the grand total.
 
