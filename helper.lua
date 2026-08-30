@@ -2018,7 +2018,6 @@ function BCS:GetGearSetBonus()
 end
 
 function BCS:GetManaRegen()
-	-- to-maybe-do: apply buffs/talents
 	local base, casting
 	local power_regen = GetRegenMPPerSpirit()
 

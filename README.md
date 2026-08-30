@@ -28,5 +28,6 @@ Features:
 
 Known Issues:
 - Primary stats still have the vanilla text instead of the TBC one.
-- Haste rating still not implemented.
 - Class specific things missing.
+
+See TODO.md for the current list.

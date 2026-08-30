@@ -73,16 +73,13 @@ the addon works. Grouped by type, roughly most to least important.
       block with a `for i = 1, 7` loop (also now resets `OnLeave`).
 - [ ] **`BCS.SPELLHIT = { -- soon(tm) }`** in `BetterCharacterStats.lua` -- empty
       placeholder table, either use or remove.
-- [ ] **No hover tooltip on Haste / Spell Pen / Dodge / Parry.** Dodge/Parry
-      matching Blizzard is fine; a Haste breakdown (gear vs talent vs buff, like
-      the crit tooltip) would be nice.
 
 ## Stale docs / comments
 
-- [ ] **README.md** "Haste rating still not implemented" -- spell Haste *is*
-      implemented (Spell tab). Update the Known Issues list.
-- [ ] **`helper.lua` `GetManaRegen`** `-- to-maybe-do: apply buffs/talents` --
-      casting-regen talents/buffs are applied now; reword or drop.
+- [x] **README.md** "Haste rating still not implemented" -- removed; README now
+      points at this file.
+- [x] **`helper.lua` `GetManaRegen`** `-- to-maybe-do: apply buffs/talents` --
+      removed (talents/buffs are applied now).
 - [x] **`Localization.lua`** the `-- ! Deprecated ["Increases hit chance by
       ..."]` commented line -- removed with the dead `GetHitRating` block.
 - [ ] **`Localization.lua:183`** `"...15% haste to melee attacks..."` (Warchief's
