@@ -268,7 +268,7 @@ BCS["L"] = {
 	
 	SPELL_POWER_COLON = "Bonus Damage:",
 	HEAL_POWER_COLON = "Bonus Healing:",
-	MANA_REGEN_COLON = "Mana Regen (mp5):",
+	MANA_REGEN_COLON = "Regen (mp5):",
 	SPELL_PEN_COLON = "Spell Pen:",
 	SPELL_HASTE_COLON = "Haste:",
 	

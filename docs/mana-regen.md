@@ -88,7 +88,7 @@ fires on its own timer and is floored independently:
     raises it by one. Both shift with Spirit's own fraction.
   - `Also regenerating -- already in the total:` then one `+K mp5` line per active
     periodic source. No total line -- the headline stat (labelled
-    `Mana Regen (mp5):`) already is the grand total.
+    `Regen (mp5):`) already is the grand total.
 
 ## Assumptions (break these and the number will be off)
 
