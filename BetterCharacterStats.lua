@@ -635,18 +635,14 @@ function BCS:SetHealing(statFrame)
 	local text = getglobal(statFrame:GetName() .. "StatText")
 	local label = getglobal(statFrame:GetName() .. "Label")
 	
-	local power,_,dmg = BCS:GetSpellPower()
+	local power = BCS:GetSpellPower()
 	local heal = BCS:GetHealingPower()
-	
-	-- ! Needed?
-	-- power = power-dmg	
-	healingPower = power + heal
-	
+	local healingPower = power + heal
+
 	label:SetText(L.HEAL_POWER_COLON)
-	text:SetText(power+heal)
-	
-	frame.tooltip = format(L["SPELL_HEALING_POWER_TOOLTIP_HEADER"], healingPower);
-	frame.tooltipSubtext = format(L.SPELL_HEALING_POWER_TOOLTIP, healingPower, healingPower);
+	text:SetText(healingPower)
+
+	frame.tooltip = format(L["SPELL_HEALING_POWER_TOOLTIP_HEADER"], healingPower)
 
 	local _, healPercent = BCS:GetHolyPowerTalentModifiers()
 	local moonkinAuraPercent = BCS:GetMoonkinAuraBonus()
@@ -654,7 +650,6 @@ function BCS:SetHealing(statFrame)
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 		GameTooltip:SetText(this.tooltip)
-		GameTooltip:AddLine(this.tooltipSubtext)
 		if healPercent ~= 0 then
 			GameTooltip:AddLine(format("Healing (Talent): %+d%%", healPercent), 1, 1, 1)
 		end

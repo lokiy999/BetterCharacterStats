@@ -224,7 +224,6 @@ BCS["L"] = {
 	["CRIT_TOOLTIP_HEADER"] = [[|cffffffffCrit      %s|r]],
 
 	["SPELL_HEALING_POWER_TOOLTIP_HEADER"] = [[|cffffffffHealing Power %d|r]],
-	["SPELL_HEALING_POWER_TOOLTIP"] = "Increases your healing by %d.",	
 	
 	["SPELL_MANA_REGEN_TOOLTIP_HEADER"] = [[|cffffffffMana Regen|r]],
 	["SPELL_MANA_REGEN_TOOLTIP"] = "%d mana every 2 seconds while not casting.\r\n%d mana every 2 seconds while casting.\r\n|cff33c8ffmp5: %d|r%s",
