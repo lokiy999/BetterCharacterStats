@@ -38,6 +38,9 @@ BCS["L"] = {
 	["Increases movement and mounted movement speed by (%d+)%% This does not stack with other movement speed increasing effects"] = "Increases movement and mounted movement speed by (%d+)%% This does not stack with other movement speed increasing effects",
 	["Increases speed by (%d+)%%."] = "Increases speed by (%d+)%%.",
 	["Increases your attack and casting speed by (%d+)%%."] = "Increases your attack and casting speed by (%d+)%%.",
+	-- Short gear/enchant haste wordings, e.g. "+2% Haste" / "Haste +2%"
+	["%+(%d+)%% [Hh]aste"] = "%+(%d+)%% [Hh]aste",
+	["[Hh]aste %+(%d+)%%"] = "[Hh]aste %+(%d+)%%",
 	["Increases your casting speed by (%d+)%%."] = "Increases your casting speed by (%d+)%%.",
 	["Increases the casting speed by (%d+)%%."] = "Increases the casting speed by (%d+)%%.",
 	["Increases the casting speed by %[([%d/]+)%]%%."] = "Increases the casting speed by %[([%d/]+)%]%%.",
@@ -50,7 +53,6 @@ BCS["L"] = {
 	["Increases your chance to hit with melee attacks and spells by (%d+)%%."] = "Increases your chance to hit with melee attacks and spells by (%d+)%%.",
 	["Increases your chance to hit with melee weapons by (%d)%%."] = "Increases your chance to hit with melee weapons by (%d)%%.",
 	["Improves your chance to hit with spells by (%d+)%%."] = "Improves your chance to hit with spells by (%d+)%%.",
-	-- ! Deprecated ["Increases hit chance by (%d)%% and increases the chance movement impairing effects will be resisted by an additional %d+%%."] = "Increases hit chance by (%d)%% and increases the chance movement impairing effects will be resisted by an additional %d+%%.",
 	["%+(%d+)%% Hit"] = "%+(%d+)%% Hit",
 	["+(%d)%% Hit"] = "+(%d)%% Hit",
 
@@ -176,11 +178,12 @@ BCS["L"] = {
 	-- auras, buffs, etc.
 	["Chance to hit increased by (%d)%%."] = 														"Chance to hit increased by (%d)%%.",
 	["Magical damage dealt is increased by up to (%d+)."] = 										"Magical damage dealt is increased by up to (%d+).",
+	["Increases spell damage by (%d+)%."] = 														"Increases spell damage by (%d+)%.", -- flat, e.g. V+ Lightning Shield
+	["Attack power, Magical damage and healing dealt are increased by (%d+)%."] = 					"Attack power, Magical damage and healing dealt are increased by (%d+)%.",
 	["Healing done by magical spells is increased by up to (%d+)."] = 								"Healing done by magical spells is increased by up to (%d+).",
 	["Chance to hit reduced by (%d+)%%."] = 														"Chance to hit reduced by (%d+)%%.",
 	["Chance to hit decreased by (%d+)%% and %d+ Nature damage every %d+ sec."] = 					"Chance to hit decreased by (%d+)%% and %d+ Nature damage every %d+ sec.",
 	["Lowered chance to hit."] = 																	"Lowered chance to hit.", -- 5917	Fumble (25%)
-	["Increases hitpoints by 300. 15%% haste to melee attacks. 10 mana regen every 5 seconds."] = 	"Increases hitpoints by 300. 15%% haste to melee attacks. 10 mana regen every 5 seconds.",
 	["Improves your chance to hit by (%d+)%%."] = 													"Improves your chance to hit by (%d+)%%.",
 	["Chance for a critical hit with a spell increased by (%d+)%%."] = 								"Chance for a critical hit with a spell increased by (%d+)%%.",
 	["While active, target's critical hit chance with spells and attacks increases by 10%%."] = 	"While active, target's critical hit chance with spells and attacks increases by 10%%.",
@@ -197,7 +200,19 @@ BCS["L"] = {
 	["Holy spell critical hit chance increased by (%d+)%%."] = "Holy spell critical hit chance increased by (%d+)%%.",
 	["Destruction spell critical hit chance increased by (%d+)%%."] = "Destruction spell critical hit chance increased by (%d+)%%.",
 	["Critical strike chance with spells and melee attacks increased by (%d+)%%."] = "Critical strike chance with spells and melee attacks increased by (%d+)%%.",
-	
+
+	-- Mana regeneration while casting (five-second-rule bypass).
+	-- Covers Meditation / Arcane Meditation / Reflection talents, the
+	-- Transcendence 2-set bonus, etc.
+	["(%d+)%% of your [Mm]ana regeneration to continue while casting"] = "(%d+)%% of your [Mm]ana regeneration to continue while casting",
+	-- Aura of the Blue Dragon (Ace of Beasts trinket set)
+	["(%d+)%% of your [Mm]ana regeneration continuing while casting"] = "(%d+)%% of your [Mm]ana regeneration continuing while casting",
+	-- Spirit Tap proc buff ("allows 50% of mana regeneration while casting")
+	["(%d+)%% of [Mm]ana regeneration while casting"] = "(%d+)%% of [Mm]ana regeneration while casting",
+
+	-- Flat mp5 from food buffs, e.g. Nightfin Soup "well fed"
+	["[Rr]egenerating (%d+) [Mm]ana every 5 seconds"] = "[Rr]egenerating (%d+) [Mm]ana every 5 seconds",
+
 	-- Headers or Tooltips
 	["HIT_TOOLTIP_HEADER"] = [[|cffffffffHit Rating      %s|r]],
 	["HIT_TOOLTIP"] = "Increases your %s chance to hit a target of level %d by %s\r\n",
@@ -209,10 +224,12 @@ BCS["L"] = {
 	["CRIT_TOOLTIP_HEADER"] = [[|cffffffffCrit      %s|r]],
 
 	["SPELL_HEALING_POWER_TOOLTIP_HEADER"] = [[|cffffffffHealing Power %d|r]],
-	["SPELL_HEALING_POWER_TOOLTIP"] = "Increases your healing by %d.",	
 	
 	["SPELL_MANA_REGEN_TOOLTIP_HEADER"] = [[|cffffffffMana Regen|r]],
-	["SPELL_MANA_REGEN_TOOLTIP"] = "%d mana regenerated every 2 \r\nseconds while not casting.",
+	["SPELL_MANA_REGEN_TOOLTIP"] = "%d mana every 2 sec while not casting  |cff808080(= %d mp5)|r\r\n%d mana every 2 sec while casting",
+	["MANA_REGEN_GEAR_LINE"] = "\r\nGear & enchants: %d mp5%s",
+	["MANA_REGEN_MP5_BREAKPOINT"] = " |cff808080(breakpoint %d, next %d)|r",
+	["MANA_REGEN_PERIODIC_HEADER"] = "\n|cffffd100Already in the total:|r",
 	
 	["ROGUE_MELEE_HIT_TOOLTIP"] = [[
 	
@@ -220,15 +237,14 @@ BCS["L"] = {
 	+8% hit to always hit with your special abilities against a raid boss.
 	+24.6% hit to always hit a raid boss.]],
 
-	["MANA_SPRING_TOTEM"] = "\n|cff0099ff%s|cff00ff00 per tick from Mana Spring Totem |cff0099ff%s|cff00ff00 mp5.|r",
-	["BRILLIANCE_AURA"] = "\n|cff0099ff%s|cff00ff00 per tick from Brilliance Aura |cff0099ff%s|cff00ff00 mp5.|r",
-	["BLESSING_OF_WISDOM"] = "\n|cff0099ff%s|cff00ff00 per tick from Blessing of Wisdom |cff0099ff%s|cff00ff00 mp5.|r",
-	["WINSORS_WBUFF"] = "\n|cff0099ff%s|cff00ff00 per tick from Winsor's Sacrifice |cff0099ff%s|cff00ff00 mp5.|r",
-	["WARCHIEFS_WBUFF"] = "\n|cff0099ff%s|cff00ff00 per tick from Warchief's Blessing |cff0099ff%s|cff00ff00 mp5.|r",
+	["MANA_SPRING_TOTEM"] = "\n   Mana Spring Totem: |cff00ff00+%s mp5|r",
+	["BRILLIANCE_AURA"] = "\n   Brilliance Aura: |cff00ff00+%s mp5|r",
+	["BLESSING_OF_WISDOM"] = "\n   Blessing of Wisdom: |cff00ff00+%s mp5|r",
+	["WARCHIEFS_WBUFF"] = "\n   Warchief's / Winsor's: |cff00ff00+%s mp5|r",
 
 	--Talent Tooltips
-	["DIVINE_CONCENTRATION"] = "\n|cff0099ff%s|cff00ff00 per tick from Divine Concentration. |cff0099ff%s|cff00ff00 mp5.|r",
-	["DREAMSTATE"] = "\n|cff0099ff%s|cff00ff00 per tick from Dreamstate. |cff0099ff%s|cff00ff00 mp5.|r",
+	["DIVINE_CONCENTRATION"] = "\n   Divine Concentration: |cff00ff00+%s mp5|r",
+	["DREAMSTATE"] = "\n   Dreamstate: |cff00ff00+%s mp5|r",
 		
 
 	PLAYERSTAT_BASE_STATS = "Base Stats",
@@ -251,7 +267,7 @@ BCS["L"] = {
 	
 	SPELL_POWER_COLON = "Bonus Damage:",
 	HEAL_POWER_COLON = "Bonus Healing:",
-	MANA_REGEN_COLON = "Mana Regen:",
+	MANA_REGEN_COLON = "Regen (mp5):",
 	SPELL_PEN_COLON = "Spell Pen:",
 	SPELL_HASTE_COLON = "Haste:",
 	

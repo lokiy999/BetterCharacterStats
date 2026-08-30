@@ -11,6 +11,7 @@ local tonumber = tonumber
 local tinsert = tinsert
 local lastBlessingOfWisdomMP5 = 0 -- Stores last detected MP5 from BoW
 local lastGearBonus = 1 --Stores the gear bonus snapshot (default 1.0)
+local lastMsTVal = 0 -- Stores last detected Mana Spring Totem per-2s value
 
 local function tContains(table, item)
 	local index = 1
@@ -25,7 +26,7 @@ end
 
 -- ============================================================
 -- DEBUG HELPERS -- temporary, remove before merging to master.
--- See TODO_BEFORE_MERGE.md.
+-- See TODO.md ("Before merging").
 -- ============================================================
 
 -- DEBUG: prints every line of every active buff's tooltip.
@@ -115,6 +116,76 @@ function BCS:DebugSpellHaste()
 					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
 					if left and left:GetText() and strfind(left:GetText(), "Haste") then
 						BCS:Print("talent tab "..tab.." #"..talent..": \""..left:GetText().."\"")
+					end
+				end
+			end
+		end
+	end
+end
+
+-- DEBUG: for every equipped item that has a "mana per 5 sec" line, prints the
+-- whole tooltip (set header, piece count, each bonus line) with an active/grey
+-- classification, then the values GetManaRegen computed. Lets an mp5 mismatch
+-- with the in-game tick be traced to an unparsed or mis-counted source.
+-- Usage: /script BCS:DebugManaRegen()
+function BCS:DebugManaRegen()
+	for slot = 0, 19 do
+		if BCS_Tooltip:SetInventoryItem("player", slot) then
+			local relevant = false
+			for line = 1, BCS_Tooltip:NumLines() do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				local text = left and left:GetText()
+				if text and strfind(strlower(text), "mana per 5 sec") then relevant = true end
+			end
+			if relevant then
+				BCS:Print("--- slot "..slot.." ---")
+				for line = 1, BCS_Tooltip:NumLines() do
+					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+					local text = left and left:GetText()
+					-- only set headers ("Name (x/y)"), set-bonus lines and mp5 lines
+					if text and (strfind(text, "%(%d+/%d+%)") or strfind(strlower(text), "set:") or strfind(strlower(text), "mana per 5 sec")) then
+						local r, g, b = left:GetTextColor()
+						-- grey bonus line ~ (0.5,0.5,0.5); active ~ green/white
+						local state = (r > 0.45 and r < 0.55 and g > 0.45 and g < 0.55) and "GREY" or "active"
+						BCS:Print(line..": \""..text.."\" ["..state.."]")
+					end
+				end
+			end
+		end
+	end
+	local base, casting, mp5, _, _, _, _, bow, mts, pct = BCS:GetManaRegen()
+	BCS:Print("GetManaRegen: base(spiritTick)="..tostring(base).." casting(spiritTick)="..tostring(casting)
+		.." gearMp5="..tostring(mp5).." bowMp5="..tostring(bow).." mtsTick="..tostring(mts).." castingPct="..tostring(pct))
+end
+
+-- DEBUG: for every talent whose SetTalent tooltip mentions "mana regeneration
+-- while casting" (Meditation / Arcane Meditation / Reflection), prints
+-- GetTalentInfo's rank/maxRank next to the % the tooltip text shows. If they
+-- disagree at a partial rank (e.g. Reflection 1/3 shows 15%), SetTalent is
+-- reporting the wrong rank and GetManaRegen's casting-regen scan is off.
+-- Invest ranks one at a time and re-run. Usage:
+--   /script BCS:DebugCastingRegenTalent()
+function BCS:DebugCastingRegenTalent()
+	local patterns = {
+		"(%d+)%% of your [Mm]ana regeneration to continue while casting",
+		"(%d+)%% of your [Mm]ana regeneration continuing while casting",
+		"(%d+)%% of [Mm]ana regeneration while casting",
+		"regenerate at (%d+)%% of normal rate while casting",
+	}
+	for tab = 1, GetNumTalentTabs() do
+		for talent = 1, GetNumTalents(tab) do
+			local name, _, _, _, rank, maxRank = GetTalentInfo(tab, talent)
+			BCS_Tooltip:SetTalent(tab, talent)
+			for line = 1, BCS_Tooltip:NumLines() do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				local text = left and left:GetText()
+				if text then
+					for _, pat in ipairs(patterns) do
+						local _, _, pct = strfind(text, pat)
+						if pct then
+							BCS:Print(name.." "..tostring(rank).."/"..tostring(maxRank)
+								.."  tooltip shows "..pct.."%  |  \""..text.."\"")
+						end
 					end
 				end
 			end
@@ -677,119 +748,37 @@ function BCS:GetHitRating(hitOnly)
 	
 	local MAX_TABS = GetNumTalentTabs()
 	
-	-- ! Can I remove this part?
-	--[[
-	local Cache_GetHitRating_Tab, Cache_GetHitRating_Talent
-	if Cache_GetHitRating_Tab and Cache_GetHitRating_Talent then
-		BCS_Tooltip:SetTalent(Cache_GetHitRating_Tab, Cache_GetHitRating_Talent)
-		local MAX_LINES = BCS_Tooltip:NumLines()
-		
-		for line=1, MAX_LINES do
-			local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
-			if left:GetText() then
-				local _,_, value = strfind(left:GetText(), L["Increases your chance to hit with all attacks and spells by (%d+)%%."])
-				local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(Cache_GetHitRating_Tab, Cache_GetHitRating_Talent)
-				if value and rank > 0 then
-					hit = hit + tonumber(value)		
-					line = MAX_LINES
-				end
-
-				-- Hunter
-				-- Killer Instinct
-				_,_, value = strfind(left:GetText(), L["Increases hit and crit chance by (%d+)%% for both you and your pet."])
-				name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(Cache_GetHitRating_Tab, Cache_GetHitRating_Talent)
-				if value and rank > 0 then
-					hit = hit + tonumber(value)
-					line = MAX_LINES
-				end
-
-				-- Rogue / Warrior
-				-- Precision / Precision
-				_,_, value = strfind(left:GetText(), L["Increases your chance to hit with melee weapons by (%d)%%."])
-				name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(Cache_GetHitRating_Tab, Cache_GetHitRating_Talent)
-				if value and rank > 0 then
-					hit = hit + tonumber(value)
-					line = MAX_LINES
-				end
-				
-				-- Hunter
-				-- ?? what talent, if any
-				-- ! deprecated?
-				_,_, value = strfind(left:GetText(), L["Increases hit chance by (%d)%% and increases the chance movement impairing effects will be resisted by an additional %d+%%."])
-				name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(Cache_GetHitRating_Tab, Cache_GetHitRating_Talent)
-				if value and rank > 0 then
-					hit = hit + tonumber(value)
-					line = MAX_LINES
-				end
-
-				-- Paladin / Shaman
-				-- Precision / Nature's Guidance			
-				_,_, value = strfind(left:GetText(), L["Increases your chance to hit with melee attacks and spells by (%d+)%%."])
-				name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(Cache_GetHitRating_Tab, Cache_GetHitRating_Talent)
-				if value and rank > 0 then
-					hit = hit + tonumber(value)
-					line = MAX_LINES
-				end
-			end
-		end
-		
-		if not hitOnly then
-			hit = hit - hit_debuff
-			if hit < 0 then hit = 0 end
-			return hit
-		else
-			return hit
-		end
-	end
-	--]]
-	
 	for tab=1, MAX_TABS do
 		local MAX_TALENTS = GetNumTalents(tab)
-		
+
 		for talent=1, MAX_TALENTS do
-			BCS_Tooltip:SetTalent(tab, talent);
-			local MAX_LINES = BCS_Tooltip:NumLines()
-			
-			for line=1, MAX_LINES do
-				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
-				if left:GetText() then	
-					-- Druid
-					-- Accuracy
-					local _,_, value = strfind(left:GetText(), L["Increases your chance to hit with all attacks and spells by (%d+)%%."])
-					name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
-					if value and rank > 0 then
-						hit = hit + tonumber(value)
-						line = MAX_LINES
-					end
+			local _, _, _, _, rank = GetTalentInfo(tab, talent)
+			if rank and rank > 0 then
+				BCS_Tooltip:SetTalent(tab, talent)
 
-					-- Hunter
-					-- Killer Instinct
-					_,_, value = strfind(left:GetText(), L["Increases hit and crit chance by (%d+)%% for both you and your pet."])
-					name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
-					if value and rank > 0 then
-						hit = hit + tonumber(value)
-						line = MAX_LINES
+				for line=1, BCS_Tooltip:NumLines() do
+					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+					local text = left and left:GetText()
+					if text then
+						-- Druid Accuracy / Hunter Killer Instinct /
+						-- Rogue-Warrior Precision / Paladin-Shaman Precision & Nature's Guidance
+						local _,_, value = strfind(text, L["Increases your chance to hit with all attacks and spells by (%d+)%%."])
+						if not value then
+							_,_, value = strfind(text, L["Increases hit and crit chance by (%d+)%% for both you and your pet."])
+						end
+						if not value then
+							_,_, value = strfind(text, L["Increases your chance to hit with melee weapons by (%d)%%."])
+						end
+						if not value then
+							_,_, value = strfind(text, L["Increases your chance to hit with melee attacks and spells by (%d+)%%."])
+						end
+						if value then
+							hit = hit + tonumber(value)
+							break
+						end
 					end
-
-					-- Rogue / Warrior
-					-- Precision / Precision
-					_,_, value = strfind(left:GetText(), L["Increases your chance to hit with melee weapons by (%d)%%."])
-					local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
-					if value and rank > 0 then
-						hit = hit + tonumber(value)
-						line = MAX_LINES
-					end
-
-					-- Paladin / Shaman
-					-- Precision / Nature's Guidance		 		
-					_,_, value = strfind(left:GetText(), L["Increases your chance to hit with melee attacks and spells by (%d+)%%."])
-					name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
-					if value and rank > 0 then
-						hit = hit + tonumber(value)
-						line = MAX_LINES
-					end
-				end	
-			end			
+				end
+			end
 		end
 	end
 	
@@ -841,7 +830,9 @@ function BCS:GetSpellHitRating()
 	local hit_Set_Bonus = {}
 
 	local Hit_Schools = {}
-	
+
+	local value, value2 -- reused by the strfind scans below
+
 	-- scan gear
 	local MAX_INVENTORY_SLOTS = 19
 	for slot=0, MAX_INVENTORY_SLOTS do
@@ -1276,6 +1267,8 @@ function BCS:GetSpellCritChance()
 	local natureCritDamage = 0
 	local offensiveCritDamage = 0
 	local firetotemCritDamage = 0
+
+	local value, value2 -- reused by the strfind scans below
 
 	local _, intellect = UnitStat("player", 4)
 	local _, class = UnitClass("player")
@@ -1813,20 +1806,37 @@ function BCS:GetSpellPower()
 	local enchantDamage, _ = BCS:GetWeaponEnchant()
 	damagePower = damagePower + enchantDamage
 
+	-- "Magical damage dealt is increased by up to X." (Zandalarian Hero Charm):
+	-- damage only, so damagePower only -- SetSpellPower shows spellPower +
+	-- damagePower, and adding to both double-counts it.
 	local _, _, spellPowerFromAura = BCS:GetPlayerAura(L["Magical damage dealt is increased by up to (%d+)."])
 	if spellPowerFromAura then
-		spellPower = spellPower + tonumber(spellPowerFromAura)
 		damagePower = damagePower + tonumber(spellPowerFromAura)
+	end
+
+	-- Flat spell-damage buffs, e.g. Shaman "Lightning Shield" on this realm:
+	-- "Increases spell damage by X." Damage only (not healing), so it goes in
+	-- damagePower, which SetSpellPower adds on top of spellPower.
+	local _, _, flatSpellDamageAura = BCS:GetPlayerAura(L["Increases spell damage by (%d+)%."])
+	if flatSpellDamageAura then
+		damagePower = damagePower + tonumber(flatSpellDamageAura)
+	end
+
+	-- "Attack power, Magical damage and healing dealt are increased by X."
+	-- Affects both damage and healing, so it goes in spellPower (the shared
+	-- bucket). The attack-power part is reflected by UnitAttackPower already.
+	local _, _, apMdhAura = BCS:GetPlayerAura(L["Attack power, Magical damage and healing dealt are increased by (%d+)%."])
+	if apMdhAura then
+		spellPower = spellPower + tonumber(apMdhAura)
 	end
 
 	-- Druid "Moonkin Form": "...increasing spell damage by up to X% of total
 	-- Intellect..." (detected via the Moonkin Form self-buff icon while shifted).
+	-- Spell damage only -> damagePower only (see note above).
 	local _, _, moonkinFormPercent = BCS:GetPlayerAura(L["increasing spell damage by up to (%d+)%% of total Intellect"])
 	if moonkinFormPercent then
 		local _, effectiveInt = UnitStat("player", 4)
-		local moonkinFormBonus = floor((tonumber(moonkinFormPercent) / 100) * effectiveInt)
-		spellPower = spellPower + moonkinFormBonus
-		damagePower = damagePower + moonkinFormBonus
+		damagePower = damagePower + floor((tonumber(moonkinFormPercent) / 100) * effectiveInt)
 	end
 
 
@@ -1840,243 +1850,11 @@ function BCS:GetSpellPower()
 	return math.floor(spellPower), SpellPower_Schools, math.floor(damagePower)
 end
 
---! Deprecated
---[[function BCS:GetSpellPower_old(school)
-	if school then
-		if not L["Equip: Increases damage done by "..school.." spells and effects by up to (%d+)."] then return -1 end
-		local spellPower = 0;
-		local MAX_INVENTORY_SLOTS = 19
-		
-		for slot=0, MAX_INVENTORY_SLOTS do
-			local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
-			
-			if hasItem then
-				for line=1, BCS_Tooltip:NumLines() do
-					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
-					
-					if left:GetText() then
-						local _,_, value = strfind(left:GetText(), L["Equip: Increases damage done by "..school.." spells and effects by up to (%d+)."])
-						if value then
-							spellPower = spellPower + tonumber(value)
-						end
-						if L[school.." Damage %+(%d+)"] then
-							_,_, value = strfind(left:GetText(), L[school.." Damage %+(%d+)"])
-							if value then
-								spellPower = spellPower + tonumber(value)
-							end
-						end
-						if L["^%+(%d+) "..school.." Spell Damage"] then
-							_,_, value = strfind(left:GetText(), L["^%+(%d+) "..school.." Spell Damage"])
-							if value then
-								spellPower = spellPower + tonumber(value)
-							end
-						end
-					end
-				end
-			end
-			
-		end
-		
-		return math.floor(spellPower)
-	else
-		local spellPower = 0 + UnitStat("player",4)*0.33;
-		local arcanePower = spellPower;
-		local firePower = spellPower;
-		local frostPower = spellPower;
-		local holyPower = spellPower;
-		local naturePower = spellPower;
-		local shadowPower = spellPower;
-		local damagePower = spellPower;
-		local MAX_INVENTORY_SLOTS = 19
-		
-		local SpellPower_Set_Bonus = {}
-		
-		-- scan gear
-		for slot=0, MAX_INVENTORY_SLOTS do
-			local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
-			
-			if hasItem then
-				local SET_NAME
-				
-				for line=1, BCS_Tooltip:NumLines() do
-					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
-					
-					if left:GetText() then
-						local _,_, value = strfind(left:GetText(), L["Equip: Increases damage and healing done by magical spells and effects by up to (%d+)."])
-						if value then
-							spellPower = spellPower + tonumber(value)
-						end
-						_,_, value = strfind(left:GetText(), L["Spell Damage %+(%d+)"])
-						if value then
-							spellPower = spellPower + tonumber(value)
-						end
-						_,_, value = strfind(left:GetText(), L["^%+(%d+) Spell Damage and Healing"])
-						if value then
-							spellPower = spellPower + tonumber(value)
-						end
-						_,_, value = strfind(left:GetText(), L["^%+(%d+) Damage and Healing Spells"])
-						if value then
-							spellPower = spellPower + tonumber(value)
-						end
-						
-						_,_, value = strfind(left:GetText(), L["Equip: Increases damage done by Arcane spells and effects by up to (%d+)."])
-						if value then
-							arcanePower = arcanePower + tonumber(value)
-						end
-						_,_, value = strfind(left:GetText(), L["^%+(%d+) Arcane Spell Damage"])
-						if value then
-							arcanePower = arcanePower + tonumber(value)
-						end
-						
-						_,_, value = strfind(left:GetText(), L["Equip: Increases damage done by Fire spells and effects by up to (%d+)."])
-						if value then
-							firePower = firePower + tonumber(value)
-						end
-						_,_, value = strfind(left:GetText(), L["Fire Damage %+(%d+)"])
-						if value then
-							firePower = firePower + tonumber(value)
-						end
-						_,_, value = strfind(left:GetText(), L["^%+(%d+) Fire Spell Damage"])
-						if value then
-							firePower = firePower + tonumber(value)
-						end
-						
-						_,_, value = strfind(left:GetText(), L["Equip: Increases damage done by Frost spells and effects by up to (%d+)."])
-						if value then
-							frostPower = frostPower + tonumber(value)
-						end
-						_,_, value = strfind(left:GetText(), L["Frost Damage %+(%d+)"])
-						if value then
-							frostPower = frostPower + tonumber(value)
-						end
-						_,_, value = strfind(left:GetText(), L["^%+(%d+) Frost Spell Damage"])
-						if value then
-							frostPower = frostPower + tonumber(value)
-						end
-						
-						_,_, value = strfind(left:GetText(), L["Equip: Increases damage done by Holy spells and effects by up to (%d+)."])
-						if value then
-							holyPower = holyPower + tonumber(value)
-						end
-						_,_, value = strfind(left:GetText(), L["^%+(%d+) Holy Spell Damage"])
-						if value then
-							holyPower = holyPower + tonumber(value)
-						end
-						
-						_,_, value = strfind(left:GetText(), L["Equip: Increases damage done by Nature spells and effects by up to (%d+)."])
-						if value then
-							naturePower = naturePower + tonumber(value)
-						end
-						_,_, value = strfind(left:GetText(), L["^%+(%d+) Nature Spell Damage"])
-						if value then
-							naturePower = naturePower + tonumber(value)
-						end
-						
-						_,_, value = strfind(left:GetText(), L["Equip: Increases damage done by Shadow spells and effects by up to (%d+)."])
-						if value then
-							shadowPower = shadowPower + tonumber(value)
-						end
-						_,_, value = strfind(left:GetText(), L["Shadow Damage %+(%d+)"])
-						if value then
-							shadowPower = shadowPower + tonumber(value)
-						end
-						_,_, value = strfind(left:GetText(), L["^%+(%d+) Shadow Spell Damage"])
-						if value then
-							shadowPower = shadowPower + tonumber(value)
-						end
-						
-						_,_, value = strfind(left:GetText(), "(.+) %(%d/%d%)")
-						if value then
-							SET_NAME = value
-						end
-
-						_, _, value = strfind(left:GetText(), L["^Set: Increases damage and healing done by magical spells and effects by up to (%d+)%."])
-						if value and SET_NAME and not tContains(SpellPower_Set_Bonus, SET_NAME) then
-							tinsert(SpellPower_Set_Bonus, SET_NAME)
-							spellPower = spellPower + tonumber(value)
-						end
-						
-					end
-				end
-			end
-			
-		end
-		
-		-- scan talents
-		local MAX_TABS = GetNumTalentTabs()
-		
-		for tab=1, MAX_TABS do
-			local MAX_TALENTS = GetNumTalents(tab)
-			
-			for talent=1, MAX_TALENTS do
-				BCS_Tooltip:SetTalent(tab, talent)
-				local MAX_LINES = BCS_Tooltip:NumLines()
-				
-				for line=1, MAX_LINES do
-					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
-					if left:GetText() then
-						-- Priest
-						-- Spiritual Guidance
-						local _,_, value = strfind(left:GetText(), L["^Increases spell damage and healing by up to (%d+)%% of your total Spirit."])
-						local name, iconTexture, tier, column, rank, maxRank, isExceptional, meetsPrereq = GetTalentInfo(tab, talent)
-						if value and rank > 0 then
-							local stat, effectiveStat = UnitStat("player", 5)
-							spellPower = spellPower + floor(((tonumber(value) / 100) * effectiveStat))
-							
-							-- nothing more is currenlty supported, break out of the loops
-							line = MAX_LINES
-							talent = MAX_TALENTS
-							tab = MAX_TABS
-						end
-					end	
-				end
-				
-			end
-		end
-		
-		-- buffs
-		local _, _, spellPowerFromAura = BCS:GetPlayerAura(L["Magical damage dealt is increased by up to (%d+)."])
-		if spellPowerFromAura then
-			spellPower = spellPower + tonumber(spellPowerFromAura)
-			damagePower = damagePower + tonumber(spellPowerFromAura)
-		end
-		
-		local secondaryPower = 0
-		local secondaryPowerName = ""
-		
-		if arcanePower > secondaryPower then
-			secondaryPower = arcanePower
-			secondaryPowerName = L.SPELL_SCHOOL_ARCANE
-		end
-		if firePower > secondaryPower then
-			secondaryPower = firePower
-			secondaryPowerName = L.SPELL_SCHOOL_FIRE
-		end
-		if frostPower > secondaryPower then
-			secondaryPower = frostPower
-			secondaryPowerName = L.SPELL_SCHOOL_FROST
-		end
-		if holyPower > secondaryPower then
-			secondaryPower = holyPower
-			secondaryPowerName = L.SPELL_SCHOOL_HOLY
-		end
-		if naturePower > secondaryPower then
-			secondaryPower = naturePower
-			secondaryPowerName = L.SPELL_SCHOOL_NATURE
-		end
-		if shadowPower > secondaryPower then
-			secondaryPower = shadowPower
-			secondaryPowerName = L.SPELL_SCHOOL_SHADOW
-		end
-		
-		return math.floor(spellPower), secondaryPower, secondaryPowerName, damagePower
-	end
-end]]
-
 function BCS:GetHealingPower()
 	local healPower = 0;
 	local healPower_Set_Bonus = {}
 	local MAX_INVENTORY_SLOTS = 19
+	local value, value2 -- reused by the strfind scans below
 	
 	for slot=0, MAX_INVENTORY_SLOTS do
 		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
@@ -2129,6 +1907,11 @@ function BCS:GetHealingPower()
 	if healPowerFromAura then
 		healPower = healPower + tonumber(healPowerFromAura)
 	end
+
+	-- NOTE: "Attack power, Magical damage and healing dealt are increased by X"
+	-- is NOT counted here. It boosts damage AND healing, so it lives in
+	-- GetSpellPower's spellPower; SetHealing already adds GetSpellPower() +
+	-- GetHealingPower(), and GetHealingPower only holds healing-ONLY sources.
 
 	-- enchants
 	local _, enchantHealing = BCS:GetWeaponEnchant()
@@ -2276,12 +2059,56 @@ function BCS:GetGearSetBonus()
 end
 
 function BCS:GetManaRegen()
-	-- to-maybe-do: apply buffs/talents
 	local base, casting
 	local power_regen = GetRegenMPPerSpirit()
-	
-	casting = power_regen / 100
+
 	base = power_regen
+
+	-- Percentage of Spirit-based mana regen that continues while casting
+	-- (five-second-rule bypass). Talents (Meditation, Reflection, ...), set
+	-- bonuses (Transcendence 2-set) and auras (Aura of the Blue Dragon) that
+	-- grant this stack additively and are capped at 100%.
+	local castingRegenPercent = 0
+	local castingRegenPatterns = {
+		L["(%d+)%% of your [Mm]ana regeneration to continue while casting"],
+		L["(%d+)%% of your [Mm]ana regeneration continuing while casting"],
+		L["(%d+)%% of [Mm]ana regeneration while casting"],
+	}
+
+	-- Talents
+	for tab = 1, GetNumTalentTabs() do
+		for talent = 1, GetNumTalents(tab) do
+			local _, _, _, _, rank = GetTalentInfo(tab, talent)
+			if rank and rank > 0 then
+				BCS_Tooltip:SetTalent(tab, talent)
+				for line = 1, BCS_Tooltip:NumLines() do
+					local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+					if left and left:GetText() then
+						for _, pattern in ipairs(castingRegenPatterns) do
+							local _, _, pct = strfind(left:GetText(), pattern)
+							if pct then
+								castingRegenPercent = castingRegenPercent + tonumber(pct)
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	-- Buffs / auras
+	for _, pattern in ipairs(castingRegenPatterns) do
+		local match = { BCS:GetPlayerAura(pattern) }
+		if match[3] then
+			castingRegenPercent = castingRegenPercent + tonumber(match[3])
+		end
+	end
+
+	if castingRegenPercent > 100 then
+		castingRegenPercent = 100
+	end
+
+	casting = power_regen * castingRegenPercent / 100
 
 	local mp5 = 0					-- Initialize to prevent nil errors
 	local paladinManaRegen = 0
@@ -2414,19 +2241,30 @@ function BCS:GetManaRegen()
 	
 	-- ***MOVED ZG BONUS TO ITS OWN SNAPSHOT FUNCTION ABOVE BCS:GetGearSetBonus()***
 	local MAX_INVENTORY_SLOTS = 19
-	
+	local countedSetMp5 = {} -- set-bonus mp5 lines already counted (keyed by set|value)
+
 	for slot=0, MAX_INVENTORY_SLOTS do
 		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
-		
+
 		if hasItem then
+			local currentSet = nil
 			for line=1, BCS_Tooltip:NumLines() do
 				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
-				
+
 				-- Ensure 'left' exists and has valid text before using it
-				local text = left and left:GetText() or ""
-				text = strlower(text) -- Convert to lowercase for better matching
+				local rawText = left and left:GetText() or ""
+				local text = strlower(rawText) -- Convert to lowercase for better matching
 				-- Debugging output
 				--DEFAULT_CHAT_FRAME:AddMessage("Scanning Tooltip: " .. text)
+
+				-- Track the set this tooltip belongs to ("Name (x/y)" header) so a
+				-- set-bonus mp5 line, which repeats on every equipped piece, is
+				-- only counted once.
+				local _,_, setName = strfind(rawText, "^(.+) %(%d+/%d+%)")
+				if setName then
+					currentSet = setName
+				end
+
 				local _,_, value = strfind(text, "^mana regen %+(%d+)")
 				if value then
 					mp5 = mp5 + tonumber(value)
@@ -2450,22 +2288,51 @@ function BCS:GetManaRegen()
 				if value then
 					mp5 = mp5 + tonumber(value)
 					-- Debugging output
-					--DEFAULT_CHAT_FRAME:AddMessage("Found MP5 from enchant: " .. value)				
+					--DEFAULT_CHAT_FRAME:AddMessage("Found MP5 from enchant: " .. value)
+				end
+
+				-- Set bonus, e.g. "Set: Restores 5 mana per 5 sec." The line shows
+				-- on every equipped piece of the set, so key it by set + value and
+				-- count it once. Skip greyed-out (inactive) bonuses.
+				_,_, value = strfind(text, "set: restores (%d+) mana per 5 sec%.?")
+				if value then
+					local r, g, b = left:GetTextColor()
+					local isGrey = (r > 0.45 and r < 0.55 and g > 0.45 and g < 0.55 and b > 0.45 and b < 0.55)
+					local key = (currentSet or "?") .. "|" .. value
+					if not isGrey and not countedSetMp5[key] then
+						countedSetMp5[key] = true
+						mp5 = mp5 + tonumber(value)
+					end
+				end
+
+				-- Weapon mana oils only show as their name on the weapon.
+				if strfind(text, "minor mana oil") then
+					mp5 = mp5 + 4
+				elseif strfind(text, "lesser mana oil") then
+					mp5 = mp5 + 8
+				elseif strfind(text, "brilliant mana oil") then
+					mp5 = mp5 + 12
 				end
 			end
 		end
+	end
+
+	-- Flat mp5 from food buffs (e.g. Nightfin Soup "well fed"). The spirit part
+	-- of such buffs is already reflected in UnitStat.
+	local wellFed = { BCS:GetPlayerAura(L["[Rr]egenerating (%d+) [Mm]ana every 5 seconds"]) }
+	if wellFed[3] then
+		mp5 = mp5 + tonumber(wellFed[3])
 	end
 	-- Apply Bonuses and Maintain Snapshot
     local finalBoWMP5 = floor(blessingOfWisdomMP5 * divineGraceBonus * lastGearBonus)
 	--DEFAULT_CHAT_FRAME:AddMessage("Blessing of Wisdom (Displayed MP5): " .. finalBoWMP5)
 	
-	-- Finalized math fixes here namely Blessing of Wisdom tooltip being off by 1 mana per 5:
-	if finalBoWMP5 == 43 then 
-		finalBoWMP5 = 42 -- BoW (Rank 6) WoW math fix 43 to 42 rounded down without messing up other correct ranks
-	elseif finalBoWMP5 == 33 then
-		finalBoWMP5 = 32 -- BoW (Rank 4) WoW math fix 33 to 32 rounded down without messing up other correct ranks
-	end
-	
+	-- NOTE: previously this rounded 43->42 and 33->32 to compensate for the old
+	-- model that folded BoW into the 2s spirit tick. On this server BoW is its own
+	-- 5s periodic energize (combat log shows the exact tooltip value, e.g. 33 every
+	-- 5s, with the spirit tick unchanged), so finalBoWMP5 is now used as-is and
+	-- added to periodicMp5 in SetManaRegen. See docs/mana-regen.md.
+
 	local finalMtSVal = floor(manaSpringTotemMP2 * manaSpringBonus)
 	
 		-- Can finalize Mana Spring Totem values here for correct ingame rounding in combat log but
@@ -2479,7 +2346,7 @@ function BCS:GetManaRegen()
 	--	mp5 = mp5 + 10
 	--end
 	
-	return base, casting, mp5, paladinManaTick, paladinManaRegen, druidManaTick, druidManaRegen, finalBoWMP5, finalMtSVal
+	return base, casting, mp5, paladinManaTick, paladinManaRegen, druidManaTick, druidManaRegen, finalBoWMP5, finalMtSVal, castingRegenPercent
 end
 
 function BCS:GetResilienceChance()
@@ -2628,20 +2495,86 @@ end
 -- talents: "Increases your casting speed by X%." (e.g. "Improved Memory"), or
 -- "Increases the casting speed by [4/8/12/16/20]%." for talents that show all
 -- ranks at once (pick the value matching the talent's actual invested rank).
+
+-- Sum the first matching pattern's number across every player aura of the given
+-- type. Unlike BCS:GetPlayerAura (first aura only), this stacks -- a player can
+-- carry several haste buffs, or several casting-speed slows, at once.
+local function SumAuraMatches(patterns, auraType)
+	local total = 0
+	for i = 0, 31 do
+		local index = GetPlayerBuff(i, auraType)
+		if index and index > -1 then
+			BCS_Tooltip:SetPlayerBuff(index)
+			local fullText = ""
+			for line = 1, BCS_Tooltip:NumLines() do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				if left and left:GetText() then
+					fullText = fullText .. " " .. left:GetText()
+				end
+			end
+			for _, pat in ipairs(patterns) do
+				local _s, _e, v = strfind(fullText, pat)
+				if v then
+					total = total + tonumber(v)
+					break
+				end
+			end
+		end
+	end
+	return total
+end
+
 function BCS:GetSpellHaste()
 	local haste = 0
 
 	local MAX_INVENTORY_SLOTS = 19
+	local countedSetHaste = {} -- set-bonus haste already counted (keyed by set|value)
+	local hastePatterns = {
+		L["Increases your attack and casting speed by (%d+)%%."],
+		L["Increases your casting speed by (%d+)%%."],
+		L["%+(%d+)%% [Hh]aste"],
+		L["[Hh]aste %+(%d+)%%"],
+	}
 	for slot = 0, MAX_INVENTORY_SLOTS do
 		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
 		if hasItem then
+			local currentSet = nil
 			for line = 1, BCS_Tooltip:NumLines() do
 				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
 				if left and left:GetText() then
 					local text = left:GetText()
-					local _, _, value = strfind(text, L["Increases your attack and casting speed by (%d+)%%."])
+
+					-- Track the set this tooltip belongs to, so a set-bonus haste
+					-- line (which repeats on every equipped piece) is counted once.
+					local _, _, setName = strfind(text, "^(.+) %(%d+/%d+%)")
+					if setName then
+						currentSet = setName
+					end
+
+					-- "Equip: Increases your attack and casting speed by X%.",
+					-- "Increases your casting speed by X%." (spell-only haste), or a
+					-- short gear/enchant wording like "+2% Haste" / "Haste +2%".
+					-- Skip "Use:" lines -- those are on-use effects, not always on.
+					local value
+					if not strfind(strlower(text), "use:") then
+						for _, pat in ipairs(hastePatterns) do
+							local _s, _e, v = strfind(text, pat)
+							if v then
+								value = v
+								break
+							end
+						end
+					end
 					if value then
-						haste = haste + tonumber(value)
+						if strfind(strlower(text), "set:") then
+							local key = (currentSet or "?") .. "|" .. value
+							if not countedSetHaste[key] then
+								countedSetHaste[key] = true
+								haste = haste + tonumber(value)
+							end
+						else
+							haste = haste + tonumber(value)
+						end
 					end
 				end
 			end
@@ -2679,14 +2612,21 @@ function BCS:GetSpellHaste()
 		end
 	end
 
-	-- scan buffs
-	local _, _, hasteFromAura = BCS:GetPlayerAura("casting speed by (%d+)%%")
-	if not hasteFromAura then
-		_, _, hasteFromAura = BCS:GetPlayerAura("casting speed increased by (%d+)%%")
-	end
-	if hasteFromAura then
-		haste = haste + tonumber(hasteFromAura)
-	end
+	-- scan buffs -- sum every haste buff (a player can carry more than one)
+	haste = haste + SumAuraMatches({
+		"casting speed by (%d+)%%",
+		"casting speed increased by (%d+)%%",
+	}, 'HELPFUL')
+
+	-- scan debuffs: casting-speed slows (Curse of Tongues, Mind-numbing Poison,
+	-- Slow, ...) subtract from Haste.
+	haste = haste - SumAuraMatches({
+		"[Ss]lows casting speed by (%d+)%%",
+		"[Cc]asting speed reduced by (%d+)%%",
+		"[Cc]asting speed slowed by (%d+)%%",
+		"[Cc]asting speed decreased by (%d+)%%",
+		"[Ii]ncreas.- casting time by (%d+)%%",
+	}, 'HARMFUL')
 
 	-- scan spellbook passives (e.g. Night Elf "Quickness" racial:
 	-- "Increases your Agility, movement and casting speed by X%."). Only count
@@ -2723,6 +2663,59 @@ function BCS:GetSpellHaste()
 		end
 	end
 
+	return haste
+end
+
+-- Base (unmodified) weapon speed for an equipped slot, read from the item
+-- tooltip's "Speed X.XX" line. Buffs/haste never change the item tooltip, so
+-- this is always the base. Returns nil if the slot is empty / has no speed.
+function BCS:GetBaseWeaponSpeed(slot)
+	if not BCS_Tooltip:SetInventoryItem("player", slot) then
+		return nil
+	end
+	for line = 1, BCS_Tooltip:NumLines() do
+		local right = getglobal(BCS_Prefix .. "TextRight" .. line)
+		local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+		local rt = right and right:GetText()
+		local lt = left and left:GetText()
+		local _, _, spd = strfind(rt or "", "Speed (%d+%.%d+)")
+		if not spd then
+			_, _, spd = strfind(lt or "", "Speed (%d+%.%d+)")
+		end
+		if spd then
+			return tonumber(spd)
+		end
+	end
+	return nil
+end
+
+-- Melee haste %, derived from current vs base main-hand swing speed. This
+-- captures every source at once (gear, enchants, talents, buffs AND slows),
+-- since UnitAttackSpeed already reflects all of them. Druid forms use the
+-- form's own base speed, not the equipped weapon's.
+function BCS:GetMeleeHaste()
+	local currentSpeed = UnitAttackSpeed("player")
+	if not currentSpeed or currentSpeed <= 0 then
+		return 0
+	end
+
+	-- Druid Cat/Bear attack at the form's own speed, not the weapon's. Detect
+	-- via the form's self-buff icon (GetShapeshiftForm isn't on every client;
+	-- Dire Bear shares the Bear icon). Aquatic/Travel/Moonkin don't melee.
+	local baseSpeed
+	if BCS:GetPlayerAuraTexture("Interface\\Icons\\Ability_Druid_CatForm") then
+		baseSpeed = 1.0
+	elseif BCS:GetPlayerAuraTexture("Interface\\Icons\\Ability_Racial_BearForm") then
+		baseSpeed = 2.5
+	end
+	if not baseSpeed then
+		baseSpeed = BCS:GetBaseWeaponSpeed(16) or 2.0 -- 2.0 = unarmed
+	end
+
+	local haste = (baseSpeed / currentSpeed - 1) * 100
+	if haste < 0.005 and haste > -0.005 then
+		haste = 0
+	end
 	return haste
 end
 

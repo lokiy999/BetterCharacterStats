@@ -20,10 +20,6 @@ BCS.MELEEHIT = {
 	},
 }
 
-BCS.SPELLHIT = {
-	-- soon(tm)
-}
-
 BCS.PaperDollFrame = PaperDollFrame
 
 BCS.Debug = false
@@ -418,61 +414,48 @@ function BCS:SetAttackPower(statFrame)
 	end)
 end
 
-function BCS:SetSpellPower(statFrame, school)
-	local frame = statFrame 
+function BCS:SetSpellPower(statFrame)
+	local frame = statFrame
 	local text = getglobal(statFrame:GetName() .. "StatText")
 	local label = getglobal(statFrame:GetName() .. "Label")
-	
-	local colorPos = "|cff20ff20"
-	local colorNeg = "|cffff2020"
-	
-	if school then
-		label:SetText(L["SPELL_SCHOOL_"..strupper(school)])
-		local base, schools = BCS:GetSpellPower()
-		local output = base + fromSchool
-		
-		if fromSchool > 0 then
-			output = colorPos .. output .. "|r"
+
+	local power, schools, dmg = BCS:GetSpellPower()
+
+	power = power + dmg
+
+	label:SetText(L.SPELL_POWER_COLON)
+	text:SetText(power)
+
+	frame.tooltip = format(L["SPELL_POWER_TOOLTIP_HEADER"], power)
+
+	local damagePercent = BCS:GetHolyPowerTalentModifiers()
+	local moonkinAuraPercent = BCS:GetMoonkinAuraBonus()
+	local frostDamagePercent = BCS:GetFrostDamageTalentBonus()
+
+	frame:SetScript("OnEnter", function()
+		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+		GameTooltip:SetText(this.tooltip)
+		-- Per school: the effective total for that school (main number + the
+		-- school-specific bonus), with the bonus itself in brackets.
+		for k, v in pairs(schools) do
+			if (v > 0) then
+				GameTooltip:AddDoubleLine(k, format("%d |cff20ff20(+%d)|r", power + v, v))
+			end
 		end
-		
-		text:SetText(output)
-	else
-		local power, schools, dmg = BCS:GetSpellPower();
-
-		power = power + dmg
-		
-		label:SetText(L.SPELL_POWER_COLON)
-		text:SetText(power);
-		
-		frame.tooltip = format(L["SPELL_POWER_TOOLTIP_HEADER"], power)
-
-		local damagePercent = BCS:GetHolyPowerTalentModifiers()
-		local moonkinAuraPercent = BCS:GetMoonkinAuraBonus()
-		local frostDamagePercent = BCS:GetFrostDamageTalentBonus()
-
-		frame:SetScript("OnEnter", function()
-			GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-			GameTooltip:SetText(this.tooltip)
-			for k, v in pairs(schools) do
-				if (v > 0) then
-					GameTooltip:AddDoubleLine(k, v)
-				end
-			end
-			if damagePercent ~= 0 then
-				GameTooltip:AddLine(format("Holy Damage (Talent): %+d%%", damagePercent), 1, 1, 1)
-			end
-			if moonkinAuraPercent ~= 0 then
-				GameTooltip:AddLine(format("Damage (Moonkin Aura): +%d%%", moonkinAuraPercent), 1, 1, 1)
-			end
-			if frostDamagePercent ~= 0 then
-				GameTooltip:AddLine(format("Frost Damage (Talent): +%d%%", frostDamagePercent), 1, 1, 1)
-			end
-			GameTooltip:Show()
-		end)
-		frame:SetScript("OnLeave", function()
-			GameTooltip:Hide()
-		end)
-	end
+		if damagePercent ~= 0 then
+			GameTooltip:AddLine(format("Holy Damage (Talent): %+d%%", damagePercent), 1, 1, 1)
+		end
+		if moonkinAuraPercent ~= 0 then
+			GameTooltip:AddLine(format("Damage (Moonkin Aura): +%d%%", moonkinAuraPercent), 1, 1, 1)
+		end
+		if frostDamagePercent ~= 0 then
+			GameTooltip:AddLine(format("Frost Damage (Talent): +%d%%", frostDamagePercent), 1, 1, 1)
+		end
+		GameTooltip:Show()
+	end)
+	frame:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
 end
 
 function BCS:SetRating(statFrame, ratingType)
@@ -648,18 +631,14 @@ function BCS:SetHealing(statFrame)
 	local text = getglobal(statFrame:GetName() .. "StatText")
 	local label = getglobal(statFrame:GetName() .. "Label")
 	
-	local power,_,dmg = BCS:GetSpellPower()
+	local power = BCS:GetSpellPower()
 	local heal = BCS:GetHealingPower()
-	
-	-- ! Needed?
-	-- power = power-dmg	
-	healingPower = power + heal
-	
+	local healingPower = power + heal
+
 	label:SetText(L.HEAL_POWER_COLON)
-	text:SetText(power+heal)
-	
-	frame.tooltip = format(L["SPELL_HEALING_POWER_TOOLTIP_HEADER"], healingPower);
-	frame.tooltipSubtext = format(L.SPELL_HEALING_POWER_TOOLTIP, healingPower, healingPower);
+	text:SetText(healingPower)
+
+	frame.tooltip = format(L["SPELL_HEALING_POWER_TOOLTIP_HEADER"], healingPower)
 
 	local _, healPercent = BCS:GetHolyPowerTalentModifiers()
 	local moonkinAuraPercent = BCS:GetMoonkinAuraBonus()
@@ -667,7 +646,6 @@ function BCS:SetHealing(statFrame)
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 		GameTooltip:SetText(this.tooltip)
-		GameTooltip:AddLine(this.tooltipSubtext)
 		if healPercent ~= 0 then
 			GameTooltip:AddLine(format("Healing (Talent): %+d%%", healPercent), 1, 1, 1)
 		end
@@ -700,89 +678,51 @@ function BCS:SetManaRegen(statFrame)
 		return
 	end
 	
-	local base, casting, mp5, paladinManaTick, paladinManaRegen, druidManaTick, druidManaRegen, finalBoWMP5, finalMtSVal = BCS:GetManaRegen()
+	local base, casting, mp5, paladinManaTick, paladinManaRegen, druidManaTick, druidManaRegen, finalBoWMP5, finalMtSVal, castingRegenPercent = BCS:GetManaRegen()
 	
-	-- Check if Mana Spring Totem aura is active
-	local hasManaSpring = BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Nature_ManaRegenTotem")
+	-- All of the buffs below are detected by the buff-tooltip TEXT (the addon's
+	-- dominant pattern), not by icon -- icons get reskinned / shared between ranks
+	-- on custom servers. Mana Spring / BoW piggyback on GetManaRegen's own scan
+	-- (finalMtSVal / finalBoWMP5 are > 0 only while the buff is up); the rest scan
+	-- here via BCS:GetPlayerAura.
+
+	-- Mana Spring Totem -- finalMtSVal is the per-2s value.
 	local finalMtSVal = finalMtSVal or 0
-	local manaSpringtick = 0
 	local manaSpringmp5 = 0
 	local manaSpringText = ""
-
-	if hasManaSpring then
-		manaSpringtick = finalMtSVal -- 10 per tick
-		manaSpringmp5 = floor(finalMtSVal * 5 / 2) -- 25 MP5
-		manaSpringText = format(L["MANA_SPRING_TOTEM"], manaSpringtick, manaSpringmp5)
-	else
-		manaSpringtick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
-		manaSpringmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
+	if finalMtSVal > 0 then
+		manaSpringmp5 = floor(finalMtSVal * 5 / 2)
+		manaSpringText = format(L["MANA_SPRING_TOTEM"], manaSpringmp5)
 	end
 
-	-- Check if Blessing of Wisdom buff is active / fixed GBoW
-	local hasBlessingOfWisdom = BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Holy_SealOfWisdom") or BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Holy_GreaterBlessingofWisdom")
+	-- Blessing of Wisdom -- finalBoWMP5 is already the mp5 value.
 	local finalBoWMP5 = finalBoWMP5 or 0
-	local blessingegentick = 0
 	local blessingRegenmp5 = 0
 	local blessingRegenText = ""
-	
-	if hasBlessingOfWisdom then
-		blessingegentick = floor(finalBoWMP5 * 2 / 5) -- mana per tick from mp5 calc
-		blessingRegenmp5 = finalBoWMP5 --Blessing of Wisdom is already in mp5 calc
-		blessingRegenText = format(L["BLESSING_OF_WISDOM"], blessingegentick, blessingRegenmp5)
-	else
-		blessingegentick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
-		blessingRegenmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
+	if finalBoWMP5 > 0 then
+		blessingRegenmp5 = finalBoWMP5
+		blessingRegenText = format(L["BLESSING_OF_WISDOM"], blessingRegenmp5)
 	end
-	
-	local hasWarchiefsBlessing = BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Arcane_TeleportOrgrimmar")
-	local hasWarchiefsBlessingTT = BCS:GetPlayerAuraValue("Increases hitpoints by 300. Movement, attack and casting speed increased by 5%. 30 mana regen every 5 seconds.")
-	local warchiefsRegentick = 0
+
+	-- Warchief's Blessing / Winsor's Sacrifice -- identical "N mana regen every 5
+	-- seconds" line and identical effect; only the world-buff icon tells them
+	-- apart, so match the text and show one combined line.
 	local warchiefsRegenmp5 = 0
 	local warchiefsRegenText = ""
-	
-	if hasWarchiefsBlessing and hasWarchiefsBlessingTT then
-		warchiefsRegentick = 12
-		warchiefsRegenmp5 = 30
-		warchiefsRegenText = format(L["WARCHIEFS_WBUFF"], warchiefsRegentick, warchiefsRegenmp5)
-	else
-		warchiefsRegentick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
-		warchiefsRegenmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
+	local _, _, wcRegen = BCS:GetPlayerAura("(%d+) mana regen every 5 seconds")
+	if wcRegen then
+		warchiefsRegenmp5 = tonumber(wcRegen)
+		warchiefsRegenText = format(L["WARCHIEFS_WBUFF"], warchiefsRegenmp5)
 	end
-	
-	local hasWinsorsSacrifice = BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Frost_FrostBrand")
-	local hasWinsorsSacrificeTT = BCS:GetPlayerAuraValue("Increases hitpoints by 300. Movement, attack and casting speed increased by 5%. 30 mana regen every 5 seconds.")
-	local winsorsRegentick = 0
-	local winsorsRegenmp5 = 0
-	local winsorsRegenText = ""
-	
-	if hasWinsorsSacrifice and hasWinsorsSacrificeTT then
-		winsorsRegentick = 12
-		winsorsRegenmp5 = 30
-		winsorsRegenText = format(L["WINSORS_WBUFF"], winsorsRegentick, winsorsRegenmp5)
-	else
-		winsorsRegentick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
-		winsorsRegenmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
-	end
-	
-	-- Check if Brilliance Aura is active
-	local hasBrillianceAura = BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Nature_Brilliance")
-	local hasBrillianceAuraTT = BCS:GetPlayerAuraValue("Regenerates 1% of your Mana every 10 sec.")
+
+	-- Brilliance Aura -- X% of max mana every 10s, percent parsed from the text.
 	local maxMana = UnitManaMax("player")
-	local brillRegen = 0
-	local brillRegenPercent = 0.01 -- 1% mana
-	local brillRegenInterval = 10 -- 10 seconds
-	local brillRegentick = 0
 	local brillRegenmp5 = 0
 	local brillRegenText = ""
-
-	if hasBrillianceAura and hasBrillianceAuraTT then
-		brillRegen = (maxMana * brillRegenPercent)
-		brillRegentick = floor(maxMana * brillRegenPercent * (2 / brillRegenInterval)) -- Convert to 2s tick
-		brillRegenmp5 = floor(maxMana * brillRegenPercent * (5 / brillRegenInterval)) -- Convert to MP5
-		brillRegenText = format(L["BRILLIANCE_AURA"], brillRegentick, brillRegenmp5)
-	else
-		brillRegentick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
-		brillRegenmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
+	local _, _, brillPct = BCS:GetPlayerAura("Regenerates (%d+)%% of your Mana every 10 sec")
+	if brillPct then
+		brillRegenmp5 = floor(maxMana * (tonumber(brillPct) / 100) * (5 / 10))
+		brillRegenText = format(L["BRILLIANCE_AURA"], brillRegenmp5)
 	end
 
 	-- Ensure paladinManaRegen and paladinManaTick always have a default value
@@ -790,18 +730,36 @@ function BCS:SetManaRegen(statFrame)
 	paladinManaTick = paladinManaTick or 0
 	druidManaRegen = druidManaRegen or 0
 	druidManaTick = druidManaTick or 0
-	manaSpringmp5 = (finalMtSVal * 5 / 2) or 0
 
-	-- In-game active amount
-	local tickSpirit = base -- Spirit regen per tick (2 sec in-game)
-	local tickMp2 = floor(mp5 * 2 / 5) -- MP5 regen converted to per 2 sec tick
+	-- ==========================================================================
+	-- Mana regen model -- see docs/mana-regen.md for the full rationale.
+	--
+	-- The server keeps ONE combined rate (SPELL_AURA_MOD_POWER_REGEN + spirit),
+	-- and every 2s tick it does a SINGLE floor on that combined value. So Spirit
+	-- regen and the flat "mana per 5 sec" from gear/enchant/set/oil/food must be
+	-- summed FIRST and floored ONCE -- never rounded per source, or the fractions
+	-- drift and the headline reads 1-2 high/low.
+	--
+	-- Everything else regenerates on its OWN timer with its own independent floor
+	-- and is added on top as a flat mp5 amount (periodicMp5): Blessing of Wisdom,
+	-- Mana Spring Totem, Warchief's/Winsor's, Brilliance Aura, Divine
+	-- Concentration, Dreamstate. Combat-log confirmed for BoW (5s) and Mana Spring
+	-- (2s) on this server; see docs/mana-regen.md.
+	-- ==========================================================================
 
-	-- Theorycrafting MP5 equivalents
-	local spiritMP5 = (base * 5 / 2) -- Convert Spirit regen to MP5 equivalent
-	local mp5Theo = (tickMp2 * 5 / 2) -- Convert MP2 regen to MP5 equivalent
+	-- Flat mp5 that the server folds into the single combined tick. Only true
+	-- SPELL_AURA_MOD_POWER_REGEN (gear/enchant/set/oil/food) lives here. Buff
+	-- "mana every N sec" effects are separate energizes on this server -- see
+	-- periodicMp5 below and docs/mana-regen.md.
+	local flatMp5 = mp5
 
-	-- Add both mana sources separately to final display
-	text:SetText(format("%d", (spiritMP5 + mp5Theo + paladinManaRegen + druidManaRegen + manaSpringmp5 + brillRegenmp5 + finalBoWMP5 + winsorsRegenmp5 + warchiefsRegenmp5)))
+	local flatMp5Tick = flatMp5 * 2 / 5   -- per 2s tick, UNfloored
+	local spiritTick = base               -- per 2s tick, UNfloored
+	local spiritTickCasting = casting     -- already base * castingRegenPercent/100
+
+	-- The server's single per-tick floor.
+	local tickNotCasting = floor(spiritTick + flatMp5Tick)
+	local tickCasting = floor(spiritTickCasting + flatMp5Tick)
 
 	 -- **Check if player is Paladin before adding Divine Concentration**
     local _, playerClass = UnitClass("player")
@@ -809,15 +767,50 @@ function BCS:SetManaRegen(statFrame)
 	local druidText = ""
 
 	if playerClass == "PALADIN" and paladinManaRegen > 0 then
-        paladinText = format(L["DIVINE_CONCENTRATION"], paladinManaTick, paladinManaRegen)
+        paladinText = format(L["DIVINE_CONCENTRATION"], paladinManaRegen)
     end
-	
+
 	if playerClass == "DRUID" and druidManaRegen > 0 then
-		druidText = format(L["DREAMSTATE"], druidManaTick, druidManaRegen)
+		druidText = format(L["DREAMSTATE"], druidManaRegen)
 	end
 
-	frame.tooltip = format(L["SPELL_MANA_REGEN_TOOLTIP_HEADER"], tickSpirit, spiritMP5, tickMp2, mp5Theo, tickSpirit + tickMp2, spiritMP5 + mp5Theo)
-	frame.tooltipSubtext = format(L["SPELL_MANA_REGEN_TOOLTIP"], tickSpirit, spiritMP5, tickMp2, mp5Theo, tickSpirit + tickMp2, spiritMP5 + mp5Theo) .. paladinText .. druidText .. blessingRegenText .. manaSpringText .. brillRegenText .. winsorsRegenText .. warchiefsRegenText
+	-- Separate periodic-energize sources, each floored on its own timer and
+	-- independent of the spirit tick / casting state. Combat log confirmed on
+	-- this server: Blessing of Wisdom (5s), Mana Spring Totem (2s). Warchief's /
+	-- Winsor's carried here too by the same "mana every 5 sec" wording.
+	local periodicMp5 = brillRegenmp5 + paladinManaRegen + druidManaRegen + blessingRegenmp5 + manaSpringmp5 + warchiefsRegenmp5
+
+	-- Headline: the combined tick as a rate (x 2.5), plus the periodic sources.
+	text:SetText(format("%d", floor(tickNotCasting * 5 / 2 + periodicMp5)))
+
+	-- Flat-mp5 breakpoints against the REAL combined tick: "breakpoint" is the
+	-- flat mp5 at which the current tick level starts (drop below it and the
+	-- tick falls by 1), "next" is the flat mp5 that raises the tick by 1. Both
+	-- account for Spirit's own fractional part, so they shift with Spirit.
+	local mp5Breakpoint = ""
+	if flatMp5 > 0 then
+		local bp = ceil((tickNotCasting - spiritTick) * 5 / 2)
+		local nextBp = ceil((tickNotCasting + 1 - spiritTick) * 5 / 2)
+		if bp < 0 then bp = 0 end
+		mp5Breakpoint = format(L["MANA_REGEN_MP5_BREAKPOINT"], bp, nextBp)
+	end
+
+	-- Gear/enchant mp5 line (only when there is any, with the tick-breakpoint hint).
+	local gearLine = ""
+	if flatMp5 > 0 then
+		gearLine = format(L["MANA_REGEN_GEAR_LINE"], floor(flatMp5), mp5Breakpoint)
+	end
+
+	-- Periodic-energize breakdown: header + one "+N mp5" line per active source.
+	-- The headline stat is already the grand total, so no total line here.
+	local periodicText = paladinText .. druidText .. blessingRegenText .. manaSpringText .. brillRegenText .. warchiefsRegenText
+	local periodicBlock = ""
+	if periodicText ~= "" then
+		periodicBlock = L["MANA_REGEN_PERIODIC_HEADER"] .. periodicText
+	end
+
+	frame.tooltip = L["SPELL_MANA_REGEN_TOOLTIP_HEADER"]
+	frame.tooltipSubtext = format(L["SPELL_MANA_REGEN_TOOLTIP"], tickNotCasting, floor(tickNotCasting * 5 / 2), tickCasting) .. gearLine .. periodicBlock
 	
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
@@ -900,6 +893,17 @@ function BCS:SetSpellHaste(statFrame)
 
 	label:SetText(L.SPELL_HASTE_COLON)
 	text:SetText(format("%.2f%%", BCS:GetSpellHaste()))
+end
+
+function BCS:SetMeleeHaste(statFrame)
+	local text = getglobal(statFrame:GetName() .. "StatText")
+	local label = getglobal(statFrame:GetName() .. "Label")
+
+	label:SetText(L.SPELL_HASTE_COLON)
+	-- Whole % only: this value is derived from base-vs-current swing speed, and
+	-- the game reports those to ~2 decimals, so the division carries fractional
+	-- noise (a true 2% reads as ~2.04%). Real melee haste comes in whole chunks.
+	text:SetText(format("%.0f%%", BCS:GetMeleeHaste()))
 end
 
 function BCS:SetSpellPen(statFrame)
@@ -1033,58 +1037,12 @@ function BCS:SetRangedAttackSpeed(startFrame)
 		return
 	end
 
-	local rangedAttackSpeed, minDamage, maxDamage, physicalBonusPos, physicalBonusNeg, percent = UnitRangedDamage("player")
-	local displayMin = max(floor(minDamage),1)
-	local displayMax = max(ceil(maxDamage),1)
-
-	minDamage = (minDamage / percent) - physicalBonusPos - physicalBonusNeg
-	maxDamage = (maxDamage / percent) - physicalBonusPos - physicalBonusNeg
-
-	local baseDamage = (minDamage + maxDamage) * 0.5
-	local fullDamage = (baseDamage + physicalBonusPos + physicalBonusNeg) * percent
-	local totalBonus = (fullDamage - baseDamage)
-	local damagePerSecond = (max(fullDamage,1) / rangedAttackSpeed)
-	local tooltip = max(floor(minDamage),1).." - "..max(ceil(maxDamage),1)
-
-	if ( totalBonus == 0 ) then
-		if ( ( displayMin < 100 ) and ( displayMax < 100 ) ) then 
-			damageText:SetText(displayMin.." - "..displayMax)	
-		else
-			damageText:SetText(displayMin.."-"..displayMax)
-		end
-	else
-		local colorPos = "|cff20ff20"
-		local colorNeg = "|cffff2020"
-		local color
-		if ( totalBonus > 0 ) then
-			color = colorPos
-		else
-			color = colorNeg
-		end
-		if ( ( displayMin < 100 ) and ( displayMax < 100 ) ) then 
-			damageText:SetText(color..displayMin.." - "..displayMax.."|r")	
-		else
-			damageText:SetText(color..displayMin.."-"..displayMax.."|r")
-		end
-		if ( physicalBonusPos > 0 ) then
-			tooltip = tooltip..colorPos.." +"..physicalBonusPos.."|r"
-		end
-		if ( physicalBonusNeg < 0 ) then
-			tooltip = tooltip..colorNeg.." "..physicalBonusNeg.."|r"
-		end
-		if ( percent > 1 ) then
-			tooltip = tooltip..colorPos.." x"..floor(percent*100+0.5).."%|r"
-		elseif ( percent < 1 ) then
-			tooltip = tooltip..colorNeg.." x"..floor(percent*100+0.5).."%|r"
-		end
-		damageFrame.tooltip = tooltip.." "..format(TEXT(DPS_TEMPLATE), damagePerSecond)
-	end
-	
+	-- UnitRangedDamage's first return is the speed Blizzard already computed
+	-- (weapon speed with all haste applied) -- just display it. This frame has
+	-- no hover handler, so there is no tooltip / dps to build here; the Ranged
+	-- Damage stat (SetRangedDamage) owns that.
+	local rangedAttackSpeed = UnitRangedDamage("player")
 	damageText:SetText(format("%.2f", rangedAttackSpeed))
-	
-	damageFrame.attackSpeed = rangedAttackSpeed
-	damageFrame.damage = tooltip
-	damageFrame.dps = damagePerSecond
 end
 
 function BCS:SetRangedAttackPower(statFrame)
@@ -1121,45 +1079,18 @@ function BCS:SetRangedAttackPower(statFrame)
 end
 
 function BCS:UpdatePaperdollStats(prefix, index)
-	local stat1 = getglobal(prefix..1)
-	local stat2 = getglobal(prefix..2)
-	local stat3 = getglobal(prefix..3)
-	local stat4 = getglobal(prefix..4)
-	local stat5 = getglobal(prefix..5)
-	local stat6 = getglobal(prefix..6)
-	local stat7 = getglobal(prefix..7)
-
-	stat1:SetScript("OnEnter", nil)
-	stat2:SetScript("OnEnter", nil)
-	stat3:SetScript("OnEnter", nil)
-	stat4:SetScript("OnEnter", nil)
-	stat4:SetScript("OnEnter", nil)
-	stat5:SetScript("OnEnter", nil)
-	stat6:SetScript("OnEnter", nil)
-	stat7:SetScript("OnEnter", nil)
-
-	stat1.tooltip = nil
-	stat2.tooltip = nil
-	stat3.tooltip = nil
-	stat4.tooltip = nil
-	stat4.tooltip = nil
-	stat5.tooltip = nil
-	stat6.tooltip = nil
-	stat7.tooltip = nil
-
-	stat1.tooltipSubtext = nil
-	stat2.tooltipSubtext = nil
-	stat3.tooltipSubtext = nil
-	stat4.tooltipSubtext = nil
-	stat4.tooltipSubtext = nil
-	stat5.tooltipSubtext = nil
-	stat6.tooltipSubtext = nil
-	stat7.tooltipSubtext = nil
-
-	stat4:Show()
-	stat5:Show()
-	stat6:Show()
-	stat7:Show()
+	local stats = {}
+	for i = 1, 7 do
+		local s = getglobal(prefix..i)
+		stats[i] = s
+		s:SetScript("OnEnter", nil)
+		s:SetScript("OnLeave", nil)
+		s.tooltip = nil
+		s.tooltipSubtext = nil
+		s:Show()
+	end
+	local stat1, stat2, stat3, stat4, stat5, stat6, stat7 =
+		stats[1], stats[2], stats[3], stats[4], stats[5], stats[6], stats[7]
 
 	if ( index == "PLAYERSTAT_BASE_STATS" ) then
 		BCS:SetStat(stat1, 1)
@@ -1175,7 +1106,7 @@ function BCS:UpdatePaperdollStats(prefix, index)
 		BCS:SetAttackPower(stat3)
 		BCS:SetRating(stat4, "MELEE")
 		BCS:SetMeleeCritChance(stat5)
-		stat6:Hide()
+		BCS:SetMeleeHaste(stat6)
 		stat7:Hide()
 	elseif ( index == "PLAYERSTAT_RANGED_COMBAT" ) then
 		BCS:SetRangedDamage(stat1)

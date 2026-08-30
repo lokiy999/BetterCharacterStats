@@ -1,0 +1,130 @@
+# BetterCharacterStats -- TODO / known issues
+
+Findings from a review pass on the `fixes` branch. Nothing here is a crash;
+the addon works. Grouped by type, roughly most to least important.
+
+**Status (2026-08-30):** the review/cleanup pass is done. Everything still
+unchecked is either (a) waiting on in-game verification, (b) a standing
+"add wordings as they turn up" note, or (c) the feature backlog at the
+bottom (out of scope for this pass).
+
+## Correctness gaps
+
+- [x] **`GetSpellHaste` ignores casting-speed slows.** Now scans HARMFUL for
+      Curse of Tongues / Mind-numbing Poison / Slow wordings and subtracts.
+      Verify the pattern list matches this server's actual debuff tooltips.
+- [x] **`GetSpellHaste` only counts one haste buff.** New `SumAuraMatches`
+      helper loops all buffs (and all debuffs for slows) and sums the first
+      matching pattern per aura, so multiple haste buffs / multiple slows stack.
+- [ ] **`GetSpellHaste` gear scan wordings.** Matches
+      `Increases your attack and casting speed by X%.`,
+      `Increases your casting speed by X%.`, `+X% Haste` and `Haste +X%` (with
+      set-bonus dedup, "Use:" lines skipped). Add more custom Vanilla+ phrasings
+      as they turn up.
+- [x] **`SetRangedAttackSpeed` dead block.** Deleted the ~45 lines of damage-range
+      / dps / tooltip math -- `damageText` was overwritten with the speed anyway,
+      the mid-function tooltip was never shown (frame has no `OnEnter`), and
+      nothing reads `.damage` / `.dps` / `.attackSpeed` on this frame. Now just
+      `UnitRangedDamage("player")` first return (Blizzard's already-hasted speed)
+      -> `SetText`.
+- [x] **BoW "math fix" hardcodes.** Removed. Combat log (2026-08-30) shows BoW is
+      a 5s periodic energize for its exact tooltip value, with the spirit tick
+      unchanged -- so BoW now goes into `periodicMp5`, not `flatMp5`, and
+      `finalBoWMP5` is used as-is. See `docs/mana-regen.md`.
+- [x] **Mana Spring Totem bucketing.** Combat log (2026-08-30, Shaman) shows a
+      separate `+10` next to the `+40` spirit tick -> moved to `periodicMp5`.
+- [ ] **Warchief's / Winsor's bucketing.** Moved to `periodicMp5` by inference
+      from the "N mana regen every 5 seconds" wording (same as BoW / Mana
+      Spring). Still needs a combat-log check; if it's actually combined, move
+      the `warchiefsRegenmp5` term back into `flatMp5`. (The two now share one
+      code path / one tooltip line -- identical text, identical effect.)
+- [x] **Mana Spring / BoW / Warchief's / Winsor's / Brilliance detection.**
+      `SetManaRegen` used aura-icon matching while the `Update*` helpers used
+      tooltip text, so the two could disagree. All now go through the text scan:
+      Mana Spring / BoW reuse `GetManaRegen`'s `finalMtSVal` / `finalBoWMP5`
+      (> 0 only while up); Warchief's/Winsor's and Brilliance scan via
+      `BCS:GetPlayerAura` and parse their value out of the text. No more
+      `GetPlayerAuraTexture` in this function.
+- [ ] **Meditation / Arcane Meditation / Reflection at partial talent ranks.**
+      Vanilla talent tooltips sometimes show the *next* rank's value at 1-2/3.
+      Run `/script BCS:DebugCastingRegenTalent()` at each rank investment: it
+      prints `rank/maxRank` next to the % the SetTalent tooltip shows. If they
+      disagree (e.g. Reflection 1/3 -> "15%"), switch `GetManaRegen`'s scan to
+      `rank * 5` (all three are 5%/rank) instead of trusting the tooltip number.
+
+## Correctness gaps (cont.)
+
+- [x] **`GetSpellPower` double-counts some damage auras.** The Zandalarian Hero
+      Charm aura and the Moonkin Form spell-damage bonus were added to both
+      `spellPower` and `damagePower`; `SetSpellPower` shows `spellPower +
+      damagePower`, so they counted twice. Now `damagePower` only.
+- [x] **`SetSpellPower` per-school branch is broken.** Removed -- the per-school
+      breakdown is already in the Bonus Damage hover tooltip, so the dead
+      `if school then` branch (undefined `fromSchool`) was redundant.
+
+## Code smells (work, but should be cleaned)
+
+- [x] **Dead block in `GetHitRating`.** Removed the commented-out cached-talent
+      scan and the `Localization.lua` line only it referenced; the live talent
+      loop was also refactored (see next item).
+- [x] **Dead `GetSpellPower_old`.** Removed (~230-line commented-out block).
+- [x] **Implicit globals from `GetTalentInfo`.** The `GetHitRating` live loop
+      wrote `name/rank/...` as globals in 3 places; rewritten to fetch `rank`
+      once per talent as a local. Everything else already used `local`.
+- [x] **Implicit global `value` / `value2`.** Added `local value, value2` at the
+      top of `GetSpellHitRating`, `GetSpellCritChance` and `GetHealingPower`, so
+      the bare `_,_, value[, value2] = strfind(...)` scans no longer leak.
+- [x] **`lastMsTVal` is an implicit global.** Now a file-local next to
+      `lastBlessingOfWisdomMP5` / `lastGearBonus`.
+- [x] **Duplicate `stat4` lines in `UpdatePaperdollStats`.** Replaced the reset
+      block with a `for i = 1, 7` loop (also now resets `OnLeave`).
+- [x] **`BCS.SPELLHIT = { -- soon(tm) }`** -- removed. Was an unused stub for
+      spell-hit cap colouring (the way `BCS.MELEEHIT` colours the Rogue melee-hit
+      number); spell hit itself works fine without it. If cap colouring is wanted
+      later, re-add it as a real feature with this server's per-class caps.
+
+## Stale docs / comments
+
+- [x] **README.md** "Haste rating still not implemented" -- removed; README now
+      points at this file.
+- [x] **`helper.lua` `GetManaRegen`** `-- to-maybe-do: apply buffs/talents` --
+      removed (talents/buffs are applied now).
+- [x] **`Localization.lua`** the `-- ! Deprecated ["Increases hit chance by
+      ..."]` commented line -- removed with the dead `GetHitRating` block.
+- [x] **`Localization.lua`** unreferenced `"...15% haste to melee attacks..."`
+      (Warchief's) entry removed -- `GetMeleeHaste` derives from swing speed.
+
+## Melee Haste (added)
+
+- [x] `GetMeleeHaste` derives % from `base weapon speed / UnitAttackSpeed`.
+      Verified in-game 2026-08-30 incl. Cat / Bear forms. Handled: unarmed
+      (2.0), Cat Form (1.0), Bear/Dire Bear Form (2.5, detected by
+      `Ability_Druid_CatForm` / `Ability_Racial_BearForm` buff icons). NOT
+      handled: off-hand shown separately, servers that show haste-modified
+      speed in the weapon tooltip. Displayed as a whole % -- the swing-speed
+      division carries ~0.04% of noise that isn't a real stat.
+
+## Before merging `fixes` -> master
+
+- [ ] ~~Remove the `DEBUG HELPERS` block in `helper.lua`~~ -- **decided to keep**
+      (`DebugBuffs`, `DebugGearStatBonus`, `DebugSpellHaste`, `DebugManaRegen`,
+      `DebugCastingRegenTalent`). They never run on load, only when called
+      manually via `/script`, so the cost of shipping them is low and they stay
+      useful for the next server-wording issue. Revisit only if the file gets
+      unwieldy -- then move them to a separate `debug.lua` left out of the
+      `.toc`.
+
+## Features not implemented anywhere
+
+- [ ] Mana Spring Totem **gear snapshot** / **Ten Storms 2-pc** bonus
+      (`helper.lua` `UpdateManaSpringTotem` / `GetGearSetBonus`). Shaman only.
+- [ ] **Weapon Expertise** talents (Bow/Gun/Crossbow Specialization) -- no
+      per-weapon-type ranged crit/hit breakdown, unlike melee's Axe/Dagger/
+      Fist/Polearm handling.
+- [ ] **Armor penetration** -- Hunter "shots ignore X armor with a Gun", etc.
+      Not tracked anywhere.
+- [ ] Warrior Weapon Expertise talent(s) -- exact tooltip wording still needs to
+      be gathered before it can be added.
+- [ ] Spell Tap (Priest) talent tooltip vs. proc-buff tooltip -- only the proc
+      buff wording is currently matched; confirm the talent itself doesn't also
+      need a pattern.
