@@ -89,12 +89,12 @@ the addon works. Grouped by type, roughly most to least important.
 - [x] **`Localization.lua`** unreferenced `"...15% haste to melee attacks..."`
       (Warchief's) entry removed -- `GetMeleeHaste` derives from swing speed.
 
-## Melee Haste (added -- verify)
+## Melee Haste (added)
 
-- [ ] `GetMeleeHaste` derives % from `base weapon speed / UnitAttackSpeed`.
-      Verify against known setups. Handled: unarmed (2.0), Cat Form (1.0),
-      Bear/Dire Bear Form (2.5, detected by `Ability_Druid_CatForm` /
-      `Ability_Racial_BearForm` buff icons -- confirmed on this client). NOT
+- [x] `GetMeleeHaste` derives % from `base weapon speed / UnitAttackSpeed`.
+      Verified in-game 2026-08-30 incl. Cat / Bear forms. Handled: unarmed
+      (2.0), Cat Form (1.0), Bear/Dire Bear Form (2.5, detected by
+      `Ability_Druid_CatForm` / `Ability_Racial_BearForm` buff icons). NOT
       handled: off-hand shown separately, servers that show haste-modified
       speed in the weapon tooltip.
 
