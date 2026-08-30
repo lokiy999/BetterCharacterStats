@@ -69,19 +69,25 @@ fires on its own timer and is floored independently:
 
 ## What the addon must therefore do
 
-- Sum Spirit regen and **all** flat mp5 sources **before** flooring, and floor
-  **once**. Never convert a single source to mp5 and round it on its own — the
-  fractions from Spirit (`Spirit/4` is rarely whole) and from each mp5 source
-  would drift and the headline would read 1-2 high or low.
-- Keep Brilliance / Divine Concentration / Dreamstate outside that combined
-  floor and add them separately (they already are).
-- Headline number = `floor(combined_tick) * 2.5  +  periodic sources`.
-- Tooltip "while not casting" / "while casting" lines = the combined floored
-  tick (Spirit + every flat mp5), with the per-buff lines below as a breakdown.
-- `mp5:` line shows the raw summed flat mp5; the `(+N mp5 to next tick)` hint is
-  `(1 - frac(combined_tick)) * 2.5` — how much more flat mp5 raises the tick by
-  one. With the combined floor, "wasted" mp5 is usually < 1 tick because
-  Spirit's own fraction fills most of the gap.
+- Sum Spirit regen and the **gear/enchant/set/oil/food** flat mp5 **before**
+  flooring, and floor **once**. Never convert a single gear source to mp5 and
+  round it on its own — the fractions from Spirit (`Spirit/4` is rarely whole)
+  and from each mp5 source would drift and the headline would read 1-2 high/low.
+- Every other source (BoW, Mana Spring, Warchief's/Winsor's, Brilliance, Divine
+  Concentration, Dreamstate) is added on top as `periodicMp5` — each already an
+  integer mp5 amount floored on its own timer.
+- Headline number = `floor(combined_tick * 2.5) + periodicMp5`.
+- Tooltip layout:
+  - `N mana every 2 sec while not casting  (= floor(N*2.5) mp5)` — the combined
+    Spirit+gear tick and its rate. The rate is shown so `rate + periodic = total`
+    adds up on screen.
+  - `M mana every 2 sec while casting` — same tick with the Spirit part scaled by
+    the five-second-rule %.
+  - `Gear & enchants: G mp5 (breakpoint B, next X)` — only when `G > 0`. `B` is
+    the flat mp5 at which the current tick level starts, `X` the flat mp5 that
+    raises it by one. Both shift with Spirit's own fraction.
+  - `Also regenerating -- already in the total:` then one `+K mp5` line per active
+    periodic source, then `= T mp5 total` (equal to the headline).
 
 ## Assumptions (break these and the number will be off)
 

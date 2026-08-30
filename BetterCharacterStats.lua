@@ -694,7 +694,7 @@ function BCS:SetManaRegen(statFrame)
 	if hasManaSpring then
 		manaSpringtick = finalMtSVal -- 10 per tick
 		manaSpringmp5 = floor(finalMtSVal * 5 / 2) -- 25 MP5
-		manaSpringText = format(L["MANA_SPRING_TOTEM"], manaSpringtick, manaSpringmp5)
+		manaSpringText = format(L["MANA_SPRING_TOTEM"], manaSpringmp5)
 	else
 		manaSpringtick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
 		manaSpringmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
@@ -710,7 +710,7 @@ function BCS:SetManaRegen(statFrame)
 	if hasBlessingOfWisdom then
 		blessingegentick = finalBoWMP5 -- BoW energizes once every 5s for its full value
 		blessingRegenmp5 = finalBoWMP5 --Blessing of Wisdom is already in mp5 calc
-		blessingRegenText = format(L["BLESSING_OF_WISDOM"], blessingegentick, blessingRegenmp5)
+		blessingRegenText = format(L["BLESSING_OF_WISDOM"], blessingRegenmp5)
 	else
 		blessingegentick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
 		blessingRegenmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
@@ -725,7 +725,7 @@ function BCS:SetManaRegen(statFrame)
 	if hasWarchiefsBlessing and hasWarchiefsBlessingTT then
 		warchiefsRegentick = 12
 		warchiefsRegenmp5 = 30
-		warchiefsRegenText = format(L["WARCHIEFS_WBUFF"], warchiefsRegentick, warchiefsRegenmp5)
+		warchiefsRegenText = format(L["WARCHIEFS_WBUFF"], warchiefsRegenmp5)
 	else
 		warchiefsRegentick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
 		warchiefsRegenmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
@@ -740,7 +740,7 @@ function BCS:SetManaRegen(statFrame)
 	if hasWinsorsSacrifice and hasWinsorsSacrificeTT then
 		winsorsRegentick = 12
 		winsorsRegenmp5 = 30
-		winsorsRegenText = format(L["WINSORS_WBUFF"], winsorsRegentick, winsorsRegenmp5)
+		winsorsRegenText = format(L["WINSORS_WBUFF"], winsorsRegenmp5)
 	else
 		winsorsRegentick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
 		winsorsRegenmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
@@ -761,7 +761,7 @@ function BCS:SetManaRegen(statFrame)
 		brillRegen = (maxMana * brillRegenPercent)
 		brillRegentick = floor(maxMana * brillRegenPercent * (2 / brillRegenInterval)) -- Convert to 2s tick
 		brillRegenmp5 = floor(maxMana * brillRegenPercent * (5 / brillRegenInterval)) -- Convert to MP5
-		brillRegenText = format(L["BRILLIANCE_AURA"], brillRegentick, brillRegenmp5)
+		brillRegenText = format(L["BRILLIANCE_AURA"], brillRegenmp5)
 	else
 		brillRegentick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
 		brillRegenmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
@@ -778,14 +778,15 @@ function BCS:SetManaRegen(statFrame)
 	--
 	-- The server keeps ONE combined rate (SPELL_AURA_MOD_POWER_REGEN + spirit),
 	-- and every 2s tick it does a SINGLE floor on that combined value. So Spirit
-	-- regen and all flat "mana per 5 sec" effects (gear/enchant/set/oil/food,
-	-- Blessing of Wisdom, Mana Spring Totem, Warchief's/Winsor's) must be summed
-	-- FIRST and floored ONCE -- never rounded per source, or the fractions drift
-	-- and the headline reads 1-2 high/low.
+	-- regen and the flat "mana per 5 sec" from gear/enchant/set/oil/food must be
+	-- summed FIRST and floored ONCE -- never rounded per source, or the fractions
+	-- drift and the headline reads 1-2 high/low.
 	--
-	-- Percentage-of-max-mana periodic effects (Brilliance Aura, Divine
-	-- Concentration, Dreamstate) are SEPARATE periodic-energize events with their
-	-- own independent floor, so they stay outside the combined tick.
+	-- Everything else regenerates on its OWN timer with its own independent floor
+	-- and is added on top as a flat mp5 amount (periodicMp5): Blessing of Wisdom,
+	-- Mana Spring Totem, Warchief's/Winsor's, Brilliance Aura, Divine
+	-- Concentration, Dreamstate. Combat-log confirmed for BoW (5s) and Mana Spring
+	-- (2s) on this server; see docs/mana-regen.md.
 	-- ==========================================================================
 
 	-- Flat mp5 that the server folds into the single combined tick. Only true
@@ -808,11 +809,11 @@ function BCS:SetManaRegen(statFrame)
 	local druidText = ""
 
 	if playerClass == "PALADIN" and paladinManaRegen > 0 then
-        paladinText = format(L["DIVINE_CONCENTRATION"], paladinManaTick, paladinManaRegen)
+        paladinText = format(L["DIVINE_CONCENTRATION"], paladinManaRegen)
     end
 
 	if playerClass == "DRUID" and druidManaRegen > 0 then
-		druidText = format(L["DREAMSTATE"], druidManaTick, druidManaRegen)
+		druidText = format(L["DREAMSTATE"], druidManaRegen)
 	end
 
 	-- Separate periodic-energize sources, each floored on its own timer and
@@ -836,8 +837,23 @@ function BCS:SetManaRegen(statFrame)
 		mp5Breakpoint = format(L["MANA_REGEN_MP5_BREAKPOINT"], bp, nextBp)
 	end
 
-	frame.tooltip = format(L["SPELL_MANA_REGEN_TOOLTIP_HEADER"], tickNotCasting, tickNotCasting * 5 / 2)
-	frame.tooltipSubtext = format(L["SPELL_MANA_REGEN_TOOLTIP"], tickNotCasting, tickCasting, floor(flatMp5), mp5Breakpoint) .. paladinText .. druidText .. blessingRegenText .. manaSpringText .. brillRegenText .. winsorsRegenText .. warchiefsRegenText
+	-- Gear/enchant mp5 line (only when there is any, with the tick-breakpoint hint).
+	local gearLine = ""
+	if flatMp5 > 0 then
+		gearLine = format(L["MANA_REGEN_GEAR_LINE"], floor(flatMp5), mp5Breakpoint)
+	end
+
+	-- Periodic-energize breakdown: header + one "+N mp5" line per active source,
+	-- then a total so it is obvious these are already summed into the headline.
+	local periodicText = paladinText .. druidText .. blessingRegenText .. manaSpringText .. brillRegenText .. winsorsRegenText .. warchiefsRegenText
+	local periodicBlock = ""
+	if periodicText ~= "" then
+		periodicBlock = L["MANA_REGEN_PERIODIC_HEADER"] .. periodicText
+			.. format(L["MANA_REGEN_TOTAL"], floor(tickNotCasting * 5 / 2 + periodicMp5))
+	end
+
+	frame.tooltip = L["SPELL_MANA_REGEN_TOOLTIP_HEADER"]
+	frame.tooltipSubtext = format(L["SPELL_MANA_REGEN_TOOLTIP"], tickNotCasting, floor(tickNotCasting * 5 / 2), tickCasting) .. gearLine .. periodicBlock
 	
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")

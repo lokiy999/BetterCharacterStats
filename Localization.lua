@@ -226,8 +226,11 @@ BCS["L"] = {
 	["SPELL_HEALING_POWER_TOOLTIP_HEADER"] = [[|cffffffffHealing Power %d|r]],
 	
 	["SPELL_MANA_REGEN_TOOLTIP_HEADER"] = [[|cffffffffMana Regen|r]],
-	["SPELL_MANA_REGEN_TOOLTIP"] = "%d mana every 2 seconds while not casting.\r\n%d mana every 2 seconds while casting.\r\n|cff33c8ffmp5: %d|r%s",
+	["SPELL_MANA_REGEN_TOOLTIP"] = "%d mana every 2 sec while not casting  |cff808080(= %d mp5)|r\r\n%d mana every 2 sec while casting",
+	["MANA_REGEN_GEAR_LINE"] = "\r\n|cff33c8ffGear & enchants: %d mp5|r%s",
 	["MANA_REGEN_MP5_BREAKPOINT"] = " |cff808080(breakpoint %d, next %d)|r",
+	["MANA_REGEN_PERIODIC_HEADER"] = "\n|cffffd100Also regenerating -- already in the total:|r",
+	["MANA_REGEN_TOTAL"] = "\n|cff33c8ff= %d mp5 total|r",
 	
 	["ROGUE_MELEE_HIT_TOOLTIP"] = [[
 	
@@ -235,15 +238,15 @@ BCS["L"] = {
 	+8% hit to always hit with your special abilities against a raid boss.
 	+24.6% hit to always hit a raid boss.]],
 
-	["MANA_SPRING_TOTEM"] = "\n|cff0099ff%s|cff00ff00 per tick from Mana Spring Totem |cff0099ff%s|cff00ff00 mp5.|r",
-	["BRILLIANCE_AURA"] = "\n|cff0099ff%s|cff00ff00 per tick from Brilliance Aura |cff0099ff%s|cff00ff00 mp5.|r",
-	["BLESSING_OF_WISDOM"] = "\n|cff0099ff%s|cff00ff00 every 5 sec from Blessing of Wisdom |cff0099ff%s|cff00ff00 mp5.|r",
-	["WINSORS_WBUFF"] = "\n|cff0099ff%s|cff00ff00 per tick from Winsor's Sacrifice |cff0099ff%s|cff00ff00 mp5.|r",
-	["WARCHIEFS_WBUFF"] = "\n|cff0099ff%s|cff00ff00 per tick from Warchief's Blessing |cff0099ff%s|cff00ff00 mp5.|r",
+	["MANA_SPRING_TOTEM"] = "\n   Mana Spring Totem: |cff00ff00+%s mp5|r",
+	["BRILLIANCE_AURA"] = "\n   Brilliance Aura: |cff00ff00+%s mp5|r",
+	["BLESSING_OF_WISDOM"] = "\n   Blessing of Wisdom: |cff00ff00+%s mp5|r",
+	["WINSORS_WBUFF"] = "\n   Winsor's Sacrifice: |cff00ff00+%s mp5|r",
+	["WARCHIEFS_WBUFF"] = "\n   Warchief's Blessing: |cff00ff00+%s mp5|r",
 
 	--Talent Tooltips
-	["DIVINE_CONCENTRATION"] = "\n|cff0099ff%s|cff00ff00 per tick from Divine Concentration. |cff0099ff%s|cff00ff00 mp5.|r",
-	["DREAMSTATE"] = "\n|cff0099ff%s|cff00ff00 per tick from Dreamstate. |cff0099ff%s|cff00ff00 mp5.|r",
+	["DIVINE_CONCENTRATION"] = "\n   Divine Concentration: |cff00ff00+%s mp5|r",
+	["DREAMSTATE"] = "\n   Dreamstate: |cff00ff00+%s mp5|r",
 		
 
 	PLAYERSTAT_BASE_STATS = "Base Stats",
