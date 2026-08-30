@@ -35,11 +35,12 @@ the addon works. Grouped by type, roughly most to least important.
       `BCS:GetPlayerAuraValue(tooltip text)`. If the server's icon or tooltip
       wording differs from one path, the two disagree (one adds the value, the
       other shows/hides the line). Consolidate on one detection method.
-- [ ] **Arcane Meditation at partial talent ranks.** Vanilla talent tooltips
-      sometimes show the *next* rank's value when a talent is 1-2/3. Verify
-      `BCS_Tooltip:SetTalent` returns the *current* rank's % for
-      Meditation / Arcane Meditation / Reflection in `GetManaRegen`'s
-      casting-regen scan; adjust if it reads the wrong rank.
+- [ ] **Meditation / Arcane Meditation / Reflection at partial talent ranks.**
+      Vanilla talent tooltips sometimes show the *next* rank's value at 1-2/3.
+      Run `/script BCS:DebugCastingRegenTalent()` at each rank investment: it
+      prints `rank/maxRank` next to the % the SetTalent tooltip shows. If they
+      disagree (e.g. Reflection 1/3 -> "15%"), switch `GetManaRegen`'s scan to
+      `rank * 5` (all three are 5%/rank) instead of trusting the tooltip number.
 
 ## Correctness gaps (cont.)
 
@@ -96,8 +97,9 @@ the addon works. Grouped by type, roughly most to least important.
 ## Before merging `fixes` -> master
 
 - [ ] Remove the `DEBUG HELPERS` block in `helper.lua` (`DebugBuffs`,
-      `DebugGearStatBonus`, `DebugSpellHaste`, `DebugManaRegen`). Also drop the
-      `docs/mana-regen.md` reference to `DebugManaRegen` if it goes.
+      `DebugGearStatBonus`, `DebugSpellHaste`, `DebugManaRegen`,
+      `DebugCastingRegenTalent`). Also drop the `docs/mana-regen.md` reference to
+      `DebugManaRegen` if it goes.
 
 ## Features not implemented anywhere
 

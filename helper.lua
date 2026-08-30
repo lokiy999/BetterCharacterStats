@@ -158,6 +158,41 @@ function BCS:DebugManaRegen()
 		.." gearMp5="..tostring(mp5).." bowMp5="..tostring(bow).." mtsTick="..tostring(mts).." castingPct="..tostring(pct))
 end
 
+-- DEBUG: for every talent whose SetTalent tooltip mentions "mana regeneration
+-- while casting" (Meditation / Arcane Meditation / Reflection), prints
+-- GetTalentInfo's rank/maxRank next to the % the tooltip text shows. If they
+-- disagree at a partial rank (e.g. Reflection 1/3 shows 15%), SetTalent is
+-- reporting the wrong rank and GetManaRegen's casting-regen scan is off.
+-- Invest ranks one at a time and re-run. Usage:
+--   /script BCS:DebugCastingRegenTalent()
+function BCS:DebugCastingRegenTalent()
+	local patterns = {
+		"(%d+)%% of your [Mm]ana regeneration to continue while casting",
+		"(%d+)%% of your [Mm]ana regeneration continuing while casting",
+		"(%d+)%% of [Mm]ana regeneration while casting",
+		"regenerate at (%d+)%% of normal rate while casting",
+	}
+	for tab = 1, GetNumTalentTabs() do
+		for talent = 1, GetNumTalents(tab) do
+			local name, _, _, _, rank, maxRank = GetTalentInfo(tab, talent)
+			BCS_Tooltip:SetTalent(tab, talent)
+			for line = 1, BCS_Tooltip:NumLines() do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				local text = left and left:GetText()
+				if text then
+					for _, pat in ipairs(patterns) do
+						local _, _, pct = strfind(text, pat)
+						if pct then
+							BCS:Print(name.." "..tostring(rank).."/"..tostring(maxRank)
+								.."  tooltip shows "..pct.."%  |  \""..text.."\"")
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
 -- ============================================================
 -- END DEBUG HELPERS
 -- ============================================================
