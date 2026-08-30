@@ -2496,6 +2496,35 @@ end
 -- talents: "Increases your casting speed by X%." (e.g. "Improved Memory"), or
 -- "Increases the casting speed by [4/8/12/16/20]%." for talents that show all
 -- ranks at once (pick the value matching the talent's actual invested rank).
+
+-- Sum the first matching pattern's number across every player aura of the given
+-- type. Unlike BCS:GetPlayerAura (first aura only), this stacks -- a player can
+-- carry several haste buffs, or several casting-speed slows, at once.
+local function SumAuraMatches(patterns, auraType)
+	local total = 0
+	for i = 0, 31 do
+		local index = GetPlayerBuff(i, auraType)
+		if index and index > -1 then
+			BCS_Tooltip:SetPlayerBuff(index)
+			local fullText = ""
+			for line = 1, BCS_Tooltip:NumLines() do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				if left and left:GetText() then
+					fullText = fullText .. " " .. left:GetText()
+				end
+			end
+			for _, pat in ipairs(patterns) do
+				local _s, _e, v = strfind(fullText, pat)
+				if v then
+					total = total + tonumber(v)
+					break
+				end
+			end
+		end
+	end
+	return total
+end
+
 function BCS:GetSpellHaste()
 	local haste = 0
 
@@ -2584,30 +2613,21 @@ function BCS:GetSpellHaste()
 		end
 	end
 
-	-- scan buffs
-	local _, _, hasteFromAura = BCS:GetPlayerAura("casting speed by (%d+)%%")
-	if not hasteFromAura then
-		_, _, hasteFromAura = BCS:GetPlayerAura("casting speed increased by (%d+)%%")
-	end
-	if hasteFromAura then
-		haste = haste + tonumber(hasteFromAura)
-	end
+	-- scan buffs -- sum every haste buff (a player can carry more than one)
+	haste = haste + SumAuraMatches({
+		"casting speed by (%d+)%%",
+		"casting speed increased by (%d+)%%",
+	}, 'HELPFUL')
 
 	-- scan debuffs: casting-speed slows (Curse of Tongues, Mind-numbing Poison,
-	-- Slow, ...) subtract from Haste. Different wordings, so try each.
-	local slowPatterns = {
+	-- Slow, ...) subtract from Haste.
+	haste = haste - SumAuraMatches({
 		"[Ss]lows casting speed by (%d+)%%",
 		"[Cc]asting speed reduced by (%d+)%%",
 		"[Cc]asting speed slowed by (%d+)%%",
 		"[Cc]asting speed decreased by (%d+)%%",
 		"[Ii]ncreas.- casting time by (%d+)%%",
-	}
-	for _, pat in ipairs(slowPatterns) do
-		local _s, _e, slowValue = BCS:GetPlayerAura(pat, 'HARMFUL')
-		if slowValue then
-			haste = haste - tonumber(slowValue)
-		end
-	end
+	}, 'HARMFUL')
 
 	-- scan spellbook passives (e.g. Night Elf "Quickness" racial:
 	-- "Increases your Agility, movement and casting speed by X%."). Only count
