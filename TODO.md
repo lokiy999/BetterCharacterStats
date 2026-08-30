@@ -16,12 +16,12 @@ the addon works. Grouped by type, roughly most to least important.
       `Increases your casting speed by X%.`, `+X% Haste` and `Haste +X%` (with
       set-bonus dedup, "Use:" lines skipped). Add more custom Vanilla+ phrasings
       as they turn up.
-- [ ] **`SetRangedAttackSpeed` has a large dead block.** `BetterCharacterStats.lua`
-      `SetRangedAttackSpeed` lines ~1073-1117 compute and set a damage range into
-      `damageText`, which is then unconditionally overwritten with the attack
-      speed at the end. The tooltip built mid-function is never shown (no
-      `OnEnter` is set). Decide: wire up the tooltip, or delete the damage math
-      (keep only what feeds `.damage` / `.dps` if anything reads them).
+- [x] **`SetRangedAttackSpeed` dead block.** Deleted the ~45 lines of damage-range
+      / dps / tooltip math -- `damageText` was overwritten with the speed anyway,
+      the mid-function tooltip was never shown (frame has no `OnEnter`), and
+      nothing reads `.damage` / `.dps` / `.attackSpeed` on this frame. Now just
+      `UnitRangedDamage("player")` first return (Blizzard's already-hasted speed)
+      -> `SetText`.
 - [x] **BoW "math fix" hardcodes.** Removed. Combat log (2026-08-30) shows BoW is
       a 5s periodic energize for its exact tooltip value, with the spirit tick
       unchanged -- so BoW now goes into `periodicMp5`, not `flatMp5`, and

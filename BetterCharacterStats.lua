@@ -1037,58 +1037,12 @@ function BCS:SetRangedAttackSpeed(startFrame)
 		return
 	end
 
-	local rangedAttackSpeed, minDamage, maxDamage, physicalBonusPos, physicalBonusNeg, percent = UnitRangedDamage("player")
-	local displayMin = max(floor(minDamage),1)
-	local displayMax = max(ceil(maxDamage),1)
-
-	minDamage = (minDamage / percent) - physicalBonusPos - physicalBonusNeg
-	maxDamage = (maxDamage / percent) - physicalBonusPos - physicalBonusNeg
-
-	local baseDamage = (minDamage + maxDamage) * 0.5
-	local fullDamage = (baseDamage + physicalBonusPos + physicalBonusNeg) * percent
-	local totalBonus = (fullDamage - baseDamage)
-	local damagePerSecond = (max(fullDamage,1) / rangedAttackSpeed)
-	local tooltip = max(floor(minDamage),1).." - "..max(ceil(maxDamage),1)
-
-	if ( totalBonus == 0 ) then
-		if ( ( displayMin < 100 ) and ( displayMax < 100 ) ) then 
-			damageText:SetText(displayMin.." - "..displayMax)	
-		else
-			damageText:SetText(displayMin.."-"..displayMax)
-		end
-	else
-		local colorPos = "|cff20ff20"
-		local colorNeg = "|cffff2020"
-		local color
-		if ( totalBonus > 0 ) then
-			color = colorPos
-		else
-			color = colorNeg
-		end
-		if ( ( displayMin < 100 ) and ( displayMax < 100 ) ) then 
-			damageText:SetText(color..displayMin.." - "..displayMax.."|r")	
-		else
-			damageText:SetText(color..displayMin.."-"..displayMax.."|r")
-		end
-		if ( physicalBonusPos > 0 ) then
-			tooltip = tooltip..colorPos.." +"..physicalBonusPos.."|r"
-		end
-		if ( physicalBonusNeg < 0 ) then
-			tooltip = tooltip..colorNeg.." "..physicalBonusNeg.."|r"
-		end
-		if ( percent > 1 ) then
-			tooltip = tooltip..colorPos.." x"..floor(percent*100+0.5).."%|r"
-		elseif ( percent < 1 ) then
-			tooltip = tooltip..colorNeg.." x"..floor(percent*100+0.5).."%|r"
-		end
-		damageFrame.tooltip = tooltip.." "..format(TEXT(DPS_TEMPLATE), damagePerSecond)
-	end
-	
+	-- UnitRangedDamage's first return is the speed Blizzard already computed
+	-- (weapon speed with all haste applied) -- just display it. This frame has
+	-- no hover handler, so there is no tooltip / dps to build here; the Ranged
+	-- Damage stat (SetRangedDamage) owns that.
+	local rangedAttackSpeed = UnitRangedDamage("player")
 	damageText:SetText(format("%.2f", rangedAttackSpeed))
-	
-	damageFrame.attackSpeed = rangedAttackSpeed
-	damageFrame.damage = tooltip
-	damageFrame.dps = damagePerSecond
 end
 
 function BCS:SetRangedAttackPower(statFrame)
