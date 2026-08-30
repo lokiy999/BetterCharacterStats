@@ -2332,7 +2332,7 @@ function BCS:GetManaRegen()
 	-- model that folded BoW into the 2s spirit tick. On this server BoW is its own
 	-- 5s periodic energize (combat log shows the exact tooltip value, e.g. 33 every
 	-- 5s, with the spirit tick unchanged), so finalBoWMP5 is now used as-is and
-	-- added to periodicMp5 in SetSpellManaRegen. See docs/mana-regen.md.
+	-- added to periodicMp5 in SetManaRegen. See docs/mana-regen.md.
 
 	local finalMtSVal = floor(manaSpringTotemMP2 * manaSpringBonus)
 	

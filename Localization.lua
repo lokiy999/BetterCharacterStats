@@ -230,7 +230,6 @@ BCS["L"] = {
 	["MANA_REGEN_GEAR_LINE"] = "\r\nGear & enchants: %d mp5%s",
 	["MANA_REGEN_MP5_BREAKPOINT"] = " |cff808080(breakpoint %d, next %d)|r",
 	["MANA_REGEN_PERIODIC_HEADER"] = "\n|cffffd100Also regenerating -- already in the total:|r",
-	["MANA_REGEN_TOTAL"] = "\n|cff33c8ff= %d mp5 total|r",
 	
 	["ROGUE_MELEE_HIT_TOOLTIP"] = [[
 	
@@ -269,7 +268,7 @@ BCS["L"] = {
 	
 	SPELL_POWER_COLON = "Bonus Damage:",
 	HEAL_POWER_COLON = "Bonus Healing:",
-	MANA_REGEN_COLON = "Mana Regen:",
+	MANA_REGEN_COLON = "Mana Regen (mp5):",
 	SPELL_PEN_COLON = "Spell Pen:",
 	SPELL_HASTE_COLON = "Haste:",
 	

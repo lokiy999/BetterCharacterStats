@@ -1,6 +1,6 @@
 # Mana regen calculation
 
-This documents **why** `BCS:SetSpellManaRegen` (in `BetterCharacterStats.lua`)
+This documents **why** `BCS:SetManaRegen` (in `BetterCharacterStats.lua`)
 combines mana-regen sources the way it does. If the displayed number ever turns
 out wrong on some server, start here.
 
@@ -87,7 +87,8 @@ fires on its own timer and is floored independently:
     the flat mp5 at which the current tick level starts, `X` the flat mp5 that
     raises it by one. Both shift with Spirit's own fraction.
   - `Also regenerating -- already in the total:` then one `+K mp5` line per active
-    periodic source, then `= T mp5 total` (equal to the headline).
+    periodic source. No total line -- the headline stat (labelled
+    `Mana Regen (mp5):`) already is the grand total.
 
 ## Assumptions (break these and the number will be off)
 

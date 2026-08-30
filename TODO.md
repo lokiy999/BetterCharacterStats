@@ -33,7 +33,7 @@ the addon works. Grouped by type, roughly most to least important.
       Spring). Still needs a combat-log check; if it's actually combined, move
       the `warchiefsRegenmp5` / `winsorsRegenmp5` terms back into `flatMp5`.
 - [ ] **Mana Spring / BoW are detected two different ways.**
-      `SetSpellManaRegen` checks `BCS:GetPlayerAuraTexture(icon)` while
+      `SetManaRegen` checks `BCS:GetPlayerAuraTexture(icon)` while
       `UpdateManaSpringTotem` / `UpdateBlessingOfWisdom` check
       `BCS:GetPlayerAuraValue(tooltip text)`. If the server's icon or tooltip
       wording differs from one path, the two disagree (one adds the value, the

@@ -843,13 +843,12 @@ function BCS:SetManaRegen(statFrame)
 		gearLine = format(L["MANA_REGEN_GEAR_LINE"], floor(flatMp5), mp5Breakpoint)
 	end
 
-	-- Periodic-energize breakdown: header + one "+N mp5" line per active source,
-	-- then a total so it is obvious these are already summed into the headline.
+	-- Periodic-energize breakdown: header + one "+N mp5" line per active source.
+	-- The headline stat is already the grand total, so no total line here.
 	local periodicText = paladinText .. druidText .. blessingRegenText .. manaSpringText .. brillRegenText .. winsorsRegenText .. warchiefsRegenText
 	local periodicBlock = ""
 	if periodicText ~= "" then
 		periodicBlock = L["MANA_REGEN_PERIODIC_HEADER"] .. periodicText
-			.. format(L["MANA_REGEN_TOTAL"], floor(tickNotCasting * 5 / 2 + periodicMp5))
 	end
 
 	frame.tooltip = L["SPELL_MANA_REGEN_TOOLTIP_HEADER"]
