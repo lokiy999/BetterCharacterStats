@@ -20,10 +20,6 @@ BCS.MELEEHIT = {
 	},
 }
 
-BCS.SPELLHIT = {
-	-- soon(tm)
-}
-
 BCS.PaperDollFrame = PaperDollFrame
 
 BCS.Debug = false
@@ -684,87 +680,49 @@ function BCS:SetManaRegen(statFrame)
 	
 	local base, casting, mp5, paladinManaTick, paladinManaRegen, druidManaTick, druidManaRegen, finalBoWMP5, finalMtSVal, castingRegenPercent = BCS:GetManaRegen()
 	
-	-- Check if Mana Spring Totem aura is active
-	local hasManaSpring = BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Nature_ManaRegenTotem")
+	-- All of the buffs below are detected by the buff-tooltip TEXT (the addon's
+	-- dominant pattern), not by icon -- icons get reskinned / shared between ranks
+	-- on custom servers. Mana Spring / BoW piggyback on GetManaRegen's own scan
+	-- (finalMtSVal / finalBoWMP5 are > 0 only while the buff is up); the rest scan
+	-- here via BCS:GetPlayerAura.
+
+	-- Mana Spring Totem -- finalMtSVal is the per-2s value.
 	local finalMtSVal = finalMtSVal or 0
-	local manaSpringtick = 0
 	local manaSpringmp5 = 0
 	local manaSpringText = ""
-
-	if hasManaSpring then
-		manaSpringtick = finalMtSVal -- 10 per tick
-		manaSpringmp5 = floor(finalMtSVal * 5 / 2) -- 25 MP5
+	if finalMtSVal > 0 then
+		manaSpringmp5 = floor(finalMtSVal * 5 / 2)
 		manaSpringText = format(L["MANA_SPRING_TOTEM"], manaSpringmp5)
-	else
-		manaSpringtick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
-		manaSpringmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
 	end
 
-	-- Check if Blessing of Wisdom buff is active / fixed GBoW
-	local hasBlessingOfWisdom = BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Holy_SealOfWisdom") or BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Holy_GreaterBlessingofWisdom")
+	-- Blessing of Wisdom -- finalBoWMP5 is already the mp5 value.
 	local finalBoWMP5 = finalBoWMP5 or 0
-	local blessingegentick = 0
 	local blessingRegenmp5 = 0
 	local blessingRegenText = ""
-	
-	if hasBlessingOfWisdom then
-		blessingegentick = finalBoWMP5 -- BoW energizes once every 5s for its full value
-		blessingRegenmp5 = finalBoWMP5 --Blessing of Wisdom is already in mp5 calc
+	if finalBoWMP5 > 0 then
+		blessingRegenmp5 = finalBoWMP5
 		blessingRegenText = format(L["BLESSING_OF_WISDOM"], blessingRegenmp5)
-	else
-		blessingegentick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
-		blessingRegenmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
 	end
-	
-	local hasWarchiefsBlessing = BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Arcane_TeleportOrgrimmar")
-	local hasWarchiefsBlessingTT = BCS:GetPlayerAuraValue("Increases hitpoints by 300. Movement, attack and casting speed increased by 5%. 30 mana regen every 5 seconds.")
-	local warchiefsRegentick = 0
+
+	-- Warchief's Blessing / Winsor's Sacrifice -- identical "N mana regen every 5
+	-- seconds" line and identical effect; only the world-buff icon tells them
+	-- apart, so match the text and show one combined line.
 	local warchiefsRegenmp5 = 0
 	local warchiefsRegenText = ""
-	
-	if hasWarchiefsBlessing and hasWarchiefsBlessingTT then
-		warchiefsRegentick = 12
-		warchiefsRegenmp5 = 30
+	local _, _, wcRegen = BCS:GetPlayerAura("(%d+) mana regen every 5 seconds")
+	if wcRegen then
+		warchiefsRegenmp5 = tonumber(wcRegen)
 		warchiefsRegenText = format(L["WARCHIEFS_WBUFF"], warchiefsRegenmp5)
-	else
-		warchiefsRegentick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
-		warchiefsRegenmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
 	end
-	
-	local hasWinsorsSacrifice = BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Frost_FrostBrand")
-	local hasWinsorsSacrificeTT = BCS:GetPlayerAuraValue("Increases hitpoints by 300. Movement, attack and casting speed increased by 5%. 30 mana regen every 5 seconds.")
-	local winsorsRegentick = 0
-	local winsorsRegenmp5 = 0
-	local winsorsRegenText = ""
-	
-	if hasWinsorsSacrifice and hasWinsorsSacrificeTT then
-		winsorsRegentick = 12
-		winsorsRegenmp5 = 30
-		winsorsRegenText = format(L["WINSORS_WBUFF"], winsorsRegenmp5)
-	else
-		winsorsRegentick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
-		winsorsRegenmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
-	end
-	
-	-- Check if Brilliance Aura is active
-	local hasBrillianceAura = BCS:GetPlayerAuraTexture("Interface\\Icons\\Spell_Nature_Brilliance")
-	local hasBrillianceAuraTT = BCS:GetPlayerAuraValue("Regenerates 1% of your Mana every 10 sec.")
+
+	-- Brilliance Aura -- X% of max mana every 10s, percent parsed from the text.
 	local maxMana = UnitManaMax("player")
-	local brillRegen = 0
-	local brillRegenPercent = 0.01 -- 1% mana
-	local brillRegenInterval = 10 -- 10 seconds
-	local brillRegentick = 0
 	local brillRegenmp5 = 0
 	local brillRegenText = ""
-
-	if hasBrillianceAura and hasBrillianceAuraTT then
-		brillRegen = (maxMana * brillRegenPercent)
-		brillRegentick = floor(maxMana * brillRegenPercent * (2 / brillRegenInterval)) -- Convert to 2s tick
-		brillRegenmp5 = floor(maxMana * brillRegenPercent * (5 / brillRegenInterval)) -- Convert to MP5
+	local _, _, brillPct = BCS:GetPlayerAura("Regenerates (%d+)%% of your Mana every 10 sec")
+	if brillPct then
+		brillRegenmp5 = floor(maxMana * (tonumber(brillPct) / 100) * (5 / 10))
 		brillRegenText = format(L["BRILLIANCE_AURA"], brillRegenmp5)
-	else
-		brillRegentick = 0 -- Aura / buff explicitly reset when the aura/buff is missing
-		brillRegenmp5 = 0 -- Aura / buff explicitly reset when the aura/buff is missing
 	end
 
 	-- Ensure paladinManaRegen and paladinManaTick always have a default value
@@ -820,7 +778,7 @@ function BCS:SetManaRegen(statFrame)
 	-- independent of the spirit tick / casting state. Combat log confirmed on
 	-- this server: Blessing of Wisdom (5s), Mana Spring Totem (2s). Warchief's /
 	-- Winsor's carried here too by the same "mana every 5 sec" wording.
-	local periodicMp5 = brillRegenmp5 + paladinManaRegen + druidManaRegen + blessingRegenmp5 + manaSpringmp5 + warchiefsRegenmp5 + winsorsRegenmp5
+	local periodicMp5 = brillRegenmp5 + paladinManaRegen + druidManaRegen + blessingRegenmp5 + manaSpringmp5 + warchiefsRegenmp5
 
 	-- Headline: the combined tick as a rate (x 2.5), plus the periodic sources.
 	text:SetText(format("%d", floor(tickNotCasting * 5 / 2 + periodicMp5)))
@@ -845,7 +803,7 @@ function BCS:SetManaRegen(statFrame)
 
 	-- Periodic-energize breakdown: header + one "+N mp5" line per active source.
 	-- The headline stat is already the grand total, so no total line here.
-	local periodicText = paladinText .. druidText .. blessingRegenText .. manaSpringText .. brillRegenText .. winsorsRegenText .. warchiefsRegenText
+	local periodicText = paladinText .. druidText .. blessingRegenText .. manaSpringText .. brillRegenText .. warchiefsRegenText
 	local periodicBlock = ""
 	if periodicText ~= "" then
 		periodicBlock = L["MANA_REGEN_PERIODIC_HEADER"] .. periodicText

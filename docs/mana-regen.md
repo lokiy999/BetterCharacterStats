@@ -62,10 +62,11 @@ fires on its own timer and is floored independently:
   2026-08-30 on a Shaman: combat log shows separate `+40` (spirit tick) and
   `+10` (Mana Spring) events. Added to `periodicMp5` as `manaSpringmp5`
   (= `10 * 5/2` = 25 mp5), not to `flatMp5`.
-- **Warchief's Blessing / Winsor's Sacrifice** — "30 mana regen every 5 seconds".
+- **Warchief's Blessing / Winsor's Sacrifice** — "N mana regen every 5 seconds".
   Same wording family as BoW; carried in `periodicMp5` by inference, not yet
-  combat-log-verified. If it turns out to be combined instead, move the two
-  `warchiefsRegenmp5` / `winsorsRegenmp5` terms back into `flatMp5`.
+  combat-log-verified. If it turns out to be combined instead, move the
+  `warchiefsRegenmp5` term back into `flatMp5`. The two buffs share one code
+  path (identical tooltip text and effect) and one "Warchief's / Winsor's" line.
 
 ## What the addon must therefore do
 

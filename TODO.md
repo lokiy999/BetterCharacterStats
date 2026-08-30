@@ -29,15 +29,17 @@ the addon works. Grouped by type, roughly most to least important.
 - [x] **Mana Spring Totem bucketing.** Combat log (2026-08-30, Shaman) shows a
       separate `+10` next to the `+40` spirit tick -> moved to `periodicMp5`.
 - [ ] **Warchief's / Winsor's bucketing.** Moved to `periodicMp5` by inference
-      from the "30 mana regen every 5 seconds" wording (same as BoW / Mana
+      from the "N mana regen every 5 seconds" wording (same as BoW / Mana
       Spring). Still needs a combat-log check; if it's actually combined, move
-      the `warchiefsRegenmp5` / `winsorsRegenmp5` terms back into `flatMp5`.
-- [ ] **Mana Spring / BoW are detected two different ways.**
-      `SetManaRegen` checks `BCS:GetPlayerAuraTexture(icon)` while
-      `UpdateManaSpringTotem` / `UpdateBlessingOfWisdom` check
-      `BCS:GetPlayerAuraValue(tooltip text)`. If the server's icon or tooltip
-      wording differs from one path, the two disagree (one adds the value, the
-      other shows/hides the line). Consolidate on one detection method.
+      the `warchiefsRegenmp5` term back into `flatMp5`. (The two now share one
+      code path / one tooltip line -- identical text, identical effect.)
+- [x] **Mana Spring / BoW / Warchief's / Winsor's / Brilliance detection.**
+      `SetManaRegen` used aura-icon matching while the `Update*` helpers used
+      tooltip text, so the two could disagree. All now go through the text scan:
+      Mana Spring / BoW reuse `GetManaRegen`'s `finalMtSVal` / `finalBoWMP5`
+      (> 0 only while up); Warchief's/Winsor's and Brilliance scan via
+      `BCS:GetPlayerAura` and parse their value out of the text. No more
+      `GetPlayerAuraTexture` in this function.
 - [ ] **Meditation / Arcane Meditation / Reflection at partial talent ranks.**
       Vanilla talent tooltips sometimes show the *next* rank's value at 1-2/3.
       Run `/script BCS:DebugCastingRegenTalent()` at each rank investment: it
@@ -71,8 +73,10 @@ the addon works. Grouped by type, roughly most to least important.
       `lastBlessingOfWisdomMP5` / `lastGearBonus`.
 - [x] **Duplicate `stat4` lines in `UpdatePaperdollStats`.** Replaced the reset
       block with a `for i = 1, 7` loop (also now resets `OnLeave`).
-- [ ] **`BCS.SPELLHIT = { -- soon(tm) }`** in `BetterCharacterStats.lua` -- empty
-      placeholder table, either use or remove.
+- [x] **`BCS.SPELLHIT = { -- soon(tm) }`** -- removed. Was an unused stub for
+      spell-hit cap colouring (the way `BCS.MELEEHIT` colours the Rogue melee-hit
+      number); spell hit itself works fine without it. If cap colouring is wanted
+      later, re-add it as a real feature with this server's per-class caps.
 
 ## Stale docs / comments
 

@@ -240,8 +240,7 @@ BCS["L"] = {
 	["MANA_SPRING_TOTEM"] = "\n   Mana Spring Totem: |cff00ff00+%s mp5|r",
 	["BRILLIANCE_AURA"] = "\n   Brilliance Aura: |cff00ff00+%s mp5|r",
 	["BLESSING_OF_WISDOM"] = "\n   Blessing of Wisdom: |cff00ff00+%s mp5|r",
-	["WINSORS_WBUFF"] = "\n   Winsor's Sacrifice: |cff00ff00+%s mp5|r",
-	["WARCHIEFS_WBUFF"] = "\n   Warchief's Blessing: |cff00ff00+%s mp5|r",
+	["WARCHIEFS_WBUFF"] = "\n   Warchief's / Winsor's: |cff00ff00+%s mp5|r",
 
 	--Talent Tooltips
 	["DIVINE_CONCENTRATION"] = "\n   Divine Concentration: |cff00ff00+%s mp5|r",
