@@ -20,11 +20,9 @@ The server keeps **one** floating-point rate, `m_modManaRegen`, built from:
 - **Flat `mana per 5 sec` from gear**: gear, enchants, set bonuses, weapon mana
   oils, "well fed" food buffs. These are true `SPELL_AURA_MOD_POWER_REGEN`.
 
-**Not** in the combined rate on this server: **Blessing of Wisdom** (see below).
-**Warchief's Blessing / Winsor's Sacrifice** and **Mana Spring Totem** are still
-treated as combined-rate mp5 in the addon but are *unverified* — their tooltips
-read "N mana regen every 5 seconds" / a 2s pulse, so they may also be separate
-energizes. Check the combat log the same way BoW was checked.
+**Not** in the combined rate on this server: **Blessing of Wisdom**, **Mana
+Spring Totem**, **Warchief's Blessing / Winsor's Sacrifice** — all of these are
+separate periodic energizes (see below).
 
 Each 2s tick the server does **ONE** conversion and **ONE** floor on the sum:
 
@@ -60,6 +58,14 @@ fires on its own timer and is floored independently:
   straight to the periodic total (`+ blessingRegenmp5` in `periodicMp5`), not to
   `flatMp5`. The old per-rank "off by 1" fixes (43→42, 33→32) were compensating
   for the wrong model and have been removed — `finalBoWMP5` is used as-is.
+- **Mana Spring Totem** — full tooltip value (10) every 2s. Verified in-game
+  2026-08-30 on a Shaman: combat log shows separate `+40` (spirit tick) and
+  `+10` (Mana Spring) events. Added to `periodicMp5` as `manaSpringmp5`
+  (= `10 * 5/2` = 25 mp5), not to `flatMp5`.
+- **Warchief's Blessing / Winsor's Sacrifice** — "30 mana regen every 5 seconds".
+  Same wording family as BoW; carried in `periodicMp5` by inference, not yet
+  combat-log-verified. If it turns out to be combined instead, move the two
+  `warchiefsRegenmp5` / `winsorsRegenmp5` terms back into `flatMp5`.
 
 ## What the addon must therefore do
 
@@ -85,8 +91,8 @@ fires on its own timer and is floored independently:
 | Mana-regen rate multiplier = 1.0             | `CONFIG_FLOAT_RATE_POWER_MANA`; a server-wide buff to mana regen would need a multiplier here |
 | No fractional-mana carry-over                | confirmed in-game                    |
 | No `SPELL_AURA_MOD_POWER_REGEN_PERCENT` auras | none common in Vanilla; would scale the Spirit part |
-| BoW is a 5s periodic energize, not combined  | confirmed in-game 2026-08-30 (combat log) |
-| Warchief's / Winsor's / Mana Spring bucket   | still treated as combined mp5; unverified against combat log |
+| BoW / Mana Spring are periodic, not combined | confirmed in-game 2026-08-30 (combat log) |
+| Warchief's / Winsor's are periodic too       | inferred from wording; not yet combat-log-verified |
 
 ## History
 
@@ -96,3 +102,7 @@ fires on its own timer and is floored independently:
 - Then BoW was moved out of the combined tick into the periodic total after the
   combat log showed it energizing on its own 5s timer with the spirit tick
   untouched (2026-08-30). The 43→42 / 33→32 rank hacks were removed with it.
+- Mana Spring Totem moved the same way (separate `+10` in the combat log next to
+  the spirit tick, 2026-08-30). Warchief's / Winsor's moved along with them by
+  the shared "mana every 5 sec" wording. Only gear/enchant/set/oil/food mp5 now
+  feeds the combined tick.

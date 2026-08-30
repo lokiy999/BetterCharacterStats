@@ -788,11 +788,11 @@ function BCS:SetManaRegen(statFrame)
 	-- own independent floor, so they stay outside the combined tick.
 	-- ==========================================================================
 
-	-- Flat mp5 that the server folds into the single combined tick.
+	-- Flat mp5 that the server folds into the single combined tick. Only true
+	-- SPELL_AURA_MOD_POWER_REGEN (gear/enchant/set/oil/food) lives here. Buff
+	-- "mana every N sec" effects are separate energizes on this server -- see
+	-- periodicMp5 below and docs/mana-regen.md.
 	local flatMp5 = mp5
-	if hasManaSpring then flatMp5 = flatMp5 + (finalMtSVal * 5 / 2) end
-	if hasWarchiefsBlessing and hasWarchiefsBlessingTT then flatMp5 = flatMp5 + warchiefsRegenmp5 end
-	if hasWinsorsSacrifice and hasWinsorsSacrificeTT then flatMp5 = flatMp5 + winsorsRegenmp5 end
 
 	local flatMp5Tick = flatMp5 * 2 / 5   -- per 2s tick, UNfloored
 	local spiritTick = base               -- per 2s tick, UNfloored
@@ -815,10 +815,11 @@ function BCS:SetManaRegen(statFrame)
 		druidText = format(L["DREAMSTATE"], druidManaTick, druidManaRegen)
 	end
 
-	-- Separate periodic-energize sources, each already floored on its own timer.
-	-- Blessing of Wisdom is a 5s energize on this server (combat log confirmed),
-	-- independent of the spirit tick and of casting state.
-	local periodicMp5 = brillRegenmp5 + paladinManaRegen + druidManaRegen + blessingRegenmp5
+	-- Separate periodic-energize sources, each floored on its own timer and
+	-- independent of the spirit tick / casting state. Combat log confirmed on
+	-- this server: Blessing of Wisdom (5s), Mana Spring Totem (2s). Warchief's /
+	-- Winsor's carried here too by the same "mana every 5 sec" wording.
+	local periodicMp5 = brillRegenmp5 + paladinManaRegen + druidManaRegen + blessingRegenmp5 + manaSpringmp5 + warchiefsRegenmp5 + winsorsRegenmp5
 
 	-- Headline: the combined tick as a rate (x 2.5), plus the periodic sources.
 	text:SetText(format("%d", floor(tickNotCasting * 5 / 2 + periodicMp5)))

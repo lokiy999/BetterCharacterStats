@@ -26,11 +26,12 @@ the addon works. Grouped by type, roughly most to least important.
       a 5s periodic energize for its exact tooltip value, with the spirit tick
       unchanged -- so BoW now goes into `periodicMp5`, not `flatMp5`, and
       `finalBoWMP5` is used as-is. See `docs/mana-regen.md`.
-- [ ] **Warchief's / Winsor's / Mana Spring bucketing.** These are still summed
-      into the combined `flatMp5` tick. Their tooltips ("N mana regen every 5
-      seconds"; Mana Spring pulses every 2s) suggest they may be separate
-      energizes like BoW. Check each in the combat log and move to `periodicMp5`
-      if the spirit tick is unaffected while the buff is up.
+- [x] **Mana Spring Totem bucketing.** Combat log (2026-08-30, Shaman) shows a
+      separate `+10` next to the `+40` spirit tick -> moved to `periodicMp5`.
+- [ ] **Warchief's / Winsor's bucketing.** Moved to `periodicMp5` by inference
+      from the "30 mana regen every 5 seconds" wording (same as BoW / Mana
+      Spring). Still needs a combat-log check; if it's actually combined, move
+      the `warchiefsRegenmp5` / `winsorsRegenmp5` terms back into `flatMp5`.
 - [ ] **Mana Spring / BoW are detected two different ways.**
       `SetSpellManaRegen` checks `BCS:GetPlayerAuraTexture(icon)` while
       `UpdateManaSpringTotem` / `UpdateBlessingOfWisdom` check
