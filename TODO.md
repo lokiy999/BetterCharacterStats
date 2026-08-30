@@ -22,12 +22,15 @@ the addon works. Grouped by type, roughly most to least important.
       speed at the end. The tooltip built mid-function is never shown (no
       `OnEnter` is set). Decide: wire up the tooltip, or delete the damage math
       (keep only what feeds `.damage` / `.dps` if anything reads them).
-- [ ] **BoW "math fix" hardcodes.** `helper.lua` `GetManaRegen`:
-      `if finalBoWMP5 == 43 then finalBoWMP5 = 42` (and `33 -> 32`). Fragile, and
-      now that the mana-regen headline floors the *combined* value these may
-      double-correct or become wrong. Re-test every BoW / Greater BoW rank
-      against the in-game tick and remove the hacks if the combined floor
-      already produces the right number. See `docs/mana-regen.md`.
+- [x] **BoW "math fix" hardcodes.** Removed. Combat log (2026-08-30) shows BoW is
+      a 5s periodic energize for its exact tooltip value, with the spirit tick
+      unchanged -- so BoW now goes into `periodicMp5`, not `flatMp5`, and
+      `finalBoWMP5` is used as-is. See `docs/mana-regen.md`.
+- [ ] **Warchief's / Winsor's / Mana Spring bucketing.** These are still summed
+      into the combined `flatMp5` tick. Their tooltips ("N mana regen every 5
+      seconds"; Mana Spring pulses every 2s) suggest they may be separate
+      energizes like BoW. Check each in the combat log and move to `periodicMp5`
+      if the spirit tick is unaffected while the buff is up.
 - [ ] **Mana Spring / BoW are detected two different ways.**
       `SetSpellManaRegen` checks `BCS:GetPlayerAuraTexture(icon)` while
       `UpdateManaSpringTotem` / `UpdateBlessingOfWisdom` check

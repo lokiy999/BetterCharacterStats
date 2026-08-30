@@ -237,7 +237,7 @@ BCS["L"] = {
 
 	["MANA_SPRING_TOTEM"] = "\n|cff0099ff%s|cff00ff00 per tick from Mana Spring Totem |cff0099ff%s|cff00ff00 mp5.|r",
 	["BRILLIANCE_AURA"] = "\n|cff0099ff%s|cff00ff00 per tick from Brilliance Aura |cff0099ff%s|cff00ff00 mp5.|r",
-	["BLESSING_OF_WISDOM"] = "\n|cff0099ff%s|cff00ff00 per tick from Blessing of Wisdom |cff0099ff%s|cff00ff00 mp5.|r",
+	["BLESSING_OF_WISDOM"] = "\n|cff0099ff%s|cff00ff00 every 5 sec from Blessing of Wisdom |cff0099ff%s|cff00ff00 mp5.|r",
 	["WINSORS_WBUFF"] = "\n|cff0099ff%s|cff00ff00 per tick from Winsor's Sacrifice |cff0099ff%s|cff00ff00 mp5.|r",
 	["WARCHIEFS_WBUFF"] = "\n|cff0099ff%s|cff00ff00 per tick from Warchief's Blessing |cff0099ff%s|cff00ff00 mp5.|r",
 

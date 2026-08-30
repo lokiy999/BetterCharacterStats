@@ -2328,13 +2328,12 @@ function BCS:GetManaRegen()
     local finalBoWMP5 = floor(blessingOfWisdomMP5 * divineGraceBonus * lastGearBonus)
 	--DEFAULT_CHAT_FRAME:AddMessage("Blessing of Wisdom (Displayed MP5): " .. finalBoWMP5)
 	
-	-- Finalized math fixes here namely Blessing of Wisdom tooltip being off by 1 mana per 5:
-	if finalBoWMP5 == 43 then 
-		finalBoWMP5 = 42 -- BoW (Rank 6) WoW math fix 43 to 42 rounded down without messing up other correct ranks
-	elseif finalBoWMP5 == 33 then
-		finalBoWMP5 = 32 -- BoW (Rank 4) WoW math fix 33 to 32 rounded down without messing up other correct ranks
-	end
-	
+	-- NOTE: previously this rounded 43->42 and 33->32 to compensate for the old
+	-- model that folded BoW into the 2s spirit tick. On this server BoW is its own
+	-- 5s periodic energize (combat log shows the exact tooltip value, e.g. 33 every
+	-- 5s, with the spirit tick unchanged), so finalBoWMP5 is now used as-is and
+	-- added to periodicMp5 in SetSpellManaRegen. See docs/mana-regen.md.
+
 	local finalMtSVal = floor(manaSpringTotemMP2 * manaSpringBonus)
 	
 		-- Can finalize Mana Spring Totem values here for correct ingame rounding in combat log but

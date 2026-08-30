@@ -708,7 +708,7 @@ function BCS:SetManaRegen(statFrame)
 	local blessingRegenText = ""
 	
 	if hasBlessingOfWisdom then
-		blessingegentick = floor(finalBoWMP5 * 2 / 5) -- mana per tick from mp5 calc
+		blessingegentick = finalBoWMP5 -- BoW energizes once every 5s for its full value
 		blessingRegenmp5 = finalBoWMP5 --Blessing of Wisdom is already in mp5 calc
 		blessingRegenText = format(L["BLESSING_OF_WISDOM"], blessingegentick, blessingRegenmp5)
 	else
@@ -790,7 +790,6 @@ function BCS:SetManaRegen(statFrame)
 
 	-- Flat mp5 that the server folds into the single combined tick.
 	local flatMp5 = mp5
-	if hasBlessingOfWisdom then flatMp5 = flatMp5 + finalBoWMP5 end
 	if hasManaSpring then flatMp5 = flatMp5 + (finalMtSVal * 5 / 2) end
 	if hasWarchiefsBlessing and hasWarchiefsBlessingTT then flatMp5 = flatMp5 + warchiefsRegenmp5 end
 	if hasWinsorsSacrifice and hasWinsorsSacrificeTT then flatMp5 = flatMp5 + winsorsRegenmp5 end
@@ -817,7 +816,9 @@ function BCS:SetManaRegen(statFrame)
 	end
 
 	-- Separate periodic-energize sources, each already floored on its own timer.
-	local periodicMp5 = brillRegenmp5 + paladinManaRegen + druidManaRegen
+	-- Blessing of Wisdom is a 5s energize on this server (combat log confirmed),
+	-- independent of the spirit tick and of casting state.
+	local periodicMp5 = brillRegenmp5 + paladinManaRegen + druidManaRegen + blessingRegenmp5
 
 	-- Headline: the combined tick as a rate (x 2.5), plus the periodic sources.
 	text:SetText(format("%d", floor(tickNotCasting * 5 / 2 + periodicMp5)))

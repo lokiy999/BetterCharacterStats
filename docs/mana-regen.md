@@ -17,10 +17,14 @@ The server keeps **one** floating-point rate, `m_modManaRegen`, built from:
   - Mage / Priest:                       `Spirit / 4 + 12.5`
   - Shaman:                              `Spirit / 5 + 17`
   (These are per-2s-tick values. `Spirit` is the effective value incl. buffs.)
-- **Every flat `mana per 5 sec` effect**, all of which are
-  `SPELL_AURA_MOD_POWER_REGEN`: gear, enchants, set bonuses, weapon mana oils,
-  "well fed" food buffs, **Blessing of Wisdom**, **Mana Spring Totem**,
-  **Warchief's Blessing / Winsor's Sacrifice** mana component.
+- **Flat `mana per 5 sec` from gear**: gear, enchants, set bonuses, weapon mana
+  oils, "well fed" food buffs. These are true `SPELL_AURA_MOD_POWER_REGEN`.
+
+**Not** in the combined rate on this server: **Blessing of Wisdom** (see below).
+**Warchief's Blessing / Winsor's Sacrifice** and **Mana Spring Totem** are still
+treated as combined-rate mp5 in the addon but are *unverified* — their tooltips
+read "N mana regen every 5 seconds" / a 2s pulse, so they may also be separate
+energizes. Check the combat log the same way BoW was checked.
 
 Each 2s tick the server does **ONE** conversion and **ONE** floor on the sum:
 
@@ -49,6 +53,13 @@ fires on its own timer and is floored independently:
 - **Brilliance Aura** — 1% of max mana every 10s
 - **Divine Concentration** (Paladin talent) — 1% of max mana every N s
 - **Dreamstate** (Druid talent) — X% of max mana every 10s
+- **Blessing of Wisdom** — the full tooltip value ("Restores N mana every 5
+  seconds") every 5s. Verified in-game 2026-08-30: combat log shows a discrete
+  "N mana from Blessing of Wisdom" every 5s, the 2s spirit tick is unchanged
+  by the buff, and it keeps firing at full value while casting. So BoW is added
+  straight to the periodic total (`+ blessingRegenmp5` in `periodicMp5`), not to
+  `flatMp5`. The old per-rank "off by 1" fixes (43→42, 33→32) were compensating
+  for the wrong model and have been removed — `finalBoWMP5` is used as-is.
 
 ## What the addon must therefore do
 
@@ -74,10 +85,14 @@ fires on its own timer and is floored independently:
 | Mana-regen rate multiplier = 1.0             | `CONFIG_FLOAT_RATE_POWER_MANA`; a server-wide buff to mana regen would need a multiplier here |
 | No fractional-mana carry-over                | confirmed in-game                    |
 | No `SPELL_AURA_MOD_POWER_REGEN_PERCENT` auras | none common in Vanilla; would scale the Spirit part |
-| BoW / Mana Spring per-rank values are right  | `GetManaRegen` has empirical "off by 1" fixes for some BoW ranks; if combined-flooring makes those fixes wrong, revisit them |
+| BoW is a 5s periodic energize, not combined  | confirmed in-game 2026-08-30 (combat log) |
+| Warchief's / Winsor's / Mana Spring bucket   | still treated as combined mp5; unverified against combat log |
 
 ## History
 
 - Originally each source was converted to an mp5 number and rounded separately,
   then summed. This drifted 0-2 vs the game. Reworked to the single-combined-
   floor model above (see PR "Fixes", branch `fixes`).
+- Then BoW was moved out of the combined tick into the periodic total after the
+  combat log showed it energizing on its own 5s timer with the spirit tick
+  untouched (2026-08-30). The 43→42 / 33→32 rank hacks were removed with it.
