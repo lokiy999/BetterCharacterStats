@@ -2645,15 +2645,14 @@ function BCS:GetMeleeHaste()
 		return 0
 	end
 
+	-- Druid forms attack at the form's own speed, not the weapon's. Detect via
+	-- the form's self-buff icon (GetShapeshiftForm isn't on every client).
 	local baseSpeed
-	local formIndex = GetShapeshiftForm()
-	if formIndex and formIndex > 0 then
-		local _, formName = GetShapeshiftFormInfo(formIndex)
-		if formName == "Cat Form" then
-			baseSpeed = 1.0
-		elseif formName == "Bear Form" or formName == "Dire Bear Form" then
-			baseSpeed = 2.5
-		end
+	if BCS:GetPlayerAuraTexture("Interface\\Icons\\Ability_Druid_CatForm") then
+		baseSpeed = 1.0
+	elseif BCS:GetPlayerAuraTexture("Interface\\Icons\\Ability_Racial_BearForm")
+		or BCS:GetPlayerAuraTexture("Interface\\Icons\\Ability_Druid_DireBearForm") then
+		baseSpeed = 2.5
 	end
 	if not baseSpeed then
 		baseSpeed = BCS:GetBaseWeaponSpeed(16) or 2.0 -- 2.0 = unarmed
