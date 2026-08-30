@@ -439,9 +439,11 @@ function BCS:SetSpellPower(statFrame)
 	frame:SetScript("OnEnter", function()
 		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
 		GameTooltip:SetText(this.tooltip)
+		-- Per school: the effective total for that school (main number + the
+		-- school-specific bonus), with the bonus itself in brackets.
 		for k, v in pairs(schools) do
 			if (v > 0) then
-				GameTooltip:AddDoubleLine(k, v)
+				GameTooltip:AddDoubleLine(k, format("%d |cff20ff20(+%d)|r", power + v, v))
 			end
 		end
 		if damagePercent ~= 0 then
