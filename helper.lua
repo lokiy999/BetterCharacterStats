@@ -2645,13 +2645,13 @@ function BCS:GetMeleeHaste()
 		return 0
 	end
 
-	-- Druid forms attack at the form's own speed, not the weapon's. Detect via
-	-- the form's self-buff icon (GetShapeshiftForm isn't on every client).
+	-- Druid Cat/Bear attack at the form's own speed, not the weapon's. Detect
+	-- via the form's self-buff icon (GetShapeshiftForm isn't on every client;
+	-- Dire Bear shares the Bear icon). Aquatic/Travel/Moonkin don't melee.
 	local baseSpeed
 	if BCS:GetPlayerAuraTexture("Interface\\Icons\\Ability_Druid_CatForm") then
 		baseSpeed = 1.0
-	elseif BCS:GetPlayerAuraTexture("Interface\\Icons\\Ability_Racial_BearForm")
-		or BCS:GetPlayerAuraTexture("Interface\\Icons\\Ability_Druid_DireBearForm") then
+	elseif BCS:GetPlayerAuraTexture("Interface\\Icons\\Ability_Racial_BearForm") then
 		baseSpeed = 2.5
 	end
 	if not baseSpeed then

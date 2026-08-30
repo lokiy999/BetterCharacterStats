@@ -87,13 +87,11 @@ the addon works. Grouped by type, roughly most to least important.
 ## Melee Haste (added -- verify)
 
 - [ ] `GetMeleeHaste` derives % from `base weapon speed / UnitAttackSpeed`.
-      Verify against known setups. Edge cases handled: unarmed (2.0), Cat Form
-      (1.0), Bear/Dire Bear Form (2.5) -- form detected by self-buff icon, so
-      confirm the icon paths (`Ability_Druid_CatForm`, `Ability_Racial_BearForm`,
-      `Ability_Druid_DireBearForm`) match this client. NOT handled: off-hand
-      shown separately, non-melee druid forms (Moonkin/Travel fall through to
-      weapon speed), servers that show haste-modified speed in the weapon
-      tooltip.
+      Verify against known setups. Handled: unarmed (2.0), Cat Form (1.0),
+      Bear/Dire Bear Form (2.5, detected by `Ability_Druid_CatForm` /
+      `Ability_Racial_BearForm` buff icons -- confirmed on this client). NOT
+      handled: off-hand shown separately, servers that show haste-modified
+      speed in the weapon tooltip.
 
 ## Before merging `fixes` -> master
 
