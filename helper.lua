@@ -491,6 +491,13 @@ function BCS:GetMovementSpeedBonus()
 		end
 	end
 
+	-- Spellbook passives (e.g. Night Elf "Quickness") that grant a run-speed
+	-- bonus explicitly stated to not stack with other movement speed effects.
+	local _, passiveMove = BCS:ScanSpellbookPassiveSpeedBonuses()
+	if passiveMove > runNonStackingBest then
+		runNonStackingBest = passiveMove
+	end
+
 	local runSpeed = 100 + runAdditive + runNonStackingBest
 	local mountSpeedBonus = mountAdditive + mountNonStackingBest
 
@@ -2104,12 +2111,6 @@ function BCS:GetManaRegen()
 		end
 	end
 
-	if castingRegenPercent > 100 then
-		castingRegenPercent = 100
-	end
-
-	casting = power_regen * castingRegenPercent / 100
-
 	local mp5 = 0					-- Initialize to prevent nil errors
 	local paladinManaRegen = 0
 	local paladinManaTick = 0
@@ -2242,6 +2243,7 @@ function BCS:GetManaRegen()
 	-- ***MOVED ZG BONUS TO ITS OWN SNAPSHOT FUNCTION ABOVE BCS:GetGearSetBonus()***
 	local MAX_INVENTORY_SLOTS = 19
 	local countedSetMp5 = {} -- set-bonus mp5 lines already counted (keyed by set|value)
+	local countedSetCastingRegen = {} -- set-bonus casting-regen lines already counted (keyed by set|value)
 
 	for slot=0, MAX_INVENTORY_SLOTS do
 		local hasItem = BCS_Tooltip:SetInventoryItem("player", slot)
@@ -2263,6 +2265,31 @@ function BCS:GetManaRegen()
 				local _,_, setName = strfind(rawText, "^(.+) %(%d+/%d+%)")
 				if setName then
 					currentSet = setName
+				end
+
+				-- Gear/enchants (e.g. "Chest - Mana Regeneration") granting
+				-- "X% of your mana regeneration continues while casting" --
+				-- same effect as the Meditation-style talents, but from an
+				-- item instead, so it needs to be added on top of them. Set
+				-- bonuses (e.g. "Set: Allows X% of your Mana regeneration to
+				-- continue while casting.") repeat on every equipped piece of
+				-- the set, so dedupe those like the mp5 set bonus below, and
+				-- skip greyed-out (not-yet-active) ones.
+				for _, pattern in ipairs(castingRegenPatterns) do
+					local _, _, pct = strfind(rawText, pattern)
+					if pct then
+						if strfind(text, "set:") then
+							local r, g, b = left:GetTextColor()
+							local isGrey = (r > 0.45 and r < 0.55 and g > 0.45 and g < 0.55 and b > 0.45 and b < 0.55)
+							local key = (currentSet or "?") .. "|" .. pct
+							if not isGrey and not countedSetCastingRegen[key] then
+								countedSetCastingRegen[key] = true
+								castingRegenPercent = castingRegenPercent + tonumber(pct)
+							end
+						else
+							castingRegenPercent = castingRegenPercent + tonumber(pct)
+						end
+					end
 				end
 
 				local _,_, value = strfind(text, "^mana regen %+(%d+)")
@@ -2316,6 +2343,12 @@ function BCS:GetManaRegen()
 			end
 		end
 	end
+
+	if castingRegenPercent > 100 then
+		castingRegenPercent = 100
+	end
+
+	casting = power_regen * castingRegenPercent / 100
 
 	-- Flat mp5 from food buffs (e.g. Nightfin Soup "well fed"). The spirit part
 	-- of such buffs is already reflected in UnitStat.
@@ -2634,36 +2667,110 @@ function BCS:GetSpellHaste()
 	-- on others (e.g. Bloodlust) gets counted permanently just because its own
 	-- spell description mentions "casting speed", regardless of whether its
 	-- buff is actually active on you.
+	local passiveHaste = BCS:ScanSpellbookPassiveSpeedBonuses()
+	haste = haste + passiveHaste
+
+	return haste
+end
+
+-- Scans the spellbook for always-on passive entries that grant a percentage
+-- speed bonus (e.g. Night Elf "Quickness": "Increases your Agility, movement
+-- and casting speed by X%. This does not stack with other movement speed
+-- increasing effects."). Only entries actually marked "Passive" count --
+-- otherwise an active spell you cast on others (e.g. Bloodlust) would get
+-- counted permanently just because its own description mentions "casting
+-- speed", regardless of whether its buff is actually active on you.
+--
+-- Tooltip lines are joined into one string before matching, since a long
+-- sentence like Quickness's can wrap across multiple tooltip lines and would
+-- otherwise split the phrase apart and silently fail to match.
+--
+-- Returns (hasteBonus, movementBonus), both plain percentages.
+function BCS:ScanSpellbookPassiveSpeedBonuses()
+	local haste = 0
+	local move = 0
+	local BOOKTYPE = BOOKTYPE_SPELL or "spell"
 	local MAX_SPELL_TABS = GetNumSpellTabs()
 	for tab = 1, MAX_SPELL_TABS do
 		local name, texture, offset, numSpells = GetSpellTabInfo(tab)
 		for spell = 1, numSpells do
-			local currentPage = ceil(spell / SPELLS_PER_PAGE)
-			local SpellID = spell + offset + (SPELLS_PER_PAGE * (currentPage - 1))
+			local SpellID = spell + offset
 
-			BCS_Tooltip:SetSpell(SpellID, BOOKTYPE_SPELL)
+			BCS_Tooltip:SetSpell(SpellID, BOOKTYPE)
+
+			-- Passive detection is best-effort: GetSpellSubtext (and the
+			-- "Passive" tooltip line it mirrors) may be worded or labeled
+			-- differently on a custom ruleset, so check both loosely
+			-- (case-insensitive substring) rather than an exact match.
 			local isPassive = false
-			local hasteValue = nil
+			if GetSpellSubtext then
+				local subtext = GetSpellSubtext(SpellID, BOOKTYPE)
+				if subtext and strfind(strlower(subtext), "passive") then
+					isPassive = true
+				end
+			end
+			local fullText = ""
 			for line = 1, BCS_Tooltip:NumLines() do
 				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
 				if left and left:GetText() then
 					local text = left:GetText()
-					if text == "Passive" then
+					if strfind(strlower(text), "passive") then
 						isPassive = true
 					end
-					local _, _, value = strfind(text, "casting speed by (%d+)%%")
-					if value then
-						hasteValue = tonumber(value)
-					end
+					fullText = fullText .. " " .. text
 				end
 			end
-			if isPassive and hasteValue then
-				haste = haste + hasteValue
+
+			-- Racial passives like Night Elf "Quickness" ("Increases your
+			-- Agility, movement and casting speed by X%. This does not stack
+			-- with other movement speed increasing effects.") combine several
+			-- stats in one sentence distinctive enough that no active/
+			-- on-others spell would ever say it. Count it on that phrasing
+			-- alone as a fallback, in case this server doesn't mark the entry
+			-- "Passive" the way Blizzard's client normally does.
+			local isDistinctiveRacialPhrase = strfind(fullText, "[Aa]gility, movement and casting speed by") ~= nil
+
+			if isPassive or isDistinctiveRacialPhrase then
+				local _, _, hasteValue = strfind(fullText, "casting speed by (%d+)%%")
+				if hasteValue then
+					haste = haste + tonumber(hasteValue)
+				end
+				local _, _, moveValue = strfind(fullText, "movement.-speed by (%d+)%%")
+				if moveValue then
+					move = move + tonumber(moveValue)
+				end
 			end
 		end
 	end
+	return haste, move
+end
 
-	return haste
+-- DEBUG: dumps every spellbook entry (all tabs) with its detected passive
+-- state and full tooltip text, so a mismatch between what
+-- ScanSpellbookPassiveSpeedBonuses sees and the real in-game tooltip (e.g. a
+-- racial passive on a custom ruleset) can be diagnosed from the chat log.
+-- Usage: /script BCS:DebugSpellbookPassives()
+function BCS:DebugSpellbookPassives()
+	local BOOKTYPE = BOOKTYPE_SPELL or "spell"
+	local MAX_SPELL_TABS = GetNumSpellTabs()
+	for tab = 1, MAX_SPELL_TABS do
+		local tabName, texture, offset, numSpells = GetSpellTabInfo(tab)
+		for spell = 1, numSpells do
+			local SpellID = spell + offset
+			local spellName = GetSpellName and GetSpellName(SpellID, BOOKTYPE)
+			BCS_Tooltip:SetSpell(SpellID, BOOKTYPE)
+			local subtext = GetSpellSubtext and GetSpellSubtext(SpellID, BOOKTYPE)
+			local fullText = ""
+			for line = 1, BCS_Tooltip:NumLines() do
+				local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+				if left and left:GetText() then
+					fullText = fullText .. " | " .. left:GetText()
+				end
+			end
+			BCS:Print("tab "..tab.." (\""..tostring(tabName).."\") id "..SpellID..": name=\""..tostring(spellName)
+				.."\" subtext=\""..tostring(subtext).."\" text=\""..fullText.."\"")
+		end
+	end
 end
 
 -- Base (unmodified) weapon speed for an equipped slot, read from the item
