@@ -138,6 +138,7 @@ BCS["L"] = {
 	["Reduces the chance that the opponent can resist your Frost and Fire spells by (%d)%%."] = "Reduces the chance that the opponent can resist your Frost and Fire spells by (%d)%%.",
 	["Reduces the chance that the opponent can resist your Arcane spells by (%d+)%% and gives you a (%d+)%% chance to avoid interruption caused by damage while channeling Arcane Missiles."] = "Reduces the chance that the opponent can resist your Arcane spells by (%d+)%% and gives you a (%d+)%% chance to avoid interruption caused by damage while channeling Arcane Missiles.",
 	["Increases hit and crit chance by (%d+)%% for both you and your pet."] = "Increases hit and crit chance by (%d+)%% for both you and your pet.",
+	["You and your pet gain (%d+)%% hit and crit chance."] = "You and your pet gain (%d+)%% hit and crit chance.",
 	["Increases your chance to hit with all attacks and spells by (%d+)%%."] = "Increases your chance to hit with all attacks and spells by (%d+)%%.",
 	["Increases your chance to hit with Fire, Frost and Nature spells by (%d+)%%."] = "Increases your chance to hit with Fire, Frost and Nature spells by (%d+)%%.",
 	["Increases your spell damage and critical strike chance by (%d+)%%."] = "Increases your spell damage and critical strike chance by (%d+)%%.",
