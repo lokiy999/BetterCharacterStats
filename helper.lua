@@ -774,6 +774,9 @@ function BCS:GetHitRating(hitOnly)
 							_,_, value = strfind(text, L["Increases hit and crit chance by (%d+)%% for both you and your pet."])
 						end
 						if not value then
+							_,_, value = strfind(text, L["You and your pet gain (%d+)%% hit and crit chance."])
+						end
+						if not value then
 							_,_, value = strfind(text, L["Increases your chance to hit with melee weapons by (%d)%%."])
 						end
 						if not value then
