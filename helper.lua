@@ -4,6 +4,30 @@ local BCS_Tooltip = getglobal("BetterCharacterStatsTooltip") or CreateFrame("Gam
 local BCS_Prefix = "BetterCharacterStatsTooltip"
 BCS_Tooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
 
+-- A talent that isn't at max rank also prints its "Next rank:" description,
+-- which every talent scanner would otherwise count on top of the current rank
+-- (e.g. Lightning Reflexes 3/5 read as 9% + 12%). Blank the "Next rank:" line
+-- and everything after it so scanners only ever see the invested rank.
+if not BCS_Tooltip.BCS_OrigSetTalent then
+	BCS_Tooltip.BCS_OrigSetTalent = BCS_Tooltip.SetTalent
+	BCS_Tooltip.SetTalent = function(self, tab, talent)
+		local r1, r2, r3 = self:BCS_OrigSetTalent(tab, talent)
+		local nextRank = TOOLTIP_TALENT_NEXT_RANK or "Next rank:"
+		local blanking = false
+		for line = 1, self:NumLines() do
+			local left = getglobal(BCS_Prefix .. "TextLeft" .. line)
+			local text = left and left:GetText()
+			if text and strfind(text, nextRank, 1, true) then
+				blanking = true
+			end
+			if blanking and left then
+				left:SetText("")
+			end
+		end
+		return r1, r2, r3
+	end
+end
+
 local L = BCS["L"]
 
 local strfind = strfind
